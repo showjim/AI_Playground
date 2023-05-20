@@ -1,0 +1,8 @@
+langchain
+llama-index
+python-dotenv
+faster-whisper
+ffmpeg
+pysubs2
+pyannote-audio
+pyannote-core
