@@ -2,7 +2,7 @@ import os
 import shutil
 from llm.chat import ChatBot
 
-def llm_chat():
+def llm_chat(docs_path, index_path):
     query_str = """
     You are a helpful assistant to do meeting record.
     Please summary this meeting record.
@@ -13,8 +13,11 @@ def llm_chat():
     4. what are the next steps?
     """
     try:
-        chat = ChatBot()
+        chat = ChatBot(docs_path, index_path)
         resp = chat.chat(query_str)
         print(resp)
     except Exception as e:
         print(e.__str__())
+
+if __name__ == '__main__':
+    llm_chat("output", "index")

@@ -1,7 +1,6 @@
 import os
 import shutil
 from dotenv import load_dotenv
-import time
 from llama_index import (
     GPTListIndex,
     SimpleDirectoryReader,
@@ -17,11 +16,11 @@ from langchain.chat_models import ChatOpenAI
 from llama_index.indices.loading import load_index_from_storage
 
 class OpenAI():
-    def __int__(self):
+    def __init__(self, dir="./", env='key.txt'):
         super().__init__()
-        self.WORK_ENV_DIR = './'
-        self.ENV_FILE = 'key.txt'
-        self.config_details = {}
+        self.WORK_ENV_DIR = dir
+        self.ENV_FILE = env
+
     def setup_env(self):
         # Load OpenAI key
         if os.path.exists(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE)):
