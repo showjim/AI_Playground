@@ -63,10 +63,10 @@ class OpenAI():
         )
         doc_summary_index.storage_context.persist(path)
 
-    def rebuild_index_from_dir(self, path):
+    def rebuild_index_from_dir(self, path, service_context):
         # rebuild storage context
         storage_context = StorageContext.from_defaults(persist_dir=path)
-        doc_summary_index = load_index_from_storage(storage_context)
+        doc_summary_index = load_index_from_storage(storage_context,service_context=service_context)
         return doc_summary_index
 
 class APIKeyNotFoundError(Exception):
