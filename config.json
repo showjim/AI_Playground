@@ -1,0 +1,8 @@
+{
+    "OPENAI_API_TYPE": "azure",
+    "CHATGPT_MODEL":"gpt-35-turbo",
+    "OPENAI_API_BASE":"https://xxxxx.openai.azure.com/",
+    "OPENAI_API_VERSION":"2023-03-15-preview",
+	"EMBEDDING_MODEL":"text-embedding-ada-002",
+    "EMBEDDING_MODEL_VERSION":"2022-12-01"
+}
