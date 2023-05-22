@@ -27,13 +27,13 @@ from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 
 is_vad_filter = "False"
-file_type = "video"  # @param ["audio","video"]
+# file_type = "audio"  # @param ["audio","video"]
 model_size = "base"  # @param ["base","small","medium", "large-v1","large-v2"]
-language = "en"  # @param {type:"string"}
+# language = "zh"  # @param {type:"string"}
 export_srt = "No"  # @param ["No","Yes"]
-num_speakers = 2 #@param {type:"integer"}
+# num_speakers = 3 #@param {type:"integer"}
 
-def extract_subtitle(file_names:str):
+def extract_subtitle(file_names:str, file_type, language):
     print('语音识别库配置完毕，将开始转换')
     print('加载模型 Loading model...')
     device_str = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -50,6 +50,7 @@ def extract_subtitle(file_names:str):
         # os.system(f'ffmpeg -i {file_name} -f mp3 -ab 192000 -vn {file_basename}.mp3')
         os.system(f'ffmpeg -i {file_name} {output_file}.wav -y')
         print('提取完毕 Done.')
+        file_name = output_file + ".wav"
         # print(file_basename)
     tic = tt.time()
     print('识别中 Transcribe in progress...')
@@ -89,9 +90,9 @@ def extract_subtitle(file_names:str):
                 # write each item on a new line
                 fp.write("%s\n" % item)
             print('Done')
-    return results, str(output_file) + ".wav"
+    return results, file_name #str(output_file) + ".wav"
 
-def identify_speaker(file_name, segments):
+def identify_speaker(file_name, segments, num_speakers):
     embeddings = embedding_audio(file_name, segments)
     clustering = AgglomerativeClustering(num_speakers).fit(embeddings)
     labels = clustering.labels_
@@ -118,7 +119,7 @@ def segment_embedding(path, segment, audio, duration):
     end = min(duration, segment["end"])
     clip = Segment(start, end)
     waveform, sample_rate = audio.crop(path, clip)
-    tmp = waveform[None][:,1,:][None]
+    tmp = waveform[None][:,0,:][None]
     return embedding_model(tmp)
 
 def time(secs):
