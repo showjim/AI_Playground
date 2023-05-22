@@ -15,7 +15,9 @@ from llama_index import (
 from llama_index.indices.document_summary import GPTDocumentSummaryIndex
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 from llama_index.indices.loading import load_index_from_storage
+from langchain.llms import AzureOpenAI
 from langchain.embeddings import OpenAIEmbeddings
+from langchain.schema import HumanMessage
 
 class OpenAI():
     def __init__(self, dir="./", env='key.txt'):
@@ -71,7 +73,7 @@ class OpenAI():
         doc_summary_index = load_index_from_storage(storage_context,service_context=service_context)
         return doc_summary_index
 
-class AzureOpenAI():
+class OpenAIAzure():
     def __init__(self, dir="./", env='key.txt'):
         super().__init__()
 
@@ -114,7 +116,21 @@ class AzureOpenAI():
                                openai_api_version=self.config_details['OPENAI_API_VERSION'],
                                max_tokens=num_output,
                                temperature=0.2,
+                              # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
                                )
+        test =llm([HumanMessage(content="Translate this sentence from English to French. I love programming.")])
+        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        #                   max_tokens=num_output,
+        #                   temperature=0.2,
+        #                   # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
+        #                   model_kwargs={
+        #                       "api_key": openai.api_key,
+        #                       "api_base": openai.api_base,
+        #                       "api_type": openai.api_type,
+        #                       "api_version": self.config_details['OPENAI_API_VERSION'],
+        #                       "engine": self.config_details['CHATGPT_MODEL'],
+        #                   }
+        #                   )
         llm_predictor = LLMPredictor(llm=llm)
 
         # You need to deploy your own embedding model as well as your own chat completion model
@@ -122,10 +138,11 @@ class AzureOpenAI():
             OpenAIEmbeddings(
                 model=self.embedding_model_name,
                 deployment=self.embedding_model_name,
-                # openai_api_key=openai.api_key,
-                # openai_api_base=openai.api_base,
-                # openai_api_type=openai.api_type,
-                # openai_api_version=self.config_details['EMBEDDING_MODEL_VERSION'],
+                openai_api_key=openai.api_key,
+                openai_api_base=openai.api_base,
+                openai_api_type=openai.api_type,
+                openai_api_version=self.config_details['EMBEDDING_MODEL_VERSION'],
+                # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']}
             ),
             embed_batch_size=1,
         )

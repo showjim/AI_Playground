@@ -1,10 +1,10 @@
-from llm.llms import OpenAI, AzureOpenAI
+from llm.llms import OpenAI, OpenAIAzure
 
 class ChatBot():
     def __init__(self, docs_path:str, index_path:str, env_path:str):
         super().__init__()
-        self.model = OpenAI(dir=env_path)
-        # self.model = AzureOpenAI(dir=env_path)
+        # self.model = OpenAI(dir=env_path)
+        self.model = OpenAIAzure(dir=env_path)
         self.model.setup_env()
         self.docs_path = docs_path
         self.index_path =index_path
