@@ -3,7 +3,7 @@
 Auto Meeting Minutes is a tool based on OpenAI/AzureOpenAI to chat with video/audio and output the meeting minute with build-in prompt.
 ![Sample Screenshots](/img/Screenshot_page.png)
 
-## How to use
+## 1. How to use
 
 1. Install the required dependencies:
 
@@ -16,7 +16,7 @@ pip install -r requirements.txt
 streamlit run .\AutoMeetingMinutes_webui.py
 ```
 
-## Setup OpenAI and Azure OpenAI
+## 2. Setup OpenAI and Azure OpenAI
 To configure the application, you will need to create a `key.txt` file containing your Azure OpenAI API key and a `config.json` file with your desired settings.
 
 ### key.txt
@@ -35,3 +35,10 @@ Create a `config.json` file with the following configuration:
     "EMBEDDING_MODEL": "xxxxx",
     "EMBEDDING_MODEL_VERSION": "xxxxx"
 }
+```
+
+## 3. How it works
+1. Ffmpeg is used to covert video to audio;
+2. Faster-Whisper is used to covert audio to subtitle;
+3. AgglomerativeClustering from sklearn is used to distinguish the speakers;
+4. OpenAI is used to do the meeting minute summary.
