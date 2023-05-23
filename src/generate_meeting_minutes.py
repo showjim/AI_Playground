@@ -1,6 +1,6 @@
 import os
 import shutil
-from llm.chat import ChatBot
+from src.chat import ChatBot
 
 def llm_chat(query_str, docs_path, index_path, env_path = "./"):
     # query_str = """
@@ -41,4 +41,4 @@ def llm_chat_langchain(query_str, docs_path, index_path, env_path = "./"):
         print(e.__str__())
 
 if __name__ == '__main__':
-    print(llm_chat("output", "index"))
+    print(llm_chat("output", "../index"))

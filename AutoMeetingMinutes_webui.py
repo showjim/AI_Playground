@@ -1,22 +1,20 @@
 import streamlit as st
-from analyse_audio import (
+from src.analyse_audio import (
     extract_subtitle,
     identify_speaker,
     output_subtitle
 )
-from generate_meeting_minutes import llm_chat, llm_chat_langchain
-import pandas as pd
-import json, os
+from src.generate_meeting_minutes import llm_chat, llm_chat_langchain
+import os
 
-query_str = """
-        You are a helpful assistant to do meeting record.
-        Please summary this meeting record.
-        Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
-        1. who attend the meeting?
-        2. Identify key decisions in the transcript.
-        3. What are the key action items in the meeting?
-        4. what are the next steps?
-        """
+query_str = """You are a helpful assistant to do meeting record.
+Please summary this meeting record.
+Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
+1. who attend the meeting?
+2. Identify key decisions in the transcript.
+3. What are the key action items in the meeting?
+4. what are the next steps?
+"""
 
 st.title("👨‍💻Auto-Meeting-Minutes")
 
@@ -40,7 +38,7 @@ uploaded_path = ""
 if st.button("Submit", type="primary"):
 
     if video_path is not None:
-        work_path = os.path.curdir
+        work_path = os.path.abspath('.')
         # save file
         uploaded_path = os.path.join(work_path + "/tempDir", video_path.name)
         with open(uploaded_path, mode="wb") as f:
@@ -58,7 +56,7 @@ if st.button("Submit", type="primary"):
 
 
 if st.button("Re-Generate", type="secondary"):
-    work_path = os.path.curdir
+    work_path = os.path.abspath('.')
     # Query the agent.
     # st.info('This is a purely informational message', icon="ℹ️")
     response = llm_chat_langchain(query_input, work_path + "/tempDir/output",

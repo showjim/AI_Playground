@@ -49,7 +49,7 @@ llm = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
                               # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
                                )
 embeddings = OpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chunk_size=1)
-# summary_chain = load_summarize_chain(llm, chain_type="map_reduce")
+# summary_chain = load_summarize_chain(src, chain_type="map_reduce")
 # text = "This is a test document."
 # query_result = embeddings.embed_query(text)
 # print(query_result)
@@ -80,7 +80,7 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=2048, chunk_overlap=10
 texts = text_splitter.split_documents(documents)
 
 # There is a lot of complexity hidden in this one line. I encourage you to check out the video above for more detail
-# chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True)
+# chain = load_summarize_chain(src, chain_type="map_reduce", verbose=True)
 # chain.run(texts)
 
 docsearch = FAISS.from_documents(texts, embeddings)

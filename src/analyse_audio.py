@@ -93,7 +93,9 @@ def extract_subtitle(file_names:str, file_type, language):
     return results, file_name #str(output_file) + ".wav"
 
 def identify_speaker(file_name, segments, num_speakers):
+    print('Embedding audio to tensor...')
     embeddings = embedding_audio(file_name, segments)
+    print('Identify the speakers...')
     clustering = AgglomerativeClustering(num_speakers).fit(embeddings)
     labels = clustering.labels_
     for i in range(len(segments)):

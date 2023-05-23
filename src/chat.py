@@ -1,6 +1,6 @@
 import os.path
-
-from llm.llms import OpenAI, OpenAIAzure, OpenAIAzureLangChain
+from pathlib import Path
+from src.llms import OpenAI, OpenAIAzure, OpenAIAzureLangChain
 from langchain.chains import RetrievalQA
 
 class ChatBot():
@@ -17,8 +17,10 @@ class ChatBot():
         # self.model.build_index(self.service_context, self.documents, index_path)
         # self.doc_summary_index = self.model.rebuild_index_from_dir(index_path)
     def setup(self):
+        DEFAULT_INDEX_FILE = "index.faiss"
+        index_file = os.path.join(Path(self.index_path), Path(DEFAULT_INDEX_FILE))
         self.service_context = self.model.create_chat_model()
-        if not os.path.exists(self.index_path):
+        if not os.path.exists(index_file):
             self.documents = self.model.load_docs(self.docs_path)
             self.model.build_index(self.service_context, self.documents, self.index_path)
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.service_context)
@@ -28,8 +30,10 @@ class ChatBot():
         return response.response
 
     def setup_langchain(self):
+        DEFAULT_INDEX_FILE = "index.faiss"
+        index_file = os.path.join(Path(self.index_path), Path(DEFAULT_INDEX_FILE))
         self.llm, self.embedding = self.model.create_chat_model()
-        if not os.path.exists(self.index_path):
+        if not os.path.exists(index_file):
             self.documents = self.model.load_docs(self.docs_path)
             self.model.build_index(self.embedding, self.documents, self.index_path)
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding)
