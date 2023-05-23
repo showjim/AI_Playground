@@ -4,10 +4,19 @@ from analyse_audio import (
     identify_speaker,
     output_subtitle
 )
-from generate_meeting_minutes import llm_chat
+from generate_meeting_minutes import llm_chat, llm_chat_langchain
 import pandas as pd
 import json, os
 
+query_str = """
+        You are a helpful assistant to do meeting record.
+        Please summary this meeting record.
+        Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
+        1. who attend the meeting?
+        2. Identify key decisions in the transcript.
+        3. What are the key action items in the meeting?
+        4. what are the next steps?
+        """
 
 st.title("👨‍💻Auto-Meeting-Minutes")
 
@@ -25,12 +34,13 @@ if aa_file_type == "video":
 else:
     video_path = st.file_uploader("Upload a Video or Audio", type=["wav","mp3"])
 
-work_path = st.text_area("Insert your working path")
+query_input = st.text_area("Insert your working path", query_str)
 uploaded_path = ""
 
 if st.button("Submit", type="primary"):
 
     if video_path is not None:
+        work_path = os.path.curdir
         # save file
         uploaded_path = os.path.join(work_path + "/tempDir", video_path.name)
         with open(uploaded_path, mode="wb") as f:
@@ -41,18 +51,18 @@ if st.button("Submit", type="primary"):
         output_subtitle(new_file, segments_speaker)
 
         # Query the agent.
-        response = llm_chat(work_path + "/tempDir/output",
+        response = llm_chat(query_input, work_path + "/tempDir/output",
                             work_path + "/index",
                             work_path)
         st.text(response)
-        ## Decode the response.
-        # decoded_response = decode_response(response)
-        ## Write the response to the Streamlit app.
-        # write_response(decoded_response)
+
 
 if st.button("Re-Generate", type="secondary"):
+    work_path = os.path.curdir
     # Query the agent.
-    response = llm_chat(work_path + "/tempDir/output",
-                        work_path + "/index",
-                        work_path)
+    # st.info('This is a purely informational message', icon="ℹ️")
+    response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
+                                work_path + "/index",
+                                work_path)
     st.text(response)
+    # st.info('This is a purely informational message2', icon="ℹ️")

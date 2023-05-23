@@ -128,7 +128,7 @@ def time(secs):
 def output_subtitle(path, segments):
     file_basename = Path(path).stem
     parent_dir = str(Path(path).parent)
-    with open(parent_dir + "/output/"+file_basename + ".txt", "w") as f:
+    with open(parent_dir + "/output/"+file_basename + ".txt", "w", encoding="utf-8") as f:
         for (i, segment) in enumerate(segments):
             if i == 0 or segments[i - 1]["speaker"] != segment["speaker"]:
                 f.write("\n" + segment["speaker"] + ' ' + str(time(segment["start"])) + '\n')
