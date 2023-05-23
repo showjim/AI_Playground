@@ -24,6 +24,7 @@ st.sidebar.subheader("Parameter for upload file")
 aa_lang = st.sidebar.selectbox("1.Language", ["en", "zh", "ja", "fr"])
 aa_file_type = st.sidebar.radio("2.File type", ["video", "audio"])
 aa_spk_num = st.sidebar.selectbox("3.Number of Speaker", list(range(1, 10)))
+aa_model_size = st.sidebar.selectbox("4.Whisper model", ["base","small","medium", "large-v1","large-v2"])
 
 # main page
 st.write("Please upload your video or audio below.")
@@ -43,7 +44,7 @@ if st.button("Submit", type="primary"):
         uploaded_path = os.path.join(work_path + "/tempDir", video_path.name)
         with open(uploaded_path, mode="wb") as f:
             f.write(video_path.getvalue())
-        segments, new_file = extract_subtitle(uploaded_path, aa_file_type, aa_lang)
+        segments, new_file = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
         # embeddings = embedding_audio(new_file, segments)
         segments_speaker = identify_speaker(new_file, segments, aa_spk_num)
         output_subtitle(new_file, segments_speaker)

@@ -28,12 +28,12 @@ import numpy as np
 
 is_vad_filter = "False"
 # file_type = "audio"  # @param ["audio","video"]
-model_size = "base"  # @param ["base","small","medium", "large-v1","large-v2"]
+# model_size = "base"  # @param ["base","small","medium", "large-v1","large-v2"]
 # language = "zh"  # @param {type:"string"}
 export_srt = "No"  # @param ["No","Yes"]
 # num_speakers = 3 #@param {type:"integer"}
 
-def extract_subtitle(file_names:str, file_type, language):
+def extract_subtitle(file_names:str, file_type, language, model_size):
     print('语音识别库配置完毕，将开始转换')
     print('加载模型 Loading model...')
     device_str = "mps" if torch.backends.mps.is_available() else "cpu"
