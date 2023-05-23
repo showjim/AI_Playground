@@ -7,8 +7,8 @@ from src.analyse_audio import (
 from src.generate_meeting_minutes import llm_chat, llm_chat_langchain
 import os
 
-query_str = """You are a helpful assistant to do meeting record.
-Please summary this meeting record.
+query_str = """You are a helpful assistant to do meeting minutes.
+Please summary this meeting and output meeting minutes.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
 1. who attend the meeting?
 2. Identify key decisions in the transcript.
@@ -50,7 +50,7 @@ if st.button("Submit", type="primary"):
         output_subtitle(new_file, segments_speaker)
 
         # Query the agent.
-        response = llm_chat(query_input, work_path + "/tempDir/output",
+        response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
                             work_path + "/index",
                             work_path)
         st.text(response)
