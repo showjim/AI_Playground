@@ -19,15 +19,15 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.chains import RetrievalQA
 
 # Load OpenAI key
-if os.path.exists(os.path.join("./", "key.txt")):
-    shutil.copyfile(os.path.join("./", "key.txt"), ".env")
+if os.path.exists(os.path.join("../", "key.txt")):
+    shutil.copyfile(os.path.join("../", "key.txt"), "../.env")
     load_dotenv()
 else:
     print("key.txt with OpenAI API is required")
 
 # Load config values
-if os.path.exists(os.path.join(r'config.json')):
-    with open(r'config.json') as config_file:
+if os.path.exists(os.path.join(r'../config.json')):
+    with open(r'../config.json') as config_file:
         config_details = json.load(config_file)
 
     # Setting up the embedding model
@@ -54,8 +54,7 @@ embeddings = OpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chun
 # query_result = embeddings.embed_query(text)
 # print(query_result)
 # Create our template
-template = """
-%INSTRUCTIONS:
+query = """
 You are a helpful assistant to do meeting record.
 Please summary this meeting record.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
@@ -63,25 +62,19 @@ Please try to focus on the below requests, and use the bullet format to output t
 2. Identify key decisions in the transcript.
 3. What are the key action items in the meeting?
 4. what are the next steps?
-
-%meeting record:
-{context}
-
-%QUESTION:
-{question}
 """
 
 # Create a LangChain prompt template that we can insert values to later
-prompt = PromptTemplate(
-    input_variables=["context", "question"],
-    template=template,
-)
+# prompt = PromptTemplate(
+#     input_variables=["context", "question"],
+#     template=template,
+# )
 
 
-loader = TextLoader('/Users/jerryzhou/PycharmProjects/AutoMeetingMinutes/tempDir/output/transcript.txt')
+loader = TextLoader(r'/tempDir/output/test.txt')
 documents = loader.load()
 # Get your splitter ready
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=50)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=2048, chunk_overlap=100)
 
 # Split your docs into texts
 texts = text_splitter.split_documents(documents)
@@ -91,10 +84,7 @@ texts = text_splitter.split_documents(documents)
 # chain.run(texts)
 
 docsearch = FAISS.from_documents(texts, embeddings)
-# qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=docsearch.as_retriever())
-query = "answer in English"
-docs = docsearch.get_relevant_documents(query)
-chain = load_qa_chain(llm=llm, chain_type="stuff", prompt=prompt)
-a=chain({"input_documents": docs, "question": query}, return_only_outputs=True)
+qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=docsearch.as_retriever())
+a=qa.run(query)
 
-print(a["output_text"])
+print(a)
