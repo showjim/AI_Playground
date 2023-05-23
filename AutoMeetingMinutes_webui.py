@@ -33,7 +33,7 @@ if aa_file_type == "video":
 else:
     video_path = st.file_uploader("Upload a Video or Audio", type=["wav","mp3"])
 
-query_input = st.text_area("Insert your working path", query_str)
+query_input = st.text_area("Insert your instruction", query_str)
 uploaded_path = ""
 
 if st.button("Submit", type="primary"):
