@@ -41,3 +41,20 @@ class ChatBot():
         qa = RetrievalQA.from_chain_type(llm=self.llm, chain_type="stuff", retriever=self.doc_summary_index.as_retriever())
         resp = qa.run(query_str)
         return resp
+
+class CasualChatBot():
+    def __init__(self, docs_path:str, index_path:str, env_path:str):
+        super().__init__()
+        # self.model = OpenAI(dir=env_path)
+        # self.model = OpenAIAzure(dir=env_path)
+        self.model = OpenAIAzureLangChain(dir=env_path)
+        self.model.setup_env()
+        self.docs_path = docs_path
+        self.index_path =index_path
+
+    def setup_langchain(self):
+        self.chatgpt_chain = self.model.create_casual_chat_model()
+
+    def chat_langchain(self, query_str:str):
+        resp = self.chatgpt_chain.predict(human_input=query_str)
+        return resp

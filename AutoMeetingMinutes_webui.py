@@ -7,6 +7,8 @@ from src.analyse_audio import (
 from src.generate_meeting_minutes import llm_chat, llm_chat_langchain
 import os
 
+__version__ = "Beta V0.0.1"
+
 query_str = """You are a helpful assistant to do meeting minutes.
 Please summary this meeting and output meeting minutes.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 

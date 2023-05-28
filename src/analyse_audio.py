@@ -58,6 +58,7 @@ def extract_subtitle(file_names:str, file_type, language, model_size):
                                       beam_size=5,
                                       language=language,
                                       vad_filter=is_vad_filter,
+                                      initial_prompt="Hello, welcome to my lecture.", # to help recognise punctuation
                                       vad_parameters=dict(min_silence_duration_ms=1000))
 
     # segments is a generator so the transcription only starts when you iterate over it
