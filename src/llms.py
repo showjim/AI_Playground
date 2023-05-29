@@ -47,8 +47,9 @@ from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 from tqdm import tqdm
 
-from langchain import ConversationChain, LLMChain, PromptTemplate
+from langchain import LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
+from langchain.llms import AzureOpenAI
 
 
 class OpenAI():
@@ -344,7 +345,7 @@ class OpenAIAzureLangChain():
     def create_casual_chat_model(self):
         # setup prompt
         template = """Assistant is a large language model trained by OpenAI.
-
+        
         Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to 
         providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is 
         able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding 
@@ -384,11 +385,20 @@ class OpenAIAzureLangChain():
                                max_tokens=num_output,
                                temperature=0.2,
                                )
+        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        #                   model_name=self.config_details['CHATGPT_MODEL'],
+        #                   # openai_api_key=openai.api_key,
+        #                   # openai_api_base=openai.api_base,
+        #                   # openai_api_type=openai.api_type,
+        #                   # openai_api_version=self.config_details['OPENAI_API_VERSION'],
+        #                   # max_tokens=num_output,
+        #                   # temperature=0.2,
+        #                   )
         chatgpt_chain = LLMChain(
             llm=llm, #OpenAI(temperature=0),
             prompt=prompt,
             verbose=True,
-            memory=ConversationBufferWindowMemory(k=3),
+            memory=ConversationBufferWindowMemory(k=5),
         )
 
         return chatgpt_chain

@@ -43,17 +43,18 @@ class ChatBot():
         return resp
 
 class CasualChatBot():
-    def __init__(self, docs_path:str, index_path:str, env_path:str):
+    def __init__(self, env_path:str):
         super().__init__()
         # self.model = OpenAI(dir=env_path)
         # self.model = OpenAIAzure(dir=env_path)
         self.model = OpenAIAzureLangChain(dir=env_path)
         self.model.setup_env()
-        self.docs_path = docs_path
-        self.index_path =index_path
+        # self.docs_path = docs_path
+        # self.index_path =index_path
 
     def setup_langchain(self):
         self.chatgpt_chain = self.model.create_casual_chat_model()
+        return self.chatgpt_chain
 
     def chat_langchain(self, query_str:str):
         resp = self.chatgpt_chain.predict(human_input=query_str)
