@@ -248,8 +248,8 @@ class OpenAIAzureLangChain():
             raise APIKeyNotFoundError("key.txt with OpenAI API is required")
 
         # Load config values
-        if os.path.exists(os.path.join(r'config.json')):
-            with open(r'config.json') as config_file:
+        if os.path.exists(os.path.join(self.WORK_ENV_DIR, r'config.json')):
+            with open(os.path.join(self.WORK_ENV_DIR, r'config.json')) as config_file:
                 self.config_details = json.load(config_file)
 
             # Setting up the embedding model

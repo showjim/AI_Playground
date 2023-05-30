@@ -7,7 +7,7 @@ from src.analyse_audio import (
 import os
 from src.chat import ChatBot
 
-__version__ = "Beta V0.0.1"
+__version__ = "Beta V0.0.2"
 
 work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",

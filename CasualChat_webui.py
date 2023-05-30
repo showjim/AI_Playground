@@ -3,6 +3,8 @@ from streamlit_chat import message
 from src.chat import CasualChatBot
 import os
 
+__version__ = "Beta V0.0.2"
+
 env_path = os.path.abspath('.')
 casual_chat_bot = CasualChatBot(env_path)
 # casual_chat_bot.setup_langchain() #change to st, then we can use memory function
@@ -40,6 +42,9 @@ def main():
         ''')
         # add_vertical_space(5)
         st.write('Made by Jerry Zhou')
+        st.markdown('''
+                - [Source Code](https://github.com/showjim/AutoMeetingMinutes/)
+                ''')
 
     # Generate empty lists for chain, generated and past.
     ## generated stores langchain chain

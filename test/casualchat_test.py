@@ -1,7 +1,7 @@
 from src.chat import CasualChatBot
 import os
 
-env_path = os.path.abspath('..')
+env_path = os.path.abspath('../')
 casual_chat_bot = CasualChatBot(env_path)
 casual_chat_bot.setup_langchain()
 
