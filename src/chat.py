@@ -2,6 +2,7 @@ import os.path
 from pathlib import Path
 from src.llms import OpenAI, OpenAIAzure, OpenAIAzureLangChain
 from langchain.chains import RetrievalQA
+from langchain import PromptTemplate
 
 class ChatBot():
     def __init__(self, docs_path:str, index_path:str, env_path:str):
@@ -38,7 +39,22 @@ class ChatBot():
             self.model.build_index(self.embedding, self.documents, self.index_path)
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding)
     def chat_langchain(self, query_str:str):
-        qa = RetrievalQA.from_chain_type(llm=self.llm, chain_type="stuff", retriever=self.doc_summary_index.as_retriever())
+        prompt_template = """Use the following pieces of context to answer the question at the end. 
+        If you don't know the answer, please think rationally and answer from your own knowledge base 
+
+        {context}
+
+        Question: {question}
+        """
+        PROMPT = PromptTemplate(
+            template=prompt_template, input_variables=["context", "question"]
+        )
+        chain_type_kwargs = {"prompt": PROMPT}
+        qa = RetrievalQA.from_chain_type(llm=self.llm,
+                                         chain_type="stuff",
+                                         retriever=self.doc_summary_index.as_retriever(),
+                                         verbose=True,
+                                         chain_type_kwargs=chain_type_kwargs)
         resp = qa.run(query_str)
         return resp
 

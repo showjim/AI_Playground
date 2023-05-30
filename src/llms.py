@@ -383,7 +383,7 @@ class OpenAIAzureLangChain():
                                openai_api_type=openai.api_type,
                                openai_api_version=self.config_details['OPENAI_API_VERSION'],
                                max_tokens=num_output,
-                               temperature=0.2,
+                               temperature=1.0,
                                )
         # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
         #                   model_name=self.config_details['CHATGPT_MODEL'],
