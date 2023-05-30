@@ -4,7 +4,6 @@ from src.analyse_audio import (
     identify_speaker,
     output_subtitle
 )
-from src.generate_meeting_minutes import llm_chat, llm_chat_langchain
 import os
 from src.chat import ChatBot
 
