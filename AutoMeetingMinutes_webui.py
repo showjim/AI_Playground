@@ -56,8 +56,9 @@ def main():
             output_subtitle(new_file, segments_speaker)
 
             # Query the agent.
-            chat.setup_langchain()
-            response = chat.chat_langchain(query_str)
+            with st.spinner('preparing answer'):
+                chat.setup_langchain()
+                response = chat.chat_langchain(query_str)
             # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
             #                     work_path + "/index",
             #                     work_path)
@@ -68,8 +69,9 @@ def main():
         # work_path = os.path.abspath('.')
         # Query the agent.
         # st.info('This is a purely informational message', icon="ℹ️")
-        chat.setup_langchain()
-        response = chat.chat_langchain(query_str)
+        with st.spinner('preparing answer'):
+            chat.setup_langchain()
+            response = chat.chat_langchain(query_str)
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",
         #                             work_path)
