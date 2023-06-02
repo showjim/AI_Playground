@@ -3,7 +3,7 @@ import os
 
 env_path = os.path.abspath('../')
 casual_chat_bot = CasualChatBot(env_path)
-casual_chat_bot.setup_langchain()
+casual_chat_bot.initial_llm()
 
 def generate_response(prompt):
     # chatbot = hugchat.ChatBot()

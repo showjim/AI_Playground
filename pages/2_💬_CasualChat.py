@@ -49,7 +49,7 @@ def main():
     # Generate empty lists for chain, generated and past.
     ## generated stores langchain chain
     if "chain" not in st.session_state:
-        chain = casual_chat_bot.setup_langchain()
+        chain = casual_chat_bot.initial_llm()
         st.session_state["chain"] = chain
     ## generated stores AI generated responses
     if 'generated' not in st.session_state:

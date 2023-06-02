@@ -13,6 +13,7 @@ work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",
                 work_path + "/index",
                 work_path)
+chat.initial_llm()
 query_str = """Please summary this meeting and output meeting minutes.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
 1. who attend the meeting?
@@ -57,7 +58,7 @@ def main():
 
             # Query the agent.
             with st.spinner('preparing answer'):
-                chat.setup_langchain()
+                chat.setup_vectordb()
                 response = chat.chat_langchain(query_str)
             # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
             #                     work_path + "/index",
@@ -70,7 +71,7 @@ def main():
         # Query the agent.
         # st.info('This is a purely informational message', icon="ℹ️")
         with st.spinner('preparing answer'):
-            chat.setup_langchain()
+            chat.setup_vectordb()
             response = chat.chat_langchain(query_str)
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",

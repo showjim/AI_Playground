@@ -35,6 +35,7 @@ from langchain.document_loaders import (
     UnstructuredODTLoader,
     UnstructuredPowerPointLoader,
     UnstructuredWordDocumentLoader,
+    DirectoryLoader,
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain import PromptTemplate
@@ -50,6 +51,7 @@ from tqdm import tqdm
 from langchain import LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.llms import AzureOpenAI
+
 
 
 class OpenAI():
@@ -402,6 +404,7 @@ class OpenAIAzureLangChain():
         )
 
         return chatgpt_chain
+
 
 
 class APIKeyNotFoundError(Exception):
