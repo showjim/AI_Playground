@@ -19,7 +19,7 @@ pip install -r requirements.txt
 3. Run the Streamlit application:
 
 ```bash
-streamlit run .\AutoMeetingMinutes_webui.py
+streamlit run .\home_page.py
 ```
 
 ## 2. Setup OpenAI and Azure OpenAI
