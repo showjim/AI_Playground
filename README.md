@@ -1,7 +1,10 @@
-# AutoMeetingMinutes
+# Jerry's AI Playground
 
-Auto Meeting Minutes is a tool based on OpenAI/AzureOpenAI to chat with video/audio and output the meeting minutes with build-in prompt.
-![Sample Screenshots](/img/Screenshot_page.png)
+This repo includes the tools based on AI to increase working efficiency.
+1. Auto Meeting Minutes is a tool based on OpenAI/AzureOpenAI to chat with video/audio and output the meeting minutes with build-in prompt.
+2. Casual Chat is a ChatGPT like ChatBot.
+3. FilesChat is a bot to chat with your documents.
+![Sample Screenshots](/img/home_page.png)
 
 ## 1. How to use
 
