@@ -44,7 +44,16 @@ Create a `config.json` file with the following configuration:
 ```
 
 ## 3. How it works
+### 3-1 Auto Meeting Minutes
 1. Ffmpeg is used to convert video to audio;
 2. Faster-Whisper is used to convert audio to subtitle;
 3. AgglomerativeClustering from sklearn is used to distinguish the speakers;
 4. OpenAI is used to do the meeting minute summary.
+
+### 3-2 Casual Chatbot
+1. Azure OpenAI GPT3.5 as the server;
+2. LangChain is used to create the conversational Chatbot;
+3. Streamlit is used to create the web-ui
+
+### 3-3 Files ChatBot
+1. Azure OpenAI as server and LangChain used to create a QA chatbot over documents.
