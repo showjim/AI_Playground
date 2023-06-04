@@ -3,7 +3,7 @@ from streamlit_chat import message
 from src.chat import CasualChatBot
 import os
 
-__version__ = "Beta V0.0.2"
+# __version__ = "Beta V0.0.2"
 
 env_path = os.path.abspath('.')
 casual_chat_bot = CasualChatBot(env_path)
