@@ -1,13 +1,7 @@
 import streamlit as st
-from src.analyse_audio import (
-    extract_subtitle,
-    identify_speaker,
-    output_subtitle
-)
 import os
 from src.chat import ChatBot
 
-# __version__ = "Beta V0.0.2"
 
 work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",
@@ -22,7 +16,7 @@ def main():
     # main page
     st.write("Please upload your video or audio below.")
 
-    file_path = st.file_uploader("Upload a document file", type=["pdf","txt"])
+    file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"])
 
     query_input = st.text_area("Insert your instruction")
     uploaded_path = ""
@@ -41,15 +35,14 @@ def main():
             # work_path = os.path.abspath('.')
             # save file
             uploaded_path = os.path.join(work_path + "/tempDir/output", file_path.name)
+            with open(uploaded_path, mode="wb") as f:
+                f.write(file_path.getvalue())
 
             chat.setup_vectordb()
             ## generated stores langchain chain
             if "QA_chain" not in st.session_state:
                 qa_chain = chat.chat_QA_langchain()
                 st.session_state["QA_chain"] = qa_chain
-
-            with open(uploaded_path, mode="wb") as f:
-                f.write(file_path.getvalue())
 
             # Query the agent.
             with st.spinner('preparing answer'):
