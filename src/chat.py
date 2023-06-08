@@ -11,6 +11,7 @@ class ChatBot():
         super().__init__()
         # self.model = OpenAI(dir=env_path)
         # self.model = OpenAIAzure(dir=env_path)
+        self.doc_summary_index = None
         self.model = OpenAIAzureLangChain(dir=env_path)
         self.model.setup_env()
         self.docs_path = docs_path
@@ -43,8 +44,9 @@ class ChatBot():
             self.documents = self.model.load_docs(self.docs_path)
             self.model.build_index(self.embedding, self.documents, self.index_path)
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding)
+        return self.doc_summary_index
 
-    def chat_langchain(self, query_str:str):
+    def chat_langchain(self, query_str:str, doc_summary_index):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base 
 
@@ -58,13 +60,13 @@ class ChatBot():
         chain_type_kwargs = {"prompt": PROMPT}
         qa = RetrievalQA.from_chain_type(llm=self.llm,
                                          chain_type="stuff",
-                                         retriever=self.doc_summary_index.as_retriever(),
+                                         retriever=doc_summary_index.as_retriever(),
                                          verbose=True,
                                          chain_type_kwargs=chain_type_kwargs)
         resp = qa.run(query_str)
         return resp
 
-    def chat_QA_langchain(self):
+    def chat_QA_langchain(self, doc_summary_index):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base 
 
@@ -82,7 +84,7 @@ class ChatBot():
         #                                  verbose=True,
         #                                  chain_type_kwargs=chain_type_kwargs)
         qa_chain = ConversationalRetrievalChain.from_llm(llm=self.llm,
-                                                   retriever=self.doc_summary_index.as_retriever(),
+                                                   retriever=doc_summary_index.as_retriever(),
                                                    memory=ConversationBufferMemory(
                                                        memory_key="chat_history",
                                                        input_key='question',

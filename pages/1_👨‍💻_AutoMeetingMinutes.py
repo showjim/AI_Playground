@@ -58,8 +58,8 @@ def main():
 
             # Query the agent.
             with st.spinner('preparing answer'):
-                chat.setup_vectordb()
-                response = chat.chat_langchain(query_str)
+                doc_summary_index = chat.setup_vectordb()
+                response = chat.chat_langchain(query_str, doc_summary_index)
             # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
             #                     work_path + "/index",
             #                     work_path)
@@ -71,8 +71,8 @@ def main():
         # Query the agent.
         # st.info('This is a purely informational message', icon="ℹ️")
         with st.spinner('preparing answer'):
-            chat.setup_vectordb()
-            response = chat.chat_langchain(query_str)
+            doc_summary_index = chat.setup_vectordb()
+            response = chat.chat_langchain(query_str, doc_summary_index)
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",
         #                             work_path)
