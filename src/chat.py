@@ -106,8 +106,13 @@ class CasualChatBot():
         # self.docs_path = docs_path
         # self.index_path =index_path
 
-    def initial_llm(self):
-        self.chatgpt_chain = self.model.create_casual_chat_model()
+    def initial_llm(self, mode:str):
+        if mode == "CasualChat":
+            self.chatgpt_chain = self.model.create_casual_chat_model()
+        elif mode == "Translate":
+            self.chatgpt_chain = self.model.create_translate_model()
+        else:
+            print("Wrong mode selected!")
         return self.chatgpt_chain
 
     def chat_langchain(self, query_str:str):

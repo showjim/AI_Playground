@@ -405,6 +405,53 @@ class OpenAIAzureLangChain():
 
         return chatgpt_chain
 
+    def create_translate_model(self):
+        # setup prompt
+        template = """Assistant is a large language model trained by OpenAI.
+
+        Translate anything that I say to Chinese or English. Only return the translate result. Don't interpret it.
+
+        {history}
+        Human: {human_input}
+        Assistant:"""
+
+        prompt = PromptTemplate(
+            input_variables=["history", "human_input"],
+            template=template
+        )
+
+        # max LLM token input size
+        max_input_size = 3900  # 4096
+        # set number of output tokens
+        num_output = 1024  # 512
+        # set maximum chunk overlap
+        max_chunk_overlap = 20
+        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+                              openai_api_key=openai.api_key,
+                              openai_api_base=openai.api_base,
+                              openai_api_type=openai.api_type,
+                              openai_api_version=self.config_details['OPENAI_API_VERSION'],
+                              max_tokens=num_output,
+                              temperature=1.0,
+                              )
+        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        #                   model_name=self.config_details['CHATGPT_MODEL'],
+        #                   # openai_api_key=openai.api_key,
+        #                   # openai_api_base=openai.api_base,
+        #                   # openai_api_type=openai.api_type,
+        #                   # openai_api_version=self.config_details['OPENAI_API_VERSION'],
+        #                   # max_tokens=num_output,
+        #                   # temperature=0.2,
+        #                   )
+        chatgpt_chain = LLMChain(
+            llm=llm,  # OpenAI(temperature=0),
+            prompt=prompt,
+            verbose=True,
+            memory=ConversationBufferWindowMemory(k=5),
+        )
+
+        return chatgpt_chain
+
 
 
 class APIKeyNotFoundError(Exception):
