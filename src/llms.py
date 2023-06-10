@@ -407,9 +407,8 @@ class OpenAIAzureLangChain():
 
     def create_translate_model(self):
         # setup prompt
-        template = """Assistant is a large language model trained by OpenAI.
-
-        Translate anything that I say to Chinese or English. Only return the translate result. Don't interpret it.
+        template = """Translate anything that I say to Chinese or English in a natural manner. 
+        Only return the translate result. Don't interpret it. Please use the same format of input in output answer.
 
         {history}
         Human: {human_input}
