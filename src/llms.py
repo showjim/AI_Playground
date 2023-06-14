@@ -407,10 +407,15 @@ class OpenAIAzureLangChain():
 
     def create_translate_model(self):
         # setup prompt
-        template = """Translate anything that I say to Chinese or English in a natural manner. 
+        template = """You are a professional translator. Translate anything that I say to Chinese or English in a natural manner. 
         Only return the translate result. Don't interpret it. Please use the same format of input in output answer.
-
+        
+        Below are the history of translation：
+        ------------------------------
         {history}
+        -----------------------------
+        
+        Below is the words need to be translated:
         Human: {human_input}
         Assistant:"""
 
