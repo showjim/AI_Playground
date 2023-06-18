@@ -4,6 +4,7 @@ from src.chat import ChatBot
 
 
 work_path = os.path.abspath('.')
+reset_db = False
 
 chat = ChatBot(work_path + "/tempDir/output",
                 work_path + "/index",
@@ -12,22 +13,31 @@ chat.initial_llm()
 
 st.title("㉄ Chat with files")
 
-def main():
-    # Layout of output/setup containers
+def set_reload_flag():
+    # st.write("New document need upload")
+    st.session_state["vectorreloadflag"] = True
 
-    # colored_header(label='', description='', color_name='blue-30')
+def main():
+    work_path = os.path.abspath('.')
+    # Layout of output/setup containers
     setup_container = st.container()
     instruction_container = st.container()
     response_container = st.container()
 
-    work_path = os.path.abspath('.')
+    with st.sidebar:
+        st.sidebar.expander("Settings")
+        st.sidebar.subheader("Parameter for document chains")
+        aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"], on_change=set_reload_flag)
+
     # main page
     with setup_container:
         st.write("Please upload your file below.")
         if "vectordb" not in st.session_state:
             st.session_state["vectordb"] = None
-        file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"])
-        if st.button("Submit"):
+        if "vectorreloadflag" not in st.session_state:
+            st.session_state["vectorreloadflag"] = None
+        file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"]) #, on_change=set_reload_flag)
+        if st.button("Upload"):
             if file_path is not None:
                 # save file
                 with st.spinner('Reading file'):
@@ -61,9 +71,13 @@ def main():
                 # chat.setup_vectordb()
 
                 ## generated stores langchain chain, to enable memory function of langchain in streamlit
-                if "QA_chain" not in st.session_state:
-                    qa_chain = chat.chat_QA_langchain(st.session_state["vectordb"])
+                if ("QA_chain" not in st.session_state) or (st.session_state["vectorreloadflag"] == True):
+                    if aa_combine_type == "stuff":
+                        qa_chain = chat.chat_QA_langchain(st.session_state["vectordb"])
+                    else:
+                        qa_chain = chat.chat_QA_map_reduce_langchain(st.session_state["vectordb"])
                     st.session_state["QA_chain"] = qa_chain
+                    st.session_state["vectorreloadflag"] = False
 
                 # Query the agent.
                 with st.spinner('preparing answer'):

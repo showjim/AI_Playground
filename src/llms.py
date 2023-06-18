@@ -346,9 +346,11 @@ class OpenAIAzureLangChain():
         # Split your docs into texts
         texts = text_splitter.split_documents(documents)
         print(f"Split into {len(texts)} chunks of text (max. {chunk_size} tokens each)")
-
-        docsearch = FAISS.from_documents(texts, embeddings)
-        docsearch.save_local(path, indexfilename)
+        if len(texts) == 0:
+            print("Error: there is no texts found in the document!")
+        else:
+            docsearch = FAISS.from_documents(texts, embeddings)
+            docsearch.save_local(path, indexfilename)
 
     def rebuild_index_from_dir(self, path, embeddings):
         # rebuild storage context

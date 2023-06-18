@@ -4,6 +4,9 @@ from src.llms import OpenAI, OpenAIAzure, OpenAIAzureLangChain
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory, ConversationBufferMemory
+
+from langchain.chains import LLMChain
+from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 
 class ChatBot():
@@ -95,6 +98,52 @@ class ChatBot():
                                                    return_source_documents=True)
         # resp = qa({"question": query_str})
         return qa_chain
+
+    def chat_QA_map_reduce_langchain(self, doc_summary_index):
+        prompt_template = """Use the following pieces of context to answer the question at the end. 
+        If you don't know the answer, please think rationally and answer from your own knowledge base 
+
+        {context}
+
+        Question: {question}
+        """
+        PROMPT = PromptTemplate(
+            template=prompt_template, input_variables=["context", "question"]
+        )
+        chain_type_kwargs = {"prompt": PROMPT}
+        # qa = RetrievalQA.from_chain_type(llm=self.llm,
+        #                                  chain_type="stuff",
+        #                                  retriever=self.doc_summary_index.as_retriever(),
+        #                                  verbose=True,
+        #                                  chain_type_kwargs=chain_type_kwargs)
+        # qa_chain = ConversationalRetrievalChain.from_llm(llm=self.llm,
+        #                                            retriever=doc_summary_index.as_retriever(),
+        #                                            memory=ConversationBufferMemory(
+        #                                                memory_key="chat_history",
+        #                                                input_key='question',
+        #                                                output_key='answer',
+        #                                                # k=5,
+        #                                                return_messages=True),
+        #                                            verbose=True,
+        #                                            return_source_documents=True)
+
+        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
+        doc_chain = load_qa_chain(self.llm, chain_type="map_reduce") #map_reduce,stuff
+
+        chain = ConversationalRetrievalChain(
+            retriever=doc_summary_index.as_retriever(),
+            question_generator=question_generator,
+            combine_docs_chain=doc_chain,
+            memory=ConversationBufferMemory(
+               memory_key="chat_history",
+               input_key='question',
+               output_key='answer',
+               # k=5,
+               return_messages=True),
+            verbose=True,
+            return_source_documents=True,
+        )
+        return chain
 
 class CasualChatBot():
     def __init__(self, env_path:str):
