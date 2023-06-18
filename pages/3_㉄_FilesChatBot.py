@@ -73,9 +73,9 @@ def main():
                 ## generated stores langchain chain, to enable memory function of langchain in streamlit
                 if ("QA_chain" not in st.session_state) or (st.session_state["vectorreloadflag"] == True):
                     if aa_combine_type == "stuff":
-                        qa_chain = chat.chat_QA_langchain(st.session_state["vectordb"])
+                        qa_chain = chat.chat_QA(st.session_state["vectordb"])
                     else:
-                        qa_chain = chat.chat_QA_map_reduce_langchain(st.session_state["vectordb"])
+                        qa_chain = chat.chat_QA_map_reduce(st.session_state["vectordb"])
                     st.session_state["QA_chain"] = qa_chain
                     st.session_state["vectorreloadflag"] = False
 

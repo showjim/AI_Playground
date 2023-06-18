@@ -1,6 +1,6 @@
 import os.path
 from pathlib import Path
-from src.llms import OpenAI, OpenAIAzureLlamaIndex, OpenAIAzure
+from src.llms import OpenAI, OpenAIAzure
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory, ConversationBufferMemory
@@ -49,7 +49,7 @@ class ChatBot():
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding)
         return self.doc_summary_index
 
-    def chat_langchain(self, query_str:str, doc_summary_index):
+    def chat(self, query_str:str, doc_summary_index):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base 
 
@@ -69,7 +69,7 @@ class ChatBot():
         resp = qa.run(query_str)
         return resp
 
-    def chat_QA_langchain(self, doc_summary_index):
+    def chat_QA(self, doc_summary_index):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base 
 
@@ -99,7 +99,7 @@ class ChatBot():
         # resp = qa({"question": query_str})
         return qa_chain
 
-    def chat_QA_map_reduce_langchain(self, doc_summary_index):
+    def chat_QA_map_reduce(self, doc_summary_index):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base 
 
@@ -145,6 +145,7 @@ class ChatBot():
         )
         return chain
 
+
 class CasualChatBot():
     def __init__(self, env_path:str):
         super().__init__()
@@ -164,6 +165,60 @@ class CasualChatBot():
             print("Wrong mode selected!")
         return self.chatgpt_chain
 
-    def chat_langchain(self, query_str:str):
+    def chat(self, query_str:str):
         resp = self.chatgpt_chain.predict(human_input=query_str)
         return resp
+
+
+class AgentChatBot():
+    def __init__(self, env_path:str, docs_path:str):
+        super().__init__()
+        # self.model = OpenAI(dir=env_path)
+        # self.model = OpenAIAzure(dir=env_path)
+        self.model = OpenAIAzure(dir=env_path)
+        self.model.setup_env()
+        self.docs_path = docs_path
+        # self.index_path =index_path
+
+    def initial_llm(self, mode:str, filename:str):
+        if mode == "csv":
+            self.agent = self.model.create_csv_agent(filename)
+        else:
+            print("Wrong mode selected!")
+        return self.agent
+
+    def chat_csv_agrent(self, query_str: str):
+        prompt_template = """
+                            For the following query, if it requires drawing a table, reply as follows:
+                            {"table": {"columns": ["column1", "column2", ...], "data": [[value1, value2, ...], [value1, value2, ...], ...]}}
+
+                            If the query requires creating a bar chart, reply as follows:
+                            {"bar": {"columns": ["A", "B", "C", ...], "data": [25, 24, 10, ...]}}
+
+                            If the query requires creating a line chart, reply as follows:
+                            {"line": {"columns": ["A", "B", "C", ...], "data": [25, 24, 10, ...]}}
+
+                            There can only be two types of chart, "bar" and "line".
+
+                            If it is just asking a question that requires neither, reply as follows:
+                            {"answer": "answer"}
+                            Example:
+                            {"answer": "The title with the highest rating is 'Gilead'"}
+
+                            If you do not know the answer, reply as follows:
+                            {"answer": "I do not know."}
+
+                            Return all output as a string.
+
+                            All strings in "columns" list and data list, should be in double quotes,
+
+                            For example: {"columns": ["title", "ratings_count"], "data": [["Gilead", 361], ["Spider's Web", 5164]]}
+
+                            Lets think step by step.
+
+                            Below is the query.
+                            Query:
+                        """
+        # Run the prompt through the agent.
+        response = self.agent.run(prompt_template + query_str)
+        return response.__str__()

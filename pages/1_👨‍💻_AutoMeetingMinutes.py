@@ -63,7 +63,7 @@ def main():
             # Query the agent.
             with st.spinner('preparing answer'):
                 st.session_state["mediavectordb"] = chat.setup_vectordb("./tempDir/output/" + Path(video_path.name).stem)
-                response = chat.chat_langchain(query_input, st.session_state["mediavectordb"])
+                response = chat.chat(query_input, st.session_state["mediavectordb"])
             # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
             #                     work_path + "/index",
             #                     work_path)
@@ -76,7 +76,7 @@ def main():
         # st.info('This is a purely informational message', icon="ℹ️")
         with st.spinner('preparing answer'):
             # doc_summary_index = chat.setup_vectordb(uploaded_path)
-            response = chat.chat_langchain(query_str, st.session_state["mediavectordb"])
+            response = chat.chat(query_str, st.session_state["mediavectordb"])
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",
         #                             work_path)

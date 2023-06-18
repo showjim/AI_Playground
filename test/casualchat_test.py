@@ -7,7 +7,7 @@ casual_chat_bot.initial_llm()
 
 def generate_response(prompt):
     # chatbot = hugchat.ChatBot()
-    response = casual_chat_bot.chat_langchain(prompt) #chatbot.chat(prompt)
+    response = casual_chat_bot.chat(prompt) #chatbot.chat(prompt)
     # print(response)
     return response
 

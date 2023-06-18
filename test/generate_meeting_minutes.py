@@ -7,7 +7,7 @@ def llm_chat(query_str, docs_path, index_path, env_path = "./"):
         chat = ChatBot(docs_path, index_path, env_path)
         chat.initial_llm()
         chat.setup_vectordb()
-        resp = chat.chat_langchain(query_str)
+        resp = chat.chat(query_str)
         # print(resp)
         return resp
     except Exception as e:
