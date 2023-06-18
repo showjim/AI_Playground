@@ -23,7 +23,7 @@ def main():
     work_path = os.path.abspath('.')
     # main page
     with setup_container:
-        st.write("Please upload your video or audio below.")
+        st.write("Please upload your file below.")
         if "vectordb" not in st.session_state:
             st.session_state["vectordb"] = None
         file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"])
@@ -35,7 +35,7 @@ def main():
                     with open(uploaded_path, mode="wb") as f:
                         f.write(file_path.getvalue())
                 with st.spinner('Create vector DB'):
-                    st.session_state["vectordb"] = chat.setup_vectordb()
+                    st.session_state["vectordb"] = chat.setup_vectordb(uploaded_path)
                 st.write(f"✅ {file_path.name} ")
 
     with instruction_container:

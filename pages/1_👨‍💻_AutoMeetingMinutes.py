@@ -6,6 +6,7 @@ from src.analyse_audio import (
 )
 import os
 from src.chat import ChatBot
+from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
 
@@ -35,6 +36,9 @@ def main():
 
     # main page
     st.write("Please upload your video or audio below.")
+    if "mediavectordb" not in st.session_state:
+        st.session_state["mediavectordb"] = None
+
     if aa_file_type == "video":
         video_path = st.file_uploader("Upload a Video or Audio")
     else:
@@ -58,8 +62,8 @@ def main():
 
             # Query the agent.
             with st.spinner('preparing answer'):
-                doc_summary_index = chat.setup_vectordb()
-                response = chat.chat_langchain(query_input, doc_summary_index)
+                st.session_state["mediavectordb"] = chat.setup_vectordb("./tempDir/output/" + Path(video_path.name).stem)
+                response = chat.chat_langchain(query_input, st.session_state["mediavectordb"])
             # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
             #                     work_path + "/index",
             #                     work_path)
@@ -71,8 +75,8 @@ def main():
         # Query the agent.
         # st.info('This is a purely informational message', icon="ℹ️")
         with st.spinner('preparing answer'):
-            doc_summary_index = chat.setup_vectordb()
-            response = chat.chat_langchain(query_str, doc_summary_index)
+            # doc_summary_index = chat.setup_vectordb(uploaded_path)
+            response = chat.chat_langchain(query_str, st.session_state["mediavectordb"])
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",
         #                             work_path)

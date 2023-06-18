@@ -3,6 +3,7 @@ import os, json
 import shutil
 from multiprocessing import Pool
 from typing import List
+from pathlib import Path
 
 import openai
 from dotenv import load_dotenv
@@ -294,6 +295,13 @@ class OpenAIAzureLangChain():
             )
         return all_files
 
+    def get_all_files_by_ext(self, source_dir, ext):
+        all_files = []
+        all_files.extend(
+            glob.glob(os.path.join(source_dir, f"**/*{ext}"), recursive=True)
+        )
+        return all_files
+
     def load_single_document(self, file_path):
         ext = "." + file_path.rsplit(".", 1)[-1]
         if ext in self.LOADER_MAPPING:
@@ -322,11 +330,14 @@ class OpenAIAzureLangChain():
             print(f"Loading documents from {path}")
             all_files = self.get_all_files(path)
             documents = self.load_documents(all_files)
+        elif os.path.isfile(path):
+            print(f"Loading specific document from {path}")
+            documents = self.load_documents([path])
         else:
-            raise DirectoryIsNotGivenError("Directory is required to load documents")
+            raise DirectoryIsNotGivenError("Directory or file name is required to load documents")
         return documents
 
-    def build_index(self, embeddings, documents, path):
+    def build_index(self, embeddings, documents, path, indexfilename):
         print(f"Loaded {len(documents)} new documents")
         chunk_size = 2048
         chunk_overlap = 100
@@ -337,11 +348,18 @@ class OpenAIAzureLangChain():
         print(f"Split into {len(texts)} chunks of text (max. {chunk_size} tokens each)")
 
         docsearch = FAISS.from_documents(texts, embeddings)
-        docsearch.save_local(path)
+        docsearch.save_local(path, indexfilename)
 
     def rebuild_index_from_dir(self, path, embeddings):
         # rebuild storage context
-        doc_summary_index = FAISS.load_local(path, embeddings)
+        all_files = self.get_all_files_by_ext(path, "faiss")
+        for i in range(len(all_files)):
+            filename = all_files[i]
+            tmpfile = Path(filename).stem
+            if i == 0:
+                doc_summary_index = FAISS.load_local(path, embeddings, tmpfile)
+            else:
+                doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
         return doc_summary_index
 
     def create_casual_chat_model(self):

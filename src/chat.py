@@ -36,13 +36,13 @@ class ChatBot():
     def initial_llm(self):
         self.llm, self.embedding = self.model.create_chat_model()
 
-    def setup_vectordb(self):
-        DEFAULT_INDEX_FILE = "index.faiss"
+    def setup_vectordb(self, filname:str):
+        DEFAULT_INDEX_FILE = Path(filname).stem + ".faiss"
         index_file = os.path.join(Path(self.index_path), Path(DEFAULT_INDEX_FILE))
         # self.llm, self.embedding = self.model.create_chat_model()
         if not os.path.exists(index_file):
-            self.documents = self.model.load_docs(self.docs_path)
-            self.model.build_index(self.embedding, self.documents, self.index_path)
+            self.documents = self.model.load_docs(filname) #(self.docs_path)
+            self.model.build_index(self.embedding, self.documents, self.index_path, Path(filname).stem)
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding)
         return self.doc_summary_index
 
