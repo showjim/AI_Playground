@@ -109,7 +109,7 @@ class OpenAI():
         doc_summary_index = load_index_from_storage(storage_context,service_context=service_context)
         return doc_summary_index
 
-class OpenAIAzure():
+class OpenAIAzureLlamaIndex():
     def __init__(self, dir="./", env='key.txt'):
         super().__init__()
 
@@ -217,7 +217,7 @@ class OpenAIAzure():
         return doc_summary_index
 
 
-class OpenAIAzureLangChain():
+class OpenAIAzure():
     def __init__(self, dir="./", env='key.txt'):
         super().__init__()
 

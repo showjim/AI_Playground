@@ -1,6 +1,6 @@
 import os.path
 from pathlib import Path
-from src.llms import OpenAI, OpenAIAzure, OpenAIAzureLangChain
+from src.llms import OpenAI, OpenAIAzureLlamaIndex, OpenAIAzure
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory, ConversationBufferMemory
@@ -15,7 +15,7 @@ class ChatBot():
         # self.model = OpenAI(dir=env_path)
         # self.model = OpenAIAzure(dir=env_path)
         self.doc_summary_index = None
-        self.model = OpenAIAzureLangChain(dir=env_path)
+        self.model = OpenAIAzure(dir=env_path)
         self.model.setup_env()
         self.docs_path = docs_path
         self.index_path =index_path
@@ -150,7 +150,7 @@ class CasualChatBot():
         super().__init__()
         # self.model = OpenAI(dir=env_path)
         # self.model = OpenAIAzure(dir=env_path)
-        self.model = OpenAIAzureLangChain(dir=env_path)
+        self.model = OpenAIAzure(dir=env_path)
         self.model.setup_env()
         # self.docs_path = docs_path
         # self.index_path =index_path
