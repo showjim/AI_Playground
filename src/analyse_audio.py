@@ -30,7 +30,7 @@ is_vad_filter = "False"
 # file_type = "audio"  # @param ["audio","video"]
 # model_size = "base"  # @param ["base","small","medium", "large-v1","large-v2"]
 # language = "zh"  # @param {type:"string"}
-export_srt = "No"  # @param ["No","Yes"]
+export_srt = "Yes"  # @param ["No","Yes"]
 # num_speakers = 3 #@param {type:"integer"}
 
 def extract_subtitle(file_names:str, file_type, language, model_size):

@@ -62,7 +62,7 @@ def main():
 
             # Query the agent.
             with st.spinner('preparing answer'):
-                st.session_state["mediavectordb"] = chat.setup_vectordb("./tempDir/output/" + Path(video_path.name).stem)
+                st.session_state["mediavectordb"] = chat.setup_vectordb("./tempDir/output/" + Path(video_path.name).stem + ".txt")
                 response = chat.chat(query_input, st.session_state["mediavectordb"])
             # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
             #                     work_path + "/index",

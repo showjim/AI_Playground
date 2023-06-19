@@ -176,6 +176,7 @@ class OpenAIAzure():
             print(f"Loading specific document from {path}")
             documents = self.load_documents([path])
         else:
+            print(f"The path here is : {path}")
             raise DirectoryIsNotGivenError("Directory or file name is required to load documents")
         return documents
 
