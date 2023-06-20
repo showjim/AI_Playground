@@ -1,5 +1,4 @@
-langchain==0.0.166
-llama-index==0.6.5
+langchain==0.0.200
 python-dotenv
 faster-whisper==0.5.1
 ffmpeg
@@ -9,3 +8,6 @@ pyannote-core
 streamlit==1.22.0
 streamlit-chat==0.0.2.2
 transformers
+openai
+tiktoken
+faiss-cpu

@@ -46,7 +46,7 @@ class ChatBot():
         if not os.path.exists(index_file):
             self.documents = self.model.load_docs(filname) #(self.docs_path)
             self.model.build_index(self.embedding, self.documents, self.index_path, Path(filname).stem)
-        self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding)
+        self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding, Path(filname).stem)
         return self.doc_summary_index
 
     def chat(self, query_str:str, doc_summary_index):

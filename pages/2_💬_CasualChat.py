@@ -20,14 +20,6 @@ def generate_response(prompt):
     # print(response)
     return response
 
-
-# User input
-## Function for taking user provided prompt as input
-def get_text():
-    input_text = st.text_input("You: ", "", key="input")
-    return input_text
-
-
 def main():
     # Sidebar contents
     with st.sidebar:
@@ -66,12 +58,15 @@ def main():
 
     ## Applying the user input box
     with input_container:
-        user_input = get_text()
+        # user_input = get_text()
+        with st.form(key='my_form', clear_on_submit=True):
+            user_input = st.text_input("You: ", "", key="input")
+            submit_button = st.form_submit_button(label='Send')
 
 
     ## Conditional display of AI generated responses as a function of user provided prompts
     with response_container:
-        if user_input:
+        if submit_button and user_input:
             response = generate_response(user_input)
             st.session_state.past.append(user_input)
             st.session_state.generated.append(response)

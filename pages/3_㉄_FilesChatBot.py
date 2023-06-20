@@ -17,6 +17,10 @@ def set_reload_flag():
     # st.write("New document need upload")
     st.session_state["vectorreloadflag"] = True
 
+def is_upload_status_changed():
+    # st.write("New document need upload")
+    st.session_state["upload_changed"] = True
+
 def main():
     work_path = os.path.abspath('.')
     # Layout of output/setup containers
@@ -36,17 +40,20 @@ def main():
             st.session_state["vectordb"] = None
         if "vectorreloadflag" not in st.session_state:
             st.session_state["vectorreloadflag"] = None
-        file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"]) #, on_change=set_reload_flag)
+        # if "upload_changed" not in st.session_state:
+        #     st.session_state["upload_changed"] = False
+        file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"])#, on_change=is_upload_status_changed)
         if st.button("Upload"):
             if file_path is not None:
                 # save file
                 with st.spinner('Reading file'):
                     uploaded_path = os.path.join(work_path + "/tempDir/output", file_path.name)
                     with open(uploaded_path, mode="wb") as f:
-                        f.write(file_path.getvalue())
+                        f.write(file_path.getbuffer())
                 with st.spinner('Create vector DB'):
                     st.session_state["vectordb"] = chat.setup_vectordb(uploaded_path)
-                st.write(f"✅ {file_path.name} ")
+        if st.session_state["vectordb"] is not None:
+            st.write(f"✅ {file_path.name} ")
 
     with instruction_container:
         query_input = st.text_area("Insert your instruction")

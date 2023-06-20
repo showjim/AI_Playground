@@ -80,7 +80,7 @@ class OpenAIAzure():
             ".pdf": (PDFMinerLoader, {}),
             ".ppt": (UnstructuredPowerPointLoader, {}),
             ".pptx": (UnstructuredPowerPointLoader, {}),
-            ".txt": (TextLoader, {"encoding": "utf8"}),
+            ".txt": (TextLoader,{}),# {"encoding": "utf8"}),
             # Add more mappings for other file extensions and loaders as needed
         }
 
@@ -195,16 +195,19 @@ class OpenAIAzure():
             docsearch = FAISS.from_documents(texts, embeddings)
             docsearch.save_local(path, indexfilename)
 
-    def rebuild_index_from_dir(self, path, embeddings):
-        # rebuild storage context
-        all_files = self.get_all_files_by_ext(path, "faiss")
-        for i in range(len(all_files)):
-            filename = all_files[i]
-            tmpfile = Path(filename).stem
-            if i == 0:
-                doc_summary_index = FAISS.load_local(path, embeddings, tmpfile)
-            else:
-                doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
+    def rebuild_index_from_dir(self, path, embeddings, index_name:str = ""):
+        # rebuild storage context from directory
+        if index_name == "":
+            all_files = self.get_all_files_by_ext(path, "faiss")
+            for i in range(len(all_files)):
+                filename = all_files[i]
+                tmpfile = Path(filename).stem
+                if i == 0:
+                    doc_summary_index = FAISS.load_local(path, embeddings, tmpfile)
+                else:
+                    doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
+        else:
+            doc_summary_index = FAISS.load_local(path, embeddings, index_name)
         return doc_summary_index
 
     def create_casual_chat_model(self):

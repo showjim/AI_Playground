@@ -50,12 +50,15 @@ def main():
 
     ## Applying the user input box
     with input_container:
-        user_input = get_text()
+        # user_input = get_text()
+        with st.form(key='my_form', clear_on_submit=True):
+            user_input = st.text_area("You: ", "", key="input")
+            submit_button = st.form_submit_button(label='Send')
 
 
     ## Conditional display of AI generated responses as a function of user provided prompts
     with response_container:
-        if user_input:
+        if user_input and submit_button:
             response = generate_response(user_input)
             st.session_state.original.append(user_input)
             st.session_state.result.append(response)
