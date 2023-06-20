@@ -324,16 +324,23 @@ class OpenAIAzure():
 
         # max LLM token input size
         num_output = 1024  # 512
-
-        llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
-                          model_name=self.config_details['CHATGPT_MODEL'],
-                          openai_api_key=openai.api_key,
-                          openai_api_base=openai.api_base,
-                          openai_api_type=openai.api_type,
-                          openai_api_version=self.config_details['OPENAI_API_VERSION'],
-                          max_tokens=num_output,
-                          temperature=0.2,
-                          )
+        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+                              openai_api_key=openai.api_key,
+                              openai_api_base=openai.api_base,
+                              openai_api_type=openai.api_type,
+                              openai_api_version=self.config_details['OPENAI_API_VERSION'],
+                              max_tokens=num_output,
+                              temperature=0.2,
+                              )
+        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        #                   model_name=self.config_details['CHATGPT_MODEL'],
+        #                   openai_api_key=openai.api_key,
+        #                   openai_api_base=openai.api_base,
+        #                   openai_api_type=openai.api_type,
+        #                   openai_api_version=self.config_details['OPENAI_API_VERSION'],
+        #                   max_tokens=num_output,
+        #                   temperature=0.2,
+        #                   )
         # Read the CSV file into a Pandas DataFrame.
         df = pd.read_csv(filename)
         csv_agent = create_pandas_dataframe_agent(llm=llm,

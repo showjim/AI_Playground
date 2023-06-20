@@ -220,5 +220,14 @@ class AgentChatBot():
                             Query:
                         """
         # Run the prompt through the agent.
-        response = self.agent.run(prompt_template + query_str)
+        try:
+            response = self.agent.run(prompt_template + query_str)
+        except ValueError as e:
+            response = str(e)
+            if response.startswith("Parsing LLM output produced both a final answer and a parse-able action: ") :
+                response = response.removeprefix("Parsing LLM output produced both a final answer and a parse-able action: ").removesuffix("`")
+            elif response.startswith("Could not parse LLM output: `"):
+                response = response.removeprefix("Could not parse LLM output: `").removesuffix("`")
+            else:
+                raise e
         return response.__str__()
