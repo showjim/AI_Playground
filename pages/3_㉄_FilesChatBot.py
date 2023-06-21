@@ -5,12 +5,9 @@ from src.chat import ChatBot
 
 work_path = os.path.abspath('.')
 reset_db = False
-
 chat = ChatBot(work_path + "/tempDir/output",
-                work_path + "/index",
-                work_path)
-chat.initial_llm()
-
+               work_path + "/index",
+               work_path)
 st.title("㉄ Chat with files")
 
 def set_reload_flag():
@@ -22,6 +19,9 @@ def is_upload_status_changed():
     st.session_state["upload_changed"] = True
 
 def main():
+    # initial parameter & LLM
+    if "vectorreloadflag" not in st.session_state:
+        st.session_state["vectorreloadflag"] = None
     work_path = os.path.abspath('.')
     # Layout of output/setup containers
     setup_container = st.container()
@@ -31,15 +31,26 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for document chains")
-        aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"], on_change=set_reload_flag)
+        aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"],
+                                           on_change=set_reload_flag)
+        aa_temperature = st.sidebar.selectbox(label="2.Temperature (0~1)",
+                                              options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],
+                                              index=1,
+                                              on_change=set_reload_flag)
+        aa_max_resp = st.sidebar.slider(label="3.Max response",
+                                        min_value=256,
+                                        max_value=2048,
+                                        value=512,
+                                        on_change=set_reload_flag)
+        if st.session_state["vectorreloadflag"] == True:
+            chat.initial_llm(aa_max_resp, float(aa_temperature))
+            st.session_state["vectorreloadflag"] = False
 
     # main page
     with setup_container:
         st.write("Please upload your file below.")
         if "vectordb" not in st.session_state:
             st.session_state["vectordb"] = None
-        if "vectorreloadflag" not in st.session_state:
-            st.session_state["vectorreloadflag"] = None
         # if "upload_changed" not in st.session_state:
         #     st.session_state["upload_changed"] = False
         file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"])#, on_change=is_upload_status_changed)

@@ -20,7 +20,6 @@ def generate_response(prompt):
     # print(response)
     return response
 
-
 # User input
 ## Function for taking user provided prompt as input
 def get_text():
@@ -28,13 +27,35 @@ def get_text():
     input_text = st.text_area("You: ", "", key="input")
     return input_text
 
+def set_reload_flag():
+    # st.write("New document need upload")
+    st.session_state["Translatorreloadflag"] = True
 
 def main():
+    # Setup sidebar
+    with st.sidebar:
+        st.sidebar.expander("Settings")
+        st.sidebar.subheader("Parameter for AI Translator")
+        # aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"],
+        #                                    on_change=set_reload_flag)
+        aa_temperature = st.sidebar.selectbox(label="1.Temperature (0~1)",
+                                              options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],
+                                              index=1,
+                                              on_change=set_reload_flag)
+        # aa_max_resp = st.sidebar.slider(label="3.Max response",
+        #                                 min_value=256,
+        #                                 max_value=2048,
+        #                                 on_change=set_reload_flag)
+        if "T_chain" not in st.session_state or st.session_state["Translatorreloadflag"] == True:
+            chain = casual_chat_bot.initial_llm("Translate", 2048, float(aa_temperature))
+            st.session_state["T_chain"] = chain
+            st.session_state["Translatorreloadflag"] = False
+
     # Generate empty lists for chain, generated and past.
-    ## generated stores langchain chain
-    if "T_chain" not in st.session_state:
-        chain = casual_chat_bot.initial_llm("Translate")
-        st.session_state["T_chain"] = chain
+    # ## generated stores langchain chain
+    # if "T_chain" not in st.session_state:
+    #     chain = casual_chat_bot.initial_llm("Translate")
+    #     st.session_state["T_chain"] = chain
     ## generated stores AI generated responses
     if 'result' not in st.session_state:
         st.session_state['result'] = ["I'm AI Translator, How may I help you?"]

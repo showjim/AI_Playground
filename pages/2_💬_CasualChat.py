@@ -20,29 +20,38 @@ def generate_response(prompt):
     # print(response)
     return response
 
+def set_reload_flag():
+    # st.write("New document need upload")
+    st.session_state["casualchatreloadflag"] = True
+
 def main():
     # Sidebar contents
+    if "casualchatreloadflag" not in st.session_state:
+        st.session_state["casualchatreloadflag"] = None
     with st.sidebar:
         st.title('🤗💬 Casual Chat Web-UI App(Inside TER)')
-        st.markdown('''
-        ## About
-        This app is an Azure OpenAI-powered chatbot built using:
-        - [Streamlit](https://streamlit.io/)
-        - [LangChain](https://python.langchain.com/en/latest/)
-    
-        💡 Note: No API key required!
-        ''')
-        # add_vertical_space(5)
-        st.write('Made by Jerry Zhou')
-        st.markdown('''
-                - [Source Code](https://github.com/showjim/AutoMeetingMinutes/)
-                ''')
+        st.sidebar.expander("Settings")
+        st.sidebar.subheader("Parameter for Chatbot")
+
+        aa_temperature = st.sidebar.selectbox(label="1.Temperature (0~1)",
+                                              options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
+                                              index=1,
+                                              on_change=set_reload_flag)
+        aa_max_resp = st.sidebar.slider(label="2.Max response",
+                                        min_value=256,
+                                        max_value=2048,
+                                        value=512,
+                                        on_change=set_reload_flag)
+        if "chain" not in st.session_state or st.session_state["casualchatreloadflag"] == True:
+            chain = casual_chat_bot.initial_llm("CasualChat", aa_max_resp, float(aa_temperature))
+            st.session_state["chain"] = chain
+            st.session_state["casualchatreloadflag"] = False
 
     # Generate empty lists for chain, generated and past.
-    ## generated stores langchain chain
-    if "chain" not in st.session_state:
-        chain = casual_chat_bot.initial_llm("CasualChat")
-        st.session_state["chain"] = chain
+    # ## generated stores langchain chain
+    # if "chain" not in st.session_state:
+    #     chain = casual_chat_bot.initial_llm("CasualChat")
+    #     st.session_state["chain"] = chain
     ## generated stores AI generated responses
     if 'generated' not in st.session_state:
         st.session_state['generated'] = ["I'm CasualChat, How may I help you?"]

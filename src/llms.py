@@ -106,20 +106,20 @@ class OpenAIAzure():
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
-    def create_chat_model(self):
+    def create_chat_model(self, num_output, temperature):
         # max LLM token input size
-        max_input_size = 3900  # 4096
+        # max_input_size = 3900  # 4096
         # set number of output tokens
-        num_output = 1024  # 512
+        # num_output = 1024  # 512
         # set maximum chunk overlap
-        max_chunk_overlap = 20
+        # max_chunk_overlap = 20
         llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
                                openai_api_base=openai.api_base,
                                openai_api_type=openai.api_type,
                                openai_api_version=self.config_details['OPENAI_API_VERSION'],
                                max_tokens=num_output,
-                               temperature=0.2,
+                               temperature=temperature,#0.2,
                                )
 
 
@@ -182,7 +182,7 @@ class OpenAIAzure():
 
     def build_index(self, embeddings, documents, path, indexfilename):
         print(f"Loaded {len(documents)} new documents")
-        chunk_size = 2048
+        chunk_size = 1024 #2048
         chunk_overlap = 100
         # Get your splitter ready
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -210,99 +210,20 @@ class OpenAIAzure():
             doc_summary_index = FAISS.load_local(path, embeddings, index_name)
         return doc_summary_index
 
-    def create_casual_chat_model(self):
+    def create_chat_model_with_prompt(self, num_output, temperature, template):
         # setup prompt
-        template = """Assistant is a large language model trained by OpenAI.
-        
-        Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to 
-        providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is 
-        able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding 
-        conversations and provide responses that are coherent and relevant to the topic at hand.
-
-        Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to 
-        process and understand large amounts of text, and can use this knowledge to provide accurate and informative 
-        responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the 
-        input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide 
-        range of topics.
-
-        Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights 
-        and information on a wide range of topics. Whether you need help with a specific question or just want to have 
-        a conversation about a particular topic, Assistant is here to assist.
-
-        {history}
-        Human: {human_input}
-        Assistant:"""
-
         prompt = PromptTemplate(
             input_variables=["history", "human_input"],
             template=template
         )
 
-
-        # max LLM token input size
-        max_input_size = 3900  # 4096
-        # set number of output tokens
-        num_output = 1024  # 512
-        # set maximum chunk overlap
-        max_chunk_overlap = 20
-        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
-                               openai_api_key=openai.api_key,
-                               openai_api_base=openai.api_base,
-                               openai_api_type=openai.api_type,
-                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
-                               max_tokens=num_output,
-                               temperature=1.0,
-                               )
-        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
-        #                   model_name=self.config_details['CHATGPT_MODEL'],
-        #                   # openai_api_key=openai.api_key,
-        #                   # openai_api_base=openai.api_base,
-        #                   # openai_api_type=openai.api_type,
-        #                   # openai_api_version=self.config_details['OPENAI_API_VERSION'],
-        #                   # max_tokens=num_output,
-        #                   # temperature=0.2,
-        #                   )
-        chatgpt_chain = LLMChain(
-            llm=llm, #OpenAI(temperature=0),
-            prompt=prompt,
-            verbose=True,
-            memory=ConversationBufferWindowMemory(k=5),
-        )
-
-        return chatgpt_chain
-
-    def create_translate_model(self):
-        # setup prompt
-        template = """You are a professional translator. Translate anything that I say to Chinese or English in a natural manner. 
-        Only return the translate result. Don't interpret it. Please use the same format of input in output answer.
-        
-        Below are the history of translation：
-        ------------------------------
-        {history}
-        -----------------------------
-        
-        Below is the words need to be translated:
-        Human: {human_input}
-        Assistant:"""
-
-        prompt = PromptTemplate(
-            input_variables=["history", "human_input"],
-            template=template
-        )
-
-        # max LLM token input size
-        max_input_size = 3900  # 4096
-        # set number of output tokens
-        num_output = 1024  # 512
-        # set maximum chunk overlap
-        max_chunk_overlap = 20
         llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
                               openai_api_key=openai.api_key,
                               openai_api_base=openai.api_base,
                               openai_api_type=openai.api_type,
                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
                               max_tokens=num_output,
-                              temperature=1.0,
+                              temperature=temperature,  # 1.0,
                               )
         # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
         #                   model_name=self.config_details['CHATGPT_MODEL'],

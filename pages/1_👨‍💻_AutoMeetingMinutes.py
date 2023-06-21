@@ -14,7 +14,7 @@ work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",
                 work_path + "/index",
                 work_path)
-chat.initial_llm()
+chat.initial_llm(2048, 0.2)
 query_str = """Please summary this meeting and output meeting minutes.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
 1. who attend the meeting?

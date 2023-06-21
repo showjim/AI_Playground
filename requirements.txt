@@ -11,3 +11,4 @@ transformers
 openai
 tiktoken
 faiss-cpu
+pdfminer.six

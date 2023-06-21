@@ -36,8 +36,8 @@ class ChatBot():
     #     response = query_engine.query(query_str)
     #     return response.response
 
-    def initial_llm(self):
-        self.llm, self.embedding = self.model.create_chat_model()
+    def initial_llm(self, num_output, temperature):
+        self.llm, self.embedding = self.model.create_chat_model(num_output, temperature)
 
     def setup_vectordb(self, filname:str):
         DEFAULT_INDEX_FILE = Path(filname).stem + ".faiss"
@@ -156,13 +156,46 @@ class CasualChatBot():
         # self.docs_path = docs_path
         # self.index_path =index_path
 
-    def initial_llm(self, mode:str):
+    def initial_llm(self, mode:str, num_output, temperature):
+        prompt_template = ""
         if mode == "CasualChat":
-            self.chatgpt_chain = self.model.create_casual_chat_model()
+            prompt_template = """Assistant is a large language model trained by OpenAI.
+            Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to 
+            providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is 
+            able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding 
+            conversations and provide responses that are coherent and relevant to the topic at hand.
+    
+            Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to 
+            process and understand large amounts of text, and can use this knowledge to provide accurate and informative 
+            responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the 
+            input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide 
+            range of topics.
+    
+            Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights 
+            and information on a wide range of topics. Whether you need help with a specific question or just want to have 
+            a conversation about a particular topic, Assistant is here to assist.
+    
+            {history}
+            Human: {human_input}
+            Assistant:"""
+            # self.chatgpt_chain = self.model.create_casual_chat_model()
         elif mode == "Translate":
-            self.chatgpt_chain = self.model.create_translate_model()
+            prompt_template = """You are a professional translator. Translate anything that I say to Chinese or English in a natural manner. 
+            Only return the translate result. Don't interpret it. Please use the same format of input in output answer.
+            
+            Below are the history of translation：
+            ------------------------------
+            {history}
+            -----------------------------
+            
+            Below is the words need to be translated:
+            Human: {human_input}
+            Assistant:"""
+            # self.chatgpt_chain = self.model.create_translate_model()
         else:
             print("Wrong mode selected!")
+            return None
+        self.chatgpt_chain = self.model.create_chat_model_with_prompt(num_output, temperature, prompt_template)
         return self.chatgpt_chain
 
     def chat(self, query_str:str):
