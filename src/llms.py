@@ -196,7 +196,7 @@ class OpenAIAzure():
             docsearch.save_local(path, indexfilename)
 
     def rebuild_index_from_dir(self, path, embeddings, index_name:str = ""):
-        # rebuild storage context from directory
+        # rebuild storage context from directory or specified file name
         if index_name == "":
             all_files = self.get_all_files_by_ext(path, "faiss")
             for i in range(len(all_files)):
@@ -208,6 +208,17 @@ class OpenAIAzure():
                     doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
         else:
             doc_summary_index = FAISS.load_local(path, embeddings, index_name)
+        return doc_summary_index
+
+    def rebuild_index_by_list(self, path, embeddings, all_files):
+        # all_files = self.get_all_files_by_ext(path, "faiss")
+        for i in range(len(all_files)):
+            filename = all_files[i]
+            tmpfile = filename #Path(filename).stem, has done in get_all_files_list
+            if i == 0:
+                doc_summary_index = FAISS.load_local(path, embeddings, tmpfile)
+            else:
+                doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
         return doc_summary_index
 
     def create_chat_model_with_prompt(self, num_output, temperature, template):

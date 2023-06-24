@@ -1,3 +1,4 @@
+import glob
 import os.path
 from pathlib import Path
 from src.llms import OpenAI, OpenAIAzure
@@ -47,6 +48,21 @@ class ChatBot():
             self.documents = self.model.load_docs(filname) #(self.docs_path)
             self.model.build_index(self.embedding, self.documents, self.index_path, Path(filname).stem)
         self.doc_summary_index = self.model.rebuild_index_from_dir(self.index_path, self.embedding, Path(filname).stem)
+        return self.doc_summary_index
+
+    def get_all_files_list(self, source_dir, ext:str = "faiss"):
+        all_files = []
+        result = []
+        all_files.extend(
+            glob.glob(os.path.join(source_dir, f"*.{ext}"), recursive=False)
+        )
+        for filepath in all_files:
+            file_basename = Path(filepath).stem
+            result.append(file_basename)
+        return result
+
+    def load_vectordb(self, all_files):
+        self.doc_summary_index = self.model.rebuild_index_by_list(self.index_path, self.embedding, all_files)
         return self.doc_summary_index
 
     def chat(self, query_str:str, doc_summary_index):

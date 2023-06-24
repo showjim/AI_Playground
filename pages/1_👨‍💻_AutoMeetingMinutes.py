@@ -40,7 +40,7 @@ def main():
         st.session_state["mediavectordb"] = None
 
     if aa_file_type == "video":
-        video_path = st.file_uploader("Upload a Video or Audio")
+        video_path = st.file_uploader("Upload a Video or Audio", type=["mp4","mkv","avi"])
     else:
         video_path = st.file_uploader("Upload a Video or Audio", type=["wav","mp3"])
 
