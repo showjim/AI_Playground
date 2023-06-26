@@ -1,9 +1,11 @@
 # Jerry's AI Playground
 
-This repo includes the tools based on AI to increase working efficiency.
-1. Auto Meeting Minutes is a tool based on OpenAI/AzureOpenAI to chat with video/audio and output the meeting minutes with build-in prompt.
+This repo includes the tools based on **OpenAI**, **LangChain** and **Streamlit** to increase working efficiency.
+1. Auto Meeting Minutes is a tool to chat with video/audio and output the meeting minutes with build-in prompt.
 2. Casual Chat is a ChatGPT like ChatBot.
-3. FilesChat is a bot to chat with your documents.
+3. FilesChat is a bot to chat with your own documents, supported format including PDF, PPTX, DOCX, TXT.
+4. AI translator is a chatbot to translate every words you input between Chinese and English.
+5. CSV Chatbot is a chatbot to analyse tabula data, still in developing...
 ![Sample Screenshots](/img/home_page.png)
 
 ## 1. How to use
@@ -57,3 +59,6 @@ Create a `config.json` file with the following configuration:
 
 ### 3-3 Files ChatBot
 1. Azure OpenAI as server and LangChain used to create a QA chatbot over documents.
+
+### 3-4 CSV ChatBot
+1. Azure OpenAI as server and LangChain used to create a chatbot to create python code based on user's query, and give output.

@@ -69,7 +69,7 @@ def main():
     with input_container:
         # user_input = get_text()
         with st.form(key='my_form', clear_on_submit=True):
-            user_input = st.text_input("You: ", "", key="input")
+            user_input = st.text_area("You: ", "", key="input")
             submit_button = st.form_submit_button(label='Send')
 
 
