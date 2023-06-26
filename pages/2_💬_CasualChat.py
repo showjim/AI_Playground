@@ -83,7 +83,7 @@ def main():
         if st.session_state['generated']:
             for i in range(len(st.session_state['generated'])):
                 message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
-                message(st.session_state["generated"][i], key=str(i))
+                message(st.session_state["generated"][i], key=str(i), allow_html=True)
 
 if __name__ == "__main__":
     main()

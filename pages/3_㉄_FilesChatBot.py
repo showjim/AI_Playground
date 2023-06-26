@@ -5,13 +5,13 @@ from src.chat import ChatBot
 import nltk
 import ssl
 
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-nltk.download('punkt')
+# try:
+#     _create_unverified_https_context = ssl._create_unverified_context
+# except AttributeError:
+#     pass
+# else:
+#     ssl._create_default_https_context = _create_unverified_https_context
+# nltk.download('punkt')
 
 
 reset_db = False
@@ -49,7 +49,8 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for document chains")
-        aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"],
+        aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains",
+                                           options=["stuff", "map_reduce", "refine", "map_rerank"],
                                            on_change=set_reload_setting_flag)
         aa_temperature = st.sidebar.selectbox(label="2.Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],

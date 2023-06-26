@@ -103,15 +103,15 @@ class ChatBot():
         #                                  verbose=True,
         #                                  chain_type_kwargs=chain_type_kwargs)
         qa_chain = ConversationalRetrievalChain.from_llm(llm=self.llm,
-                                                   retriever=doc_summary_index.as_retriever(),
-                                                   memory=ConversationBufferMemory(
-                                                       memory_key="chat_history",
-                                                       input_key='question',
-                                                       output_key='answer',
-                                                       # k=5,
-                                                       return_messages=True),
-                                                   verbose=True,
-                                                   return_source_documents=True)
+                                                         retriever=doc_summary_index.as_retriever(),
+                                                         memory=ConversationBufferMemory(
+                                                             memory_key="chat_history",
+                                                             input_key='question',
+                                                             output_key='answer',
+                                                             # k=5,
+                                                             return_messages=True),
+                                                         verbose=True,
+                                                         return_source_documents=True)
         # resp = qa({"question": query_str})
         return qa_chain
 
@@ -236,7 +236,7 @@ class AgentChatBot():
             print("Wrong mode selected!")
         return self.agent
 
-    def chat_csv_agrent(self, query_str: str):
+    def chat_csv_agent(self, query_str: str):
         prompt_template = """
                             For the following query, if it requires drawing a table, reply as follows:
                             {"table": {"columns": ["column1", "column2", ...], "data": [[value1, value2, ...], [value1, value2, ...], ...]}}

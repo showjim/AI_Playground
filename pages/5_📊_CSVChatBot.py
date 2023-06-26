@@ -52,7 +52,7 @@ def main():
             if file_path is not None:
                 # Query the agent.
                 with st.spinner('preparing answer'):
-                    response = st.session_state["csv_agent"].chat_csv_agrent(query_input)
+                    response = st.session_state["csv_agent"].chat_csv_agent(query_input)
 
                 resp = response
                 st.session_state["csv_agent_questions"].append(query_input)

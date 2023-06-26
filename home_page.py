@@ -1,7 +1,7 @@
 # Contents of ~/my_app/main_page.py
 import streamlit as st
 
-__version__ = "Beta V0.0.12"
+__version__ = "Beta V0.0.13"
 
 st.set_page_config(
     page_title="Jerry's AI Playground",

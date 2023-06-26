@@ -55,8 +55,13 @@ def main():
             uploaded_path = os.path.join(work_path + "/tempDir", video_path.name)
             with open(uploaded_path, mode="wb") as f:
                 f.write(video_path.getvalue())
-            segments, new_file = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
-            # embeddings = embedding_audio(new_file, segments)
+            segments, new_file, srt_string = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
+
+            # export srt file
+            if srt_string != "":
+                st.download_button("Download .srt file", data=srt_string, file_name=f"{video_path.name}.srt")
+
+            # identify the speakers
             segments_speaker = identify_speaker(new_file, segments, aa_spk_num)
             output_subtitle(new_file, segments_speaker)
 

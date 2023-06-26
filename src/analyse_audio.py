@@ -81,17 +81,19 @@ def extract_subtitle(file_names:str, file_type, language, model_size):
     print('识别完毕 Done')
     print(f'Time consumpution {toc - tic}s')
 
+    srt_string = ""
     if export_srt == "Yes":
         import pysubs2
         subs = pysubs2.load_from_whisper(results)
-        subs.save(output_file + '.srt')
+        # subs.save(output_file + '.srt')
+        srt_string = subs.to_string("srt")
 
         with open(output_file + '.txt', 'w') as fp:
             for item in results_txt:
                 # write each item on a new line
                 fp.write("%s\n" % item)
             print('Done')
-    return results, file_name #str(output_file) + ".wav"
+    return results, file_name, srt_string #str(output_file) + ".wav"
 
 def identify_speaker(file_name, segments, num_speakers):
     print('Embedding audio to tensor...')
