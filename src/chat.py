@@ -115,7 +115,7 @@ class ChatBot():
         # resp = qa({"question": query_str})
         return qa_chain
 
-    def chat_QA_map_reduce(self, doc_summary_index):
+    def chat_QA_with_type_select(self, doc_summary_index, chain_type:str="stuff"):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base 
 
@@ -144,7 +144,7 @@ class ChatBot():
         #                                            return_source_documents=True)
 
         question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
-        doc_chain = load_qa_chain(self.llm, chain_type="map_reduce") #map_reduce,stuff
+        doc_chain = load_qa_chain(self.llm, chain_type=chain_type, verbose=True) #map_reduce,stuff
 
         chain = ConversationalRetrievalChain(
             retriever=doc_summary_index.as_retriever(),

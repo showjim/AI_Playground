@@ -25,9 +25,9 @@ def set_reload_setting_flag():
 def set_reload_db_flag():
     st.session_state["index_db_reload_flag"] = True
 
-def is_upload_status_changed():
+def type_status_changed():
     # st.write("New document need upload")
-    st.session_state["upload_changed"] = True
+    st.session_state["type_status_changed"] = True
 
 def main():
     # initial parameter & LLM
@@ -51,7 +51,7 @@ def main():
         st.sidebar.subheader("Parameter for document chains")
         aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains",
                                            options=["stuff", "map_reduce", "refine", "map_rerank"],
-                                           on_change=set_reload_setting_flag)
+                                           on_change=type_status_changed)
         aa_temperature = st.sidebar.selectbox(label="2.Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],
                                               index=1,
@@ -94,9 +94,11 @@ def main():
             if st.session_state["index_db_reload_flag"] == True:
                 with st.spinner('Load Index DB'):
                     st.session_state["vectordb"] = st.session_state["FileChat"].load_vectordb(options)
-                st.session_state["index_db_reload_flag"] = False
+                # st.session_state["index_db_reload_flag"] = False
             if (st.session_state["vectordb"] is not None):
                 st.write("✅ " + ", ".join(options) + " Index DB Loaded")
+        else:
+            st.session_state["vectordb"] = None
 
     with instruction_container:
         query_input = st.text_area("Insert your instruction")
@@ -121,13 +123,18 @@ def main():
                 # chat.setup_vectordb()
 
                 ## generated stores langchain chain, to enable memory function of langchain in streamlit
-                if ("QA_chain" not in st.session_state) or (st.session_state["vectorreloadflag"] == True):
-                    if aa_combine_type == "stuff":
-                        qa_chain = st.session_state["FileChat"].chat_QA(st.session_state["vectordb"])
-                    else:
-                        qa_chain = st.session_state["FileChat"].chat_QA_map_reduce(st.session_state["vectordb"])
+                if ("QA_chain" not in st.session_state) or \
+                        (st.session_state["type_status_changed"] == True) or \
+                        (st.session_state["index_db_reload_flag"] == True):
+
+                    qa_chain = st.session_state["FileChat"].chat_QA_with_type_select(st.session_state["vectordb"], aa_combine_type)
+                    # if aa_combine_type == "stuff":
+                    #     qa_chain = st.session_state["FileChat"].chat_QA(st.session_state["vectordb"])
+                    # else:
+                    #     qa_chain = st.session_state["FileChat"].chat_QA_map_reduce(st.session_state["vectordb"])
                     st.session_state["QA_chain"] = qa_chain
-                    st.session_state["vectorreloadflag"] = False
+                    st.session_state["type_status_changed"] = False
+                    st.session_state["index_db_reload_flag"] = False
 
                 # Query the agent.
                 with st.spinner('preparing answer'):
@@ -135,6 +142,8 @@ def main():
                 resp = response["answer"]
                 st.session_state.questions.append(query_input)
                 st.session_state.answers.append(resp)
+            else:
+                st.write("Error: " + " No Index DB Is Loaded!")
 
     with response_container:
         if st.session_state['answers']:
