@@ -17,6 +17,8 @@ from langchain.document_loaders import (
     CSVLoader,
     EverNoteLoader,
     PDFMinerLoader,
+    PyMuPDFLoader,
+    PyPDFLoader,
     TextLoader,
     UnstructuredEmailLoader,
     UnstructuredEPubLoader,
@@ -77,7 +79,7 @@ class OpenAIAzure():
             ".html": (UnstructuredHTMLLoader, {}),
             ".md": (UnstructuredMarkdownLoader, {}),
             ".odt": (UnstructuredODTLoader, {}),
-            ".pdf": (PDFMinerLoader, {}),
+            ".pdf": (PyMuPDFLoader, {}), #PyMuPDFLoader PDFMinerLoader PyPDFLoader
             ".ppt": (UnstructuredPowerPointLoader, {}),
             ".pptx": (UnstructuredPowerPointLoader, {}),
             ".txt": (TextLoader,{}),# {"encoding": "utf8"}),
@@ -149,7 +151,7 @@ class OpenAIAzure():
         if ext in self.LOADER_MAPPING:
             loader_class, loader_args = self.LOADER_MAPPING[ext]
             loader = loader_class(file_path, **loader_args)
-            return loader.load()[0]
+            return loader.load() #[0]
 
         raise ValueError(f"Unsupported file extension '{ext}'")
 
@@ -161,7 +163,7 @@ class OpenAIAzure():
         documents = []
         with tqdm(total=len(all_files), desc='Loading new documents', ncols=80) as pbar:
             for doc in all_files:
-                documents.append(self.load_single_document(doc))
+                documents = documents + self.load_single_document(doc)
                 pbar.update()
 
         return documents
@@ -182,7 +184,7 @@ class OpenAIAzure():
 
     def build_index(self, embeddings, documents, path, indexfilename):
         print(f"Loaded {len(documents)} new documents")
-        chunk_size = 1024 #2048
+        chunk_size = 1000 #1024 #2048
         chunk_overlap = 100
         # Get your splitter ready
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)

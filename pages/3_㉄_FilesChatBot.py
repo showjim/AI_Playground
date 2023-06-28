@@ -111,6 +111,8 @@ def main():
         ## past stores User's questions
         if 'questions' not in st.session_state:
             st.session_state['questions'] = []
+        if 'reference' not in st.session_state:
+            st.session_state['reference'] = []
 
         if st.button("Submit", type="primary"):
 
@@ -140,8 +142,16 @@ def main():
                 with st.spinner('preparing answer'):
                     response = st.session_state["QA_chain"]({"question": query_input})
                 resp = response["answer"]
+                src_cnt = len(response['source_documents'])
+                ref = []
+                for i in range(src_cnt):
+                    ref.append({})
+                    ref[i]['source'] = Path(response['source_documents'][i].metadata['source']).stem
+                    ref[i]['page'] = response['source_documents'][i].metadata['page']
+                    ref[i]['content'] = response['source_documents'][i].page_content
                 st.session_state.questions.append(query_input)
                 st.session_state.answers.append(resp)
+                st.session_state.reference.append(ref)
             else:
                 st.write("Error: " + " No Index DB Is Loaded!")
 
@@ -152,6 +162,16 @@ def main():
                 st.markdown('-----------------')
                 st.markdown('### ' + str(n-i-1) + '. ' + st.session_state['questions'][n-i-1])
                 st.markdown(st.session_state["answers"][n-i-1])
+                ref = st.session_state["reference"][n-i-1]
+                src_cnt = len(ref)
+                st.markdown('#### Reference:')
+                for j in range(src_cnt):
+                    src_file = ref[j]['source']
+                    page = ref[j]['page']
+                    content = ref[j]['content']
+                    st.markdown('##### ' + str(j) + '. ' + src_file + " - page " + str(page) )
+                    with st.expander("See explanation"):
+                        st.markdown( content)
 
 
 if __name__ == "__main__":

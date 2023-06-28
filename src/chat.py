@@ -8,6 +8,7 @@ from langchain.memory import ConversationBufferWindowMemory, ConversationBufferM
 
 from langchain.chains import LLMChain
 from langchain.chains.question_answering import load_qa_chain
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 
 class ChatBot():
@@ -87,7 +88,7 @@ class ChatBot():
 
     def chat_QA(self, doc_summary_index):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
-        If you don't know the answer, please think rationally and answer from your own knowledge base 
+        If you don't know the answer, please think rationally and answer from your own knowledge base. 
 
         {context}
 
@@ -117,15 +118,18 @@ class ChatBot():
 
     def chat_QA_with_type_select(self, doc_summary_index, chain_type:str="stuff"):
         prompt_template = """Use the following pieces of context to answer the question at the end. 
-        If you don't know the answer, please think rationally and answer from your own knowledge base 
+        If you don't know the answer, please think rationally and answer from your own knowledge base. 
 
-        {context}
+        {summaries}
 
         Question: {question}
         """
         PROMPT = PromptTemplate(
-            template=prompt_template, input_variables=["context", "question"]
+            template=prompt_template, input_variables=["summaries", "question"]
         )
+        DOC_PROMPT = PromptTemplate(
+            template="Content: {page_content}\nSource: {source}",
+            input_variables=["page_content", "source"])
         chain_type_kwargs = {"prompt": PROMPT}
         # qa = RetrievalQA.from_chain_type(llm=self.llm,
         #                                  chain_type="stuff",
@@ -144,7 +148,12 @@ class ChatBot():
         #                                            return_source_documents=True)
 
         question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
-        doc_chain = load_qa_chain(self.llm, chain_type=chain_type, verbose=True) #map_reduce,stuff
+        # doc_chain = load_qa_chain(self.llm, chain_type=chain_type, verbose=True) #map_reduce,stuff
+        doc_chain = load_qa_with_sources_chain(self.llm,
+                                               prompt=PROMPT,
+                                               document_prompt=DOC_PROMPT,
+                                               chain_type=chain_type,
+                                               verbose=True)
 
         chain = ConversationalRetrievalChain(
             retriever=doc_summary_index.as_retriever(),
