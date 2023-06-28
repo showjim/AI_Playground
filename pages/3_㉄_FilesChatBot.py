@@ -147,7 +147,10 @@ def main():
                 for i in range(src_cnt):
                     ref.append({})
                     ref[i]['source'] = Path(response['source_documents'][i].metadata['source']).stem
-                    ref[i]['page'] = response['source_documents'][i].metadata['page']
+                    if 'page' in response['source_documents'][i].metadata.keys():
+                        ref[i]['page'] = response['source_documents'][i].metadata['page']
+                    else:
+                        ref[i]['page'] = ""
                     ref[i]['content'] = response['source_documents'][i].page_content
                 st.session_state.questions.append(query_input)
                 st.session_state.answers.append(resp)
