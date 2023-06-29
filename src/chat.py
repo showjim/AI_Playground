@@ -204,23 +204,30 @@ class CasualChatBot():
             Human: {human_input}
             Assistant:"""
             # self.chatgpt_chain = self.model.create_casual_chat_model()
+            # setup prompt
+            prompt = PromptTemplate(
+                input_variables=["history", "human_input"],
+                template=prompt_template
+            )
         elif mode == "Translate":
-            prompt_template = """You are a professional translator. Translate anything that I say to Chinese or English in a natural manner. 
-            Only return the translate result. Don't interpret it. Please use the same format of input in output answer.
-            
-            Below are the history of translation：
-            ------------------------------
+            prompt_template = """You are a professional translator. Only return the translate result. Don't interpret it. Translate anything that I say to Chinese or English. Please pay attention to the context and accurately.
+            -------------------------
+            Below are the translated history:
             {history}
-            -----------------------------
-            
+            -------------------------
             Below is the words need to be translated:
-            Human: {human_input}
-            Assistant:"""
+            {human_input}"""
             # self.chatgpt_chain = self.model.create_translate_model()
+            # setup prompt
+            prompt = PromptTemplate(
+                input_variables=["history", "human_input"],
+                template=prompt_template
+            )
         else:
             print("Wrong mode selected!")
             return None
-        self.chatgpt_chain = self.model.create_chat_model_with_prompt(num_output, temperature, prompt_template)
+
+        self.chatgpt_chain = self.model.create_chat_model_with_prompt(num_output, temperature, prompt)
         return self.chatgpt_chain
 
     def chat(self, query_str:str):

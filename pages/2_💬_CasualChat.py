@@ -2,6 +2,20 @@ import streamlit as st
 from streamlit_chat import message
 from src.chat import CasualChatBot
 import os
+from langchain.callbacks import StreamlitCallbackHandler
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.callbacks.base import BaseCallbackHandler
+
+
+class StreamHandler(BaseCallbackHandler):
+    def __init__(self, container, initial_text=""):
+        self.container = container
+        self.text=initial_text
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        # "/" is a marker to show difference
+        # you don't need it
+        self.text+=token+"/"
+        # self.container.markdown(self.text)
 
 # __version__ = "Beta V0.0.2"
 
@@ -25,11 +39,11 @@ def set_reload_flag():
     st.session_state["casualchatreloadflag"] = True
 
 def main():
+    st.title('🤗💬 Casual Chat Web-UI App')
     # Sidebar contents
     if "casualchatreloadflag" not in st.session_state:
         st.session_state["casualchatreloadflag"] = None
     with st.sidebar:
-        st.title('🤗💬 Casual Chat Web-UI App(Inside TER)')
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
 
@@ -47,43 +61,70 @@ def main():
             st.session_state["chain"] = chain
             st.session_state["casualchatreloadflag"] = False
 
-    # Generate empty lists for chain, generated and past.
-    # ## generated stores langchain chain
-    # if "chain" not in st.session_state:
-    #     chain = casual_chat_bot.initial_llm("CasualChat")
-    #     st.session_state["chain"] = chain
-    ## generated stores AI generated responses
-    if 'generated' not in st.session_state:
-        st.session_state['generated'] = ["I'm CasualChat, How may I help you?"]
-    ## past stores User's questions
-    if 'past' not in st.session_state:
-        st.session_state['past'] = ['Hi!']
+    if False:
+        ## generated stores AI generated responses
+        if 'generated' not in st.session_state:
+            st.session_state['generated'] = ["I'm CasualChat, How may I help you?"]
+        ## past stores User's questions
+        if 'past' not in st.session_state:
+            st.session_state['past'] = ['Hi!']
 
-    # Layout of input/response containers
-    response_container = st.container()
-    # colored_header(label='', description='', color_name='blue-30')
-    input_container = st.container()
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state['messages'] = [{"role": "assistant", "content": "I'm CasualChat, How may I help you?"}]
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Accept user input
+    if prompt := st.chat_input("Type you input here"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st_callback = StreamHandler(st.container()) #StreamingStdOutCallbackHandler StreamlitCallbackHandler(st.container()) StreamHandler(st.container())
+            message_placeholder = st.empty()
+            full_response = ""
+            with st.spinner('preparing answer'):
+                # full_response = st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback])
+                for response in st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback]):
+                    full_response += response#.choices[0].delta.get("content", "")
+                    message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
+
+        st.session_state['messages'].append({"role": "assistant", "content": full_response})
+
+    if False:
+        # Layout of input/response containers
+        response_container = st.container()
+        # colored_header(label='', description='', color_name='blue-30')
+        input_container = st.container()
 
 
-    ## Applying the user input box
-    with input_container:
-        # user_input = get_text()
-        with st.form(key='my_form', clear_on_submit=True):
-            user_input = st.text_area("You: ", "", key="input")
-            submit_button = st.form_submit_button(label='Send')
+        ## Applying the user input box
+        with input_container:
+            # user_input = get_text()
+            with st.form(key='my_form', clear_on_submit=True):
+                user_input = st.text_area("You: ", "", key="input")
+                submit_button = st.form_submit_button(label='Send')
 
 
-    ## Conditional display of AI generated responses as a function of user provided prompts
-    with response_container:
-        if submit_button and user_input:
-            response = generate_response(user_input)
-            st.session_state.past.append(user_input)
-            st.session_state.generated.append(response)
+        ## Conditional display of AI generated responses as a function of user provided prompts
+        with response_container:
+            if submit_button and user_input:
+                response = generate_response(user_input)
+                st.session_state.past.append(user_input)
+                st.session_state.generated.append(response)
 
-        if st.session_state['generated']:
-            for i in range(len(st.session_state['generated'])):
-                message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
-                message(st.session_state["generated"][i], key=str(i), allow_html=True)
+            if st.session_state['generated']:
+                for i in range(len(st.session_state['generated'])):
+                    message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
+                    message(st.session_state["generated"][i], key=str(i), allow_html=True)
 
 if __name__ == "__main__":
     main()

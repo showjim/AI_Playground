@@ -170,7 +170,7 @@ def main():
                     page = ref[j]['page']
                     content = ref[j]['content']
                     st.markdown('##### ' + str(j) + '. ' + src_file + " - page " + str(page) )
-                    with st.expander("See explanation"):
+                    with st.expander("See details"):
                         st.markdown( content)
 
 

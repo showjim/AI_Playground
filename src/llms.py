@@ -44,6 +44,18 @@ from langchain import LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.llms import AzureOpenAI
 from langchain.agents import create_pandas_dataframe_agent
+from langchain.callbacks.base import BaseCallbackHandler
+
+
+# class StreamHandler(BaseCallbackHandler):
+#     def __init__(self, container, initial_text=""):
+#         self.container = container
+#         self.text=initial_text
+#     def on_llm_new_token(self, token: str, **kwargs) -> None:
+#         # "/" is a marker to show difference
+#         # you don't need it
+#         self.text+=token+"/"
+#         self.container.markdown(self.text)
 
 
 class OpenAI():
@@ -223,12 +235,12 @@ class OpenAIAzure():
                 doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
         return doc_summary_index
 
-    def create_chat_model_with_prompt(self, num_output, temperature, template):
-        # setup prompt
-        prompt = PromptTemplate(
-            input_variables=["history", "human_input"],
-            template=template
-        )
+    def create_chat_model_with_prompt(self, num_output, temperature, prompt):
+        # # setup prompt
+        # prompt = PromptTemplate(
+        #     input_variables=["history", "human_input"],
+        #     template=template
+        # )
 
         llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
                               openai_api_key=openai.api_key,
@@ -237,6 +249,8 @@ class OpenAIAzure():
                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
                               max_tokens=num_output,
                               temperature=temperature,  # 1.0,
+                              streaming=True,
+                              # callbacks=[StreamHandler]
                               )
         # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
         #                   model_name=self.config_details['CHATGPT_MODEL'],
