@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_chat import message
 from src.chat import CasualChatBot
-import os
+import os, time
 from langchain.callbacks import StreamlitCallbackHandler
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
@@ -93,7 +93,8 @@ def main():
             with st.spinner('preparing answer'):
                 # full_response = st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback])
                 for response in st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback]):
-                    full_response += response#.choices[0].delta.get("content", "")
+                    full_response += response #.choices[0].delta.get("content", "")
+                    time.sleep(0.01)
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
 
