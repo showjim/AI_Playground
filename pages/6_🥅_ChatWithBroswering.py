@@ -46,8 +46,8 @@ def main():
                                         max_value=2048,
                                         value=512,
                                         on_change=set_reload_flag)
-        if "chain" not in st.session_state or st.session_state["B_casualchatreloadflag"] == True:
-            chain = casual_chat_bot.initial_llm("bing_search", int(aa_max_resp), float(aa_temperature))
+        if "B_chain" not in st.session_state or st.session_state["B_casualchatreloadflag"] == True:
+            chain = casual_chat_bot.initial_llm("bing_search", "", int(aa_max_resp), float(aa_temperature))
             st.session_state["B_chain"] = chain
             st.session_state["B_casualchatreloadflag"] = False
 
