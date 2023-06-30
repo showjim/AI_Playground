@@ -71,18 +71,24 @@ def main():
         st.write("Please upload your file below.")
         if "vectordb" not in st.session_state:
             st.session_state["vectordb"] = None
-        file_path = st.file_uploader("Upload a document file", type=["pdf","txt","pptx","docx","html"])#, on_change=is_upload_status_changed)
+        file_paths = st.file_uploader("Upload a document file",
+                                      type=["pdf", "txt", "pptx", "docx", "html"],
+                                      accept_multiple_files=True)#, on_change=is_upload_status_changed)
         if st.button("Upload"):
-            if file_path is not None:
+            if file_paths is not None or len(file_paths) > 0:
                 # save file
                 with st.spinner('Reading file'):
-                    uploaded_path = os.path.join(work_path + "/tempDir/output", file_path.name)
-                    with open(uploaded_path, mode="wb") as f:
-                        f.write(file_path.getbuffer())
+                    uploaded_paths = []
+                    for file_path in file_paths:
+                        uploaded_paths.append(os.path.join(work_path + "/tempDir/output", file_path.name))
+                        uploaded_path = uploaded_paths[-1]
+                        with open(uploaded_path, mode="wb") as f:
+                            f.write(file_path.getbuffer())
                 with st.spinner('Create vector DB'):
-                    st.session_state["vectordb"] = st.session_state["FileChat"].setup_vectordb(uploaded_path)
-                if os.path.exists(uploaded_path) == True:
-                    st.write(f"✅ {file_path.name} uploaed")
+                    for uploaded_path in uploaded_paths:
+                        st.session_state["vectordb"] = st.session_state["FileChat"].setup_vectordb(uploaded_path)
+                        if os.path.exists(uploaded_path) == True:
+                            st.write(f"✅ {Path(uploaded_path).name} uploaed")
 
         # select the specified index base(s)
         index_file_list = st.session_state["FileChat"].get_all_files_list("./index", "faiss")
@@ -116,14 +122,7 @@ def main():
 
         if st.button("Submit", type="primary"):
 
-            if file_path is not None or st.session_state["vectordb"] is not None:
-                # work_path = os.path.abspath('.')
-                # # save file
-                # uploaded_path = os.path.join(work_path + "/tempDir/output", file_path.name)
-                # with open(uploaded_path, mode="wb") as f:
-                #     f.write(file_path.getvalue())
-                # chat.setup_vectordb()
-
+            if len(file_paths) > 0 or st.session_state["vectordb"] is not None:
                 ## generated stores langchain chain, to enable memory function of langchain in streamlit
                 if ("QA_chain" not in st.session_state) or \
                         (st.session_state["type_status_changed"] == True) or \
