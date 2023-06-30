@@ -117,6 +117,10 @@ class OpenAIAzure():
             openai.api_base = self.config_details['OPENAI_API_BASE']
             openai.api_version = self.config_details['OPENAI_API_VERSION']
             openai.api_key = os.getenv("OPENAI_API_KEY")
+
+            # bing search
+            os.environ["BING_SUBSCRIPTION_KEY"] = os.getenv("BING_SUBSCRIPTION_KEY")
+            os.environ["BING_SEARCH_URL"] = self.config_details['BING_SEARCH_URL']
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
@@ -302,6 +306,29 @@ class OpenAIAzure():
                                                   )
 
         return csv_agent
+
+    def create_complete_model(self, num_output:int=1024, temperature:float=0.2):
+        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+                              openai_api_key=openai.api_key,
+                              openai_api_base=openai.api_base,
+                              openai_api_type=openai.api_type,
+                              openai_api_version=self.config_details['OPENAI_API_VERSION'],
+                              max_tokens=num_output,
+                              temperature=temperature, #0.2,
+                              streaming=True,
+                              )
+        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        #                   model_name=self.config_details['CHATGPT_MODEL'],
+        #                   openai_api_key=openai.api_key,
+        #                   openai_api_base=openai.api_base,
+        #                   openai_api_type=openai.api_type,
+        #                   openai_api_version=self.config_details['OPENAI_API_VERSION'],
+        #                   max_tokens=num_output,
+        #                   temperature=0, #0.2,
+        #                   streaming=True,
+        #                   )
+
+        return llm
 
 
 

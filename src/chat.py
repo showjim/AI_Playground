@@ -10,6 +10,7 @@ from langchain.chains import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
+from langchain.agents import AgentType, initialize_agent, load_tools
 
 class ChatBot():
     def __init__(self, docs_path:str, index_path:str, env_path:str):
@@ -245,9 +246,19 @@ class AgentChatBot():
         self.docs_path = docs_path
         # self.index_path =index_path
 
-    def initial_llm(self, mode:str, filename:str):
+    def initial_llm(self, mode:str, filename:str, num_output:int=1024, temperature:float=0):
         if mode == "csv":
             self.agent = self.model.create_csv_agent(filename)
+        elif mode == "bing_search":
+            self.model = self.model.create_complete_model(num_output, temperature)
+            tools = load_tools(["bing-search"])
+            self.agent = initialize_agent(
+                tools,
+                self.model,
+                agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+                verbose=True,
+                handle_parsing_errors="Check your output and make sure it conforms!"
+            )
         else:
             print("Wrong mode selected!")
         return self.agent
