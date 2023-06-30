@@ -210,7 +210,7 @@ class CasualChatBot():
                 template=prompt_template
             )
         elif mode == "Translate":
-            prompt_template = """You are a professional translator. Only return the translate result. Don't interpret it. Translate anything that I say to Chinese or English. Please pay attention to the context and accurately.
+            prompt_template = """You are a professional translator. Only return the translate result. Don't interpret it. Translate anything that I say in English to Chinese or in Chinesse to English. Please pay attention to the context and accurately.
             -------------------------
             Below are the translated history:
             {history}
