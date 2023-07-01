@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 from streamlit_chat import message
 from src.chat import CasualChatBot
@@ -83,6 +85,7 @@ def main():
                 # full_response = st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback])
                 for response in st.session_state["T_chain"].predict(human_input=prompt, callbacks=[st_callback]):
                     full_response += response#.choices[0].delta.get("content", "")
+                    time.sleep(0.01)
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
 

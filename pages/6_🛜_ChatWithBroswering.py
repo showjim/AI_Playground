@@ -29,7 +29,7 @@ def set_reload_flag():
     st.session_state["B_casualchatreloadflag"] = True
 
 def main():
-    st.title('🤗🥅 Chat With Broswering')
+    st.title('🤗🛜 Chat With Broswering')
     # Sidebar contents
     if "B_casualchatreloadflag" not in st.session_state:
         st.session_state["B_casualchatreloadflag"] = None
@@ -73,11 +73,11 @@ def main():
             message_placeholder = st.empty()
             full_response = ""
 
-            full_response = st.session_state["B_chain"].run(prompt, callbacks=[st_callback])
-            # for response in st.session_state["B_chain"].predict(human_input=prompt, callbacks=[st_callback]):
-            #     full_response += response #.choices[0].delta.get("content", "")
-            #     time.sleep(0.01)
-            #     message_placeholder.markdown(full_response + "▌")
+            # full_response = st.session_state["B_chain"].run(prompt, callbacks=[st_callback])
+            for response in st.session_state["B_chain"].run(prompt, callbacks=[st_callback]):
+                full_response += response #.choices[0].delta.get("content", "")
+                time.sleep(0.01)
+                message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
 
         st.session_state['B_messages'].append({"role": "assistant", "content": full_response})
