@@ -47,7 +47,7 @@ def main():
     setup_container = st.container()
     instruction_container = st.container()
     response_container = st.container()
-    tab1, tab2 = st.sidebar.tabs(["document", "Setting"])
+    tab1, tab2 = st.sidebar.tabs(["Document", "Setting"])
 
     with st.sidebar:
         # st.sidebar.expander("Settings")
