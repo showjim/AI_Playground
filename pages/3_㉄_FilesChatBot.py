@@ -136,7 +136,7 @@ def main():
                         src_file = ref[j]['source']
                         page = ref[j]['page']
                         content = ref[j]['content']
-                        st.markdown(str(j) + '. ' + src_file + " - page " + str(page))
+                        st.markdown(str(j) + '.' + src_file + " - page " + str(page))
                         with st.expander("See details"):
                             st.markdown(content)
         else:
@@ -159,8 +159,7 @@ def main():
                         (st.session_state["type_status_changed"] == True) or \
                         (st.session_state["index_db_reload_flag"] == True):
                     qa_chain = st.session_state["FileChat"].chat_QA_with_type_select(st.session_state["vectordb"],
-                                                                                     aa_combine_type,
-                                                                                     st.container())
+                                                                                     aa_combine_type)
                     # if aa_combine_type == "stuff":
                     #     qa_chain = st.session_state["FileChat"].chat_QA(st.session_state["vectordb"])
                     # else:
@@ -199,7 +198,7 @@ def main():
                 src_file = ref[j]['source']
                 page = ref[j]['page']
                 content = ref[j]['content']
-                st.markdown(str(j) + '. ' + src_file + " - page " + str(page))
+                st.markdown(str(j) + '.' + src_file + " - page " + str(page))
                 with st.expander("See details"):
                     st.markdown(content)
             full_response_n_src = {"answers": full_response, "reference": ref}
