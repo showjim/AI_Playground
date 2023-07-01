@@ -1,1 +1,2 @@
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxx
+OPENAI_API_KEY=xxxxxxxxxxxxxxxx
+BING_SUBSCRIPTION_KEY=xxxxxxxxxxxxxx
