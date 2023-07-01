@@ -124,14 +124,14 @@ class OpenAIAzure():
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
-    def create_chat_model(self, num_output, temperature):
+    def create_chat_model(self, model_name, num_output, temperature):
         # max LLM token input size
         # max_input_size = 3900  # 4096
         # set number of output tokens
         # num_output = 1024  # 512
         # set maximum chunk overlap
         # max_chunk_overlap = 20
-        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        llm = AzureChatOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
                                openai_api_base=openai.api_base,
                                openai_api_type=openai.api_type,
@@ -200,7 +200,7 @@ class OpenAIAzure():
 
     def build_index(self, embeddings, documents, path, indexfilename):
         print(f"Loaded {len(documents)} new documents")
-        chunk_size = 1000 #1024 #2048
+        chunk_size = 1000 #1000 #1024 #2048
         chunk_overlap = 100
         # Get your splitter ready
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -239,14 +239,14 @@ class OpenAIAzure():
                 doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
         return doc_summary_index
 
-    def create_chat_model_with_prompt(self, num_output, temperature, prompt):
+    def create_chat_model_with_prompt(self, model_name, num_output, temperature, prompt):
         # # setup prompt
         # prompt = PromptTemplate(
         #     input_variables=["history", "human_input"],
         #     template=template
         # )
 
-        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        llm = AzureChatOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
                               openai_api_key=openai.api_key,
                               openai_api_base=openai.api_base,
                               openai_api_type=openai.api_type,
@@ -256,7 +256,7 @@ class OpenAIAzure():
                               streaming=True,
                               # callbacks=[StreamHandler]
                               )
-        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+        # llm = AzureOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
         #                   model_name=self.config_details['CHATGPT_MODEL'],
         #                   # openai_api_key=openai.api_key,
         #                   # openai_api_base=openai.api_base,
@@ -307,8 +307,8 @@ class OpenAIAzure():
 
         return csv_agent
 
-    def create_complete_model(self, num_output:int=1024, temperature:float=0.2):
-        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
+    def create_complete_model(self, model_name, num_output:int=1024, temperature:float=0.2):
+        llm = AzureChatOpenAI(deployment_name=model_name,
                               openai_api_key=openai.api_key,
                               openai_api_base=openai.api_base,
                               openai_api_type=openai.api_type,
@@ -317,8 +317,8 @@ class OpenAIAzure():
                               temperature=temperature, #0.2,
                               streaming=True,
                               )
-        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
-        #                   model_name=self.config_details['CHATGPT_MODEL'],
+        # llm = AzureOpenAI(deployment_name=model_name,
+        #                   model_name=model_name,
         #                   openai_api_key=openai.api_key,
         #                   openai_api_base=openai.api_base,
         #                   openai_api_type=openai.api_type,

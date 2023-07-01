@@ -2,20 +2,9 @@ import time
 
 import streamlit as st
 from streamlit_chat import message
-from src.chat import CasualChatBot
+from src.chat import CasualChatBot, StreamHandler
 import os
-from langchain.callbacks.base import BaseCallbackHandler
 
-
-class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text=""):
-        self.container = container
-        self.text=initial_text
-    def on_llm_new_token(self, token: str, **kwargs) -> None:
-        # "/" is a marker to show difference
-        # you don't need it
-        self.text+=token+"/"
-        # self.container.markdown(self.text)
 
 env_path = os.path.abspath('.')
 casual_chat_bot = CasualChatBot(env_path)
@@ -49,14 +38,27 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for AI Translator")
+        aa_llm_model = st.sidebar.selectbox(label="1. LLM Model",
+                                            options=["gpt-35-turbo", "gpt-35-turbo-16k"],
+                                            index=1,
+                                            on_change=set_reload_flag)
         # aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"],
         #                                    on_change=set_reload_flag)
-        aa_temperature = st.sidebar.selectbox(label="1.Temperature (0~1)",
+        aa_temperature = st.sidebar.selectbox(label="2. Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],
                                               index=1,
                                               on_change=set_reload_flag)
+        if "16k" in aa_llm_model:
+            aa_max_resp_max_val = 16 * 1024
+        else:
+            aa_max_resp_max_val = 4096
+        aa_max_resp = st.sidebar.slider(label="3. Max response",
+                                        min_value=256,
+                                        max_value=aa_max_resp_max_val,
+                                        value=4096,
+                                        on_change=set_reload_flag)
         if "T_chain" not in st.session_state or st.session_state["Translatorreloadflag"] == True:
-            chain = casual_chat_bot.initial_llm("Translate", 2048, float(aa_temperature))
+            chain = casual_chat_bot.initial_llm("Translate", aa_llm_model, aa_max_resp, float(aa_temperature))
             st.session_state["T_chain"] = chain
             st.session_state["Translatorreloadflag"] = False
 
@@ -85,7 +87,7 @@ def main():
                 # full_response = st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback])
                 for response in st.session_state["T_chain"].predict(human_input=prompt, callbacks=[st_callback]):
                     full_response += response#.choices[0].delta.get("content", "")
-                    time.sleep(0.01)
+                    time.sleep(0.001)
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
 

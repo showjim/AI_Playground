@@ -36,18 +36,25 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
-
-        aa_temperature = st.sidebar.selectbox(label="1.Temperature (0~1)",
+        aa_llm_model = st.sidebar.selectbox(label="1. LLM Model",
+                                            options=["gpt-35-turbo", "gpt-35-turbo-16k"],
+                                            index=1,
+                                            on_change=set_reload_flag)
+        aa_temperature = st.sidebar.selectbox(label="2. Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
                                               index=1,
                                               on_change=set_reload_flag)
-        aa_max_resp = st.sidebar.slider(label="2.Max response",
+        if "16k" in aa_llm_model:
+            aa_max_resp_max_val = 16 * 1024
+        else:
+            aa_max_resp_max_val = 4096
+        aa_max_resp = st.sidebar.slider(label="3. Max response",
                                         min_value=256,
-                                        max_value=2048,
-                                        value=512,
+                                        max_value=aa_max_resp_max_val,
+                                        value=1024,
                                         on_change=set_reload_flag)
         if "B_chain" not in st.session_state or st.session_state["B_casualchatreloadflag"] == True:
-            chain = casual_chat_bot.initial_llm("bing_search", "", int(aa_max_resp), float(aa_temperature))
+            chain = casual_chat_bot.initial_llm("bing_search", "", aa_llm_model, int(aa_max_resp), float(aa_temperature))
             st.session_state["B_chain"] = chain
             st.session_state["B_casualchatreloadflag"] = False
 

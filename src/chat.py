@@ -11,6 +11,18 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain.callbacks.base import BaseCallbackHandler
+
+
+class StreamHandler(BaseCallbackHandler):
+    def __init__(self, container, initial_text=""):
+        self.container = container
+        self.text=initial_text
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        # "/" is a marker to show difference
+        # you don't need it
+        self.text+=token+"/"
+        # self.container.markdown(self.text)
 
 class ChatBot():
     def __init__(self, docs_path:str, index_path:str, env_path:str):
@@ -39,8 +51,8 @@ class ChatBot():
     #     response = query_engine.query(query_str)
     #     return response.response
 
-    def initial_llm(self, num_output, temperature):
-        self.llm, self.embedding = self.model.create_chat_model(num_output, temperature)
+    def initial_llm(self,model_name, num_output, temperature):
+        self.llm, self.embedding = self.model.create_chat_model(model_name, num_output, temperature)
 
     def setup_vectordb(self, filname:str):
         DEFAULT_INDEX_FILE = Path(filname).stem + ".faiss"
@@ -131,7 +143,7 @@ class ChatBot():
         DOC_PROMPT = PromptTemplate(
             template="Content: {page_content}\nSource: {source}",
             input_variables=["page_content", "source"])
-        chain_type_kwargs = {"prompt": PROMPT}
+        # chain_type_kwargs = {"prompt": PROMPT}
         # qa = RetrievalQA.from_chain_type(llm=self.llm,
         #                                  chain_type="stuff",
         #                                  retriever=self.doc_summary_index.as_retriever(),
@@ -182,7 +194,7 @@ class CasualChatBot():
         # self.docs_path = docs_path
         # self.index_path =index_path
 
-    def initial_llm(self, mode:str, num_output, temperature):
+    def initial_llm(self, mode:str, model_name, num_output, temperature):
         prompt_template = ""
         if mode == "CasualChat":
             prompt_template = """Assistant is a large language model trained by OpenAI.
@@ -228,7 +240,7 @@ class CasualChatBot():
             print("Wrong mode selected!")
             return None
 
-        self.chatgpt_chain = self.model.create_chat_model_with_prompt(num_output, temperature, prompt)
+        self.chatgpt_chain = self.model.create_chat_model_with_prompt(model_name, num_output, temperature, prompt)
         return self.chatgpt_chain
 
     def chat(self, query_str:str):
@@ -246,11 +258,11 @@ class AgentChatBot():
         self.docs_path = docs_path
         # self.index_path =index_path
 
-    def initial_llm(self, mode:str, filename:str, num_output:int=1024, temperature:float=0):
+    def initial_llm(self, mode:str, filename:str, model_name, num_output:int=1024, temperature:float=0):
         if mode == "csv":
             self.agent = self.model.create_csv_agent(filename)
         elif mode == "bing_search":
-            self.model = self.model.create_complete_model(num_output, temperature)
+            self.model = self.model.create_complete_model(model_name, num_output, temperature)
             tools = load_tools(["bing-search"])
             self.agent = initialize_agent(
                 tools,

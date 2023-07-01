@@ -1,21 +1,10 @@
 import streamlit as st
 from streamlit_chat import message
-from src.chat import CasualChatBot
+from src.chat import CasualChatBot, StreamHandler
 import os, time
 from langchain.callbacks import StreamlitCallbackHandler
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.callbacks.base import BaseCallbackHandler
 
-
-class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text=""):
-        self.container = container
-        self.text=initial_text
-    def on_llm_new_token(self, token: str, **kwargs) -> None:
-        # "/" is a marker to show difference
-        # you don't need it
-        self.text+=token+"/"
-        # self.container.markdown(self.text)
 
 # __version__ = "Beta V0.0.2"
 
@@ -46,28 +35,27 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
-
-        aa_temperature = st.sidebar.selectbox(label="1.Temperature (0~1)",
+        aa_llm_model = st.sidebar.selectbox(label="1. LLM Model",
+                                              options=["gpt-35-turbo", "gpt-35-turbo-16k"],
+                                              index=1,
+                                              on_change=set_reload_flag)
+        aa_temperature = st.sidebar.selectbox(label="2. Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
                                               index=1,
                                               on_change=set_reload_flag)
-        aa_max_resp = st.sidebar.slider(label="2.Max response",
+        if "16k" in aa_llm_model:
+            aa_max_resp_max_val = 16*1024
+        else:
+            aa_max_resp_max_val = 4096
+        aa_max_resp = st.sidebar.slider(label="3. Max response",
                                         min_value=256,
-                                        max_value=2048,
-                                        value=512,
+                                        max_value=aa_max_resp_max_val,
+                                        value=2048,
                                         on_change=set_reload_flag)
         if "chain" not in st.session_state or st.session_state["casualchatreloadflag"] == True:
-            chain = casual_chat_bot.initial_llm("CasualChat", aa_max_resp, float(aa_temperature))
+            chain = casual_chat_bot.initial_llm("CasualChat", aa_llm_model, aa_max_resp, float(aa_temperature))
             st.session_state["chain"] = chain
             st.session_state["casualchatreloadflag"] = False
-
-    if False:
-        ## generated stores AI generated responses
-        if 'generated' not in st.session_state:
-            st.session_state['generated'] = ["I'm CasualChat, How may I help you?"]
-        ## past stores User's questions
-        if 'past' not in st.session_state:
-            st.session_state['past'] = ['Hi!']
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -94,38 +82,11 @@ def main():
                 # full_response = st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback])
                 for response in st.session_state["chain"].predict(human_input=prompt, callbacks=[st_callback]):
                     full_response += response #.choices[0].delta.get("content", "")
-                    time.sleep(0.01)
+                    time.sleep(0.001)
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
 
         st.session_state['messages'].append({"role": "assistant", "content": full_response})
-
-    if False:
-        # Layout of input/response containers
-        response_container = st.container()
-        # colored_header(label='', description='', color_name='blue-30')
-        input_container = st.container()
-
-
-        ## Applying the user input box
-        with input_container:
-            # user_input = get_text()
-            with st.form(key='my_form', clear_on_submit=True):
-                user_input = st.text_area("You: ", "", key="input")
-                submit_button = st.form_submit_button(label='Send')
-
-
-        ## Conditional display of AI generated responses as a function of user provided prompts
-        with response_container:
-            if submit_button and user_input:
-                response = generate_response(user_input)
-                st.session_state.past.append(user_input)
-                st.session_state.generated.append(response)
-
-            if st.session_state['generated']:
-                for i in range(len(st.session_state['generated'])):
-                    message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
-                    message(st.session_state["generated"][i], key=str(i), allow_html=True)
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from pathlib import Path
-from src.chat import ChatBot
+from src.chat import ChatBot, StreamHandler
 import nltk
 import ssl
 
@@ -49,20 +49,28 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for document chains")
-        aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains",
+        aa_llm_model = st.sidebar.selectbox(label="1. LLM Model",
+                                            options=["gpt-35-turbo", "gpt-35-turbo-16k"],
+                                            index=1,
+                                            on_change=set_reload_setting_flag)
+        aa_combine_type = st.sidebar.radio(label="2. Types of combine document chains",
                                            options=["stuff", "map_reduce", "refine", "map_rerank"],
                                            on_change=type_status_changed)
-        aa_temperature = st.sidebar.selectbox(label="2.Temperature (0~1)",
+        aa_temperature = st.sidebar.selectbox(label="3. Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],
                                               index=1,
                                               on_change=set_reload_setting_flag)
-        aa_max_resp = st.sidebar.slider(label="3.Max response",
+        if "16k" in aa_llm_model:
+            aa_max_resp_max_val = 16 * 1024
+        else:
+            aa_max_resp_max_val = 4096
+        aa_max_resp = st.sidebar.slider(label="4. Max response",
                                         min_value=256,
-                                        max_value=2048,
-                                        value=512,
+                                        max_value=aa_max_resp_max_val,
+                                        value=2048,
                                         on_change=set_reload_setting_flag)
         if st.session_state["vectorreloadflag"] == True:
-            st.session_state["FileChat"].initial_llm(aa_max_resp, float(aa_temperature))
+            st.session_state["FileChat"].initial_llm(aa_llm_model, aa_max_resp, float(aa_temperature))
             st.session_state["vectorreloadflag"] = False
 
     # main page

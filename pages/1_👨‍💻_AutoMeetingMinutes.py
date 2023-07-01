@@ -14,7 +14,7 @@ work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",
                 work_path + "/index",
                 work_path)
-chat.initial_llm(2048, 0.2)
+chat.initial_llm("gpt-35-turbo", 2048, 0.2)
 query_str = """Please summary this meeting and output meeting minutes.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
 1. who attend the meeting?
@@ -85,7 +85,7 @@ def main():
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",
         #                             work_path)
-        st.text(response)
+        st.markdown(response)
         # st.info('This is a purely informational message2', icon="ℹ️")
 
 if __name__ == "__main__":
