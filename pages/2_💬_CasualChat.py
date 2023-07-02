@@ -28,7 +28,7 @@ def set_reload_flag():
     st.session_state["casualchatreloadflag"] = True
 
 def main():
-    st.title('🤗💬 Casual Chat Web-UI App')
+    st.title('💬 Casual Chat Web-UI App')
     # Sidebar contents
     if "casualchatreloadflag" not in st.session_state:
         st.session_state["casualchatreloadflag"] = None
@@ -37,7 +37,7 @@ def main():
         st.sidebar.subheader("Parameter for Chatbot")
         aa_llm_model = st.sidebar.selectbox(label="1. LLM Model",
                                               options=["gpt-35-turbo", "gpt-35-turbo-16k"],
-                                              index=1,
+                                              index=0,
                                               on_change=set_reload_flag)
         aa_temperature = st.sidebar.selectbox(label="2. Temperature (0~1)",
                                               options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
