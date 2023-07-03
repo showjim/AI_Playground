@@ -12,7 +12,7 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.agents import AgentType, initialize_agent, load_tools
 from langchain.callbacks.base import BaseCallbackHandler
-
+from langchain.chains.question_answering.map_rerank_prompt import PROMPT as map_rerank_prompt
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -130,6 +130,16 @@ class ChatBot():
         return qa_chain
 
     def chat_QA_with_type_select(self, doc_summary_index, chain_type:str="stuff"):
+        # prompt_template = """Given the following extracted parts of a long document and a question,
+        # create a final answer in the same language as the question. If you don't know the answer, just say that you don't know.
+        # Don't try to make up an answer.
+        #
+        # QUESTION: {question}
+        # =========
+        # {summaries}
+        # =========
+        # Answer in the original language of the question:
+        # """
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base. 
 
@@ -140,9 +150,49 @@ class ChatBot():
         PROMPT = PromptTemplate(
             template=prompt_template, input_variables=["summaries", "question"]
         )
+
         DOC_PROMPT = PromptTemplate(
             template="Content: {page_content}\nSource: {source}",
             input_variables=["page_content", "source"])
+
+        question_prompt_template = """Use the following portion of a long document to see if any of the text is relevant to answer the question. 
+        Return any relevant text verbatim.
+        {context}
+        Question: {question}
+        Relevant text, if any:"""
+        QUESTION_PROMPT = PromptTemplate(
+            template=question_prompt_template, input_variables=["context", "question"]
+        )
+
+        refine_prompt_template = (
+            "The original question is as follows: {question}\n"
+            "We have provided an existing answer, including sources: {existing_answer}\n"
+            "We have the opportunity to refine the existing answer"
+            "(only if needed) with some more context below.\n"
+            "------------\n"
+            "{context_str}\n"
+            "------------\n"
+            "Given the new context, refine the original answer to better "
+            "answer the question. "
+            "If you do update it, please update the sources as well. "
+            "If the context isn't useful, return the original answer."
+        )
+        REFINE_PROMPT = PromptTemplate(
+            input_variables=["question", "existing_answer", "context_str"],
+            template=refine_prompt_template,
+        )
+
+        DEFAULT_TEXT_QA_PROMPT_TMPL = (
+            "Context information is below. \n"
+            "---------------------\n"
+            "{context_str}"
+            "\n---------------------\n"
+            "Given the context information and not prior knowledge, "
+            "answer the question: {question}\n"
+        )
+        REFINE_TEXT_QA_PROMPT = PromptTemplate(
+            input_variables=["context_str", "question"], template=DEFAULT_TEXT_QA_PROMPT_TMPL
+        )
         # chain_type_kwargs = {"prompt": PROMPT}
         # qa = RetrievalQA.from_chain_type(llm=self.llm,
         #                                  chain_type="stuff",
@@ -161,13 +211,34 @@ class ChatBot():
         #                                            return_source_documents=True)
 
         question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
-        # doc_chain = load_qa_chain(self.llm, chain_type=chain_type, verbose=True) #map_reduce,stuff
-        doc_chain = load_qa_with_sources_chain(self.llm,
-                                               prompt=PROMPT,
-                                               document_prompt=DOC_PROMPT,
-                                               chain_type=chain_type,
-                                               verbose=True)
 
+        # doc_chain = load_qa_chain(self.llm, chain_type=chain_type, verbose=True) #map_reduce,stuff
+        if chain_type == "stuff":
+            doc_chain = load_qa_with_sources_chain(self.llm,
+                                                   prompt=PROMPT,
+                                                   document_prompt=DOC_PROMPT,
+                                                   chain_type=chain_type,
+                                                   verbose=True)
+        elif chain_type == "map_reduce":
+            doc_chain = load_qa_with_sources_chain(self.llm,
+                                                   question_prompt=QUESTION_PROMPT,
+                                                   combine_prompt=PROMPT,
+                                                   document_prompt=DOC_PROMPT,
+                                                   chain_type=chain_type,
+                                                   verbose=True)
+        elif chain_type == "refine":
+            doc_chain = load_qa_with_sources_chain(self.llm,
+                                                   question_prompt=REFINE_TEXT_QA_PROMPT,
+                                                   refine_prompt=REFINE_PROMPT,
+                                                   document_prompt=DOC_PROMPT,
+                                                   chain_type=chain_type,
+                                                   verbose=True)
+        elif chain_type == "map_rerank":
+            # use the default prompt from langchain, I think few ppl will use this mode
+            doc_chain = load_qa_with_sources_chain(self.llm,
+                                                   prompt=map_rerank_prompt,
+                                                   chain_type=chain_type,
+                                                   verbose=True)
         chain = ConversationalRetrievalChain(
             retriever=doc_summary_index.as_retriever(),
             question_generator=question_generator,
