@@ -10,9 +10,18 @@ from langchain.chains import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
-from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain.agents import AgentType, initialize_agent, load_tools, Tool
 from langchain.callbacks.base import BaseCallbackHandler
+
+from langchain.chains.qa_with_sources.stuff_prompt import EXAMPLE_PROMPT as DOC_PROMPT
+from langchain.chains.qa_with_sources.map_reduce_prompt import QUESTION_PROMPT as QUESTION_PROMPT
+from langchain.chains.qa_with_sources.refine_prompts import (
+    DEFAULT_TEXT_QA_PROMPT as REFINE_TEXT_QA_PROMPT,
+    DEFAULT_REFINE_PROMPT as REFINE_PROMPT,
+)
 from langchain.chains.question_answering.map_rerank_prompt import PROMPT as map_rerank_prompt
+
+from langchain.utilities import BingSearchAPIWrapper
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -138,8 +147,7 @@ class ChatBot():
         # =========
         # {summaries}
         # =========
-        # Answer in the original language of the question:
-        # """
+        # FINAL ANSWER:"""
         prompt_template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, please think rationally and answer from your own knowledge base. 
 
@@ -151,48 +159,6 @@ class ChatBot():
             template=prompt_template, input_variables=["summaries", "question"]
         )
 
-        DOC_PROMPT = PromptTemplate(
-            template="Content: {page_content}\nSource: {source}",
-            input_variables=["page_content", "source"])
-
-        question_prompt_template = """Use the following portion of a long document to see if any of the text is relevant to answer the question. 
-        Return any relevant text verbatim.
-        {context}
-        Question: {question}
-        Relevant text, if any:"""
-        QUESTION_PROMPT = PromptTemplate(
-            template=question_prompt_template, input_variables=["context", "question"]
-        )
-
-        refine_prompt_template = (
-            "The original question is as follows: {question}\n"
-            "We have provided an existing answer, including sources: {existing_answer}\n"
-            "We have the opportunity to refine the existing answer"
-            "(only if needed) with some more context below.\n"
-            "------------\n"
-            "{context_str}\n"
-            "------------\n"
-            "Given the new context, refine the original answer to better "
-            "answer the question. "
-            "If you do update it, please update the sources as well. "
-            "If the context isn't useful, return the original answer."
-        )
-        REFINE_PROMPT = PromptTemplate(
-            input_variables=["question", "existing_answer", "context_str"],
-            template=refine_prompt_template,
-        )
-
-        DEFAULT_TEXT_QA_PROMPT_TMPL = (
-            "Context information is below. \n"
-            "---------------------\n"
-            "{context_str}"
-            "\n---------------------\n"
-            "Given the context information and not prior knowledge, "
-            "answer the question: {question}\n"
-        )
-        REFINE_TEXT_QA_PROMPT = PromptTemplate(
-            input_variables=["context_str", "question"], template=DEFAULT_TEXT_QA_PROMPT_TMPL
-        )
         # chain_type_kwargs = {"prompt": PROMPT}
         # qa = RetrievalQA.from_chain_type(llm=self.llm,
         #                                  chain_type="stuff",
@@ -334,11 +300,19 @@ class AgentChatBot():
             self.agent = self.model.create_csv_agent(filename)
         elif mode == "bing_search":
             self.model = self.model.create_complete_model(model_name, num_output, temperature)
-            tools = load_tools(["bing-search"])
+            tools = load_tools(["human", "bing-search"])
+            # search = BingSearchAPIWrapper()
+            # tools = [
+            #     Tool(
+            #         name="Intermediate Answer",
+            #         func=search.run,
+            #         description="useful for when you need to ask with search",
+            #     )
+            # ]
             self.agent = initialize_agent(
                 tools,
                 self.model,
-                agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+                agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, #SELF_ASK_WITH_SEARCH ZERO_SHOT_REACT_DESCRIPTION
                 verbose=True,
                 handle_parsing_errors="Check your output and make sure it conforms!"
             )

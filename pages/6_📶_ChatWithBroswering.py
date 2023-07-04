@@ -22,14 +22,14 @@ env_path = os.path.abspath('.')
 casual_chat_bot = AgentChatBot(env_path, "") #CasualChatBot(env_path)
 # casual_chat_bot.setup_langchain() #change to st, then we can use memory function
 
-st.set_page_config(page_title="🥅 Chat With Broswering")
+st.set_page_config(page_title="📶 Chat With Broswering")
 
 def set_reload_flag():
     # st.write("New document need upload")
     st.session_state["B_casualchatreloadflag"] = True
 
 def main():
-    st.title('🛜 Chat With Broswering')
+    st.title('📶 Chat With Broswering')
     # Sidebar contents
     if "B_casualchatreloadflag" not in st.session_state:
         st.session_state["B_casualchatreloadflag"] = None
