@@ -55,7 +55,7 @@ def main():
         aa_max_resp = st.sidebar.slider(label="3. Max response",
                                         min_value=256,
                                         max_value=aa_max_resp_max_val,
-                                        value=4096,
+                                        value=2048,
                                         on_change=set_reload_flag)
         if "T_chain" not in st.session_state or st.session_state["Translatorreloadflag"] == True:
             chain = casual_chat_bot.initial_llm("Translate", aa_llm_model, aa_max_resp, float(aa_temperature))
