@@ -14,6 +14,7 @@ from langchain.llms import AzureOpenAI
 
 from langchain.prompts.prompt import PromptTemplate
 import pandas as pd
+from evaluate import load, combine
 
 def save_csv(examples, filename:str="generated_QA.csv"):
     df = pd.DataFrame(examples)
@@ -133,6 +134,7 @@ for i, eg in enumerate(examples[:3]):
     print("Predicted Grade: " + graded_outputs[i]["text"])
     print()
 
+# output with binary eval
 outputs = [
             {
                 "query": predictions[i]["query"],
@@ -144,4 +146,55 @@ outputs = [
         ]
 save_csv(outputs, "grade_result.csv")
 
+# perform SQUaD Eval
+# Some data munging to get the examples in the right format
+for i, eg in enumerate(examples):
+    eg["id"] = str(i)
+    eg["answers"] = {"text": [eg["answer"]], "answer_start": [0]}
+    predictions[i]["id"] = str(i)
+    predictions[i]["prediction_text"] = predictions[i]["result"]
 
+for p in predictions:
+    del p["result"]
+    del p["query"]
+    del p["answer"]
+    # del p["text"]
+
+new_examples = examples.copy()
+for eg in new_examples:
+    del eg["query"]
+    del eg["answer"]
+
+if 1:
+    squad_metric = load("squad")
+    results = []
+    for i in range(len(new_examples)):
+        results.append(squad_metric.compute(
+            references=[new_examples[i]],
+            predictions=[predictions[i]],
+        ))
+
+    print(results)
+
+    new_outputs = [
+        {
+            "query": outputs[i]["query"],
+            "answer": outputs[i]["answer"],
+            "result": outputs[i]["result"],
+            "grade": outputs[i]["grade"],
+            "exact_match": results[i]["exact_match"],
+            "f1": results[i]["f1"]
+        }
+        for i, example in enumerate(outputs)
+    ]
+    save_csv(new_outputs, "f1_grade_result.csv")
+else:
+    clf_metrics = combine(["accuracy", "f1", "precision", "recall"])
+    results = []
+    for i in range(len(new_examples)):
+        results.append(clf_metrics.compute(
+            references=[new_examples[i]],
+            predictions=[predictions[i]],
+        ))
+
+    print(results)
