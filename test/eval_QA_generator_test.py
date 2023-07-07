@@ -73,15 +73,7 @@ llm = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
                                temperature=0.2,
                               # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
                                )
-# llm = AzureOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
-#                           model_name=config_details['CHATGPT_MODEL'],
-#                           openai_api_key=openai.api_key,
-#                           openai_api_base=openai.api_base,
-#                           openai_api_type=openai.api_type,
-#                           openai_api_version=config_details['OPENAI_API_VERSION'],
-#                           # max_tokens=num_output,
-#                           temperature=0,
-#                           )
+
 embeddings = OpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chunk_size=1)
 
 loader = PyMuPDFLoader("./An Introduction to Scan Test for Test Engineers_1.pdf")

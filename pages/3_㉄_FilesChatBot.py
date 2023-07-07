@@ -15,9 +15,6 @@ import ssl
 #     ssl._create_default_https_context = _create_unverified_https_context
 # nltk.download('punkt')
 
-
-reset_db = False
-
 st.title("㉄ Chat with files")
 
 def set_reload_setting_flag():
