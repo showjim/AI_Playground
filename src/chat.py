@@ -300,7 +300,7 @@ class AgentChatBot():
             self.agent = self.model.create_csv_agent(filename)
         elif mode == "bing_search":
             self.model = self.model.create_complete_model(model_name, num_output, temperature)
-            tools = load_tools(["human", "bing-search"])
+            tools = load_tools(["bing-search"]) #"human",
             # search = BingSearchAPIWrapper()
             # tools = [
             #     Tool(
