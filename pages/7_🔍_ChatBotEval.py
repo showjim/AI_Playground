@@ -3,6 +3,7 @@ import json, os, shutil, openai, csv
 from dotenv import load_dotenv
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
 
 work_path = os.path.abspath('.')
 def setup_env():
@@ -53,8 +54,11 @@ def define_splitter(splitter:str, chunk_size, chunk_overlap):
         text_splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     return text_splitter
 
-def define_embedding():
-    pass
+def define_embedding(embedding_method:str):
+    if embedding_method == "OpenAI":
+        embeddings = OpenAIEmbeddings(deployment="text-embedding-ada-002", chunk_size=1)
+    elif embedding_method == "Azure Cognitive Search":
+        pass
 
 
 def main():
@@ -107,7 +111,7 @@ def main():
                                        on_change=set_reload_setting_flag)
 
     if st.session_state["evalreloadflag"] == True:
-        st.session_state["EvalChatModel"] = define_llm(aa_llm_model)
+        EvalChatModel = define_llm(aa_llm_model)
         st.session_state["evalreloadflag"] = False
 
     # Main
