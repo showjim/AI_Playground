@@ -17,6 +17,8 @@ from langchain.retrievers import (
     AzureCognitiveSearchRetriever,
     TFIDFRetriever,
 )
+from langchain.prompts.prompt import PromptTemplate
+import pandas as pd
 
 work_path = os.path.abspath('.')
 
@@ -76,6 +78,7 @@ def define_retriver(retriver: str):
 
 
 def define_splitter(splitter: str, chunk_size, chunk_overlap):
+    text_splitter = None
     if splitter == "RecursiveCharacterTextSplitter":
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     elif splitter == "CharacterTextSplitter":
@@ -84,6 +87,7 @@ def define_splitter(splitter: str, chunk_size, chunk_overlap):
 
 
 def define_embedding(embedding_method: str):
+    embeddings = None
     if embedding_method == "OpenAI":
         embeddings = OpenAIEmbeddings(deployment="text-embedding-ada-002", chunk_size=1)
     elif embedding_method == "Azure Cognitive Search":
@@ -95,6 +99,10 @@ def load_single_document(file_path):
     loader = PyMuPDFLoader(file_path)
     return loader.load()  # [0]
 
+
+def save_csv(examples, filename:str="generated_QA.csv"):
+    df = pd.DataFrame(examples)
+    df.to_csv(filename)
 
 def main():
     # Initial
@@ -151,8 +159,32 @@ def main():
         TextSplitter = define_splitter(aa_split_methods, aa_chunk_size, aa_overlap_size)
         st.session_state["evalreloadflag"] = False
 
-    # Main
+    ## Main
     st.header("`Demo auto-evaluator`")
+
+    # Prompt for evaluation
+    template = """You are a teacher grading a quiz.
+    You are given a question, the student's answer, and the true answer, and are asked to score the student answer as either CORRECT or INCORRECT.
+    Write out in a step by step manner your reasoning to be sure that your conclusion is correct. Avoid simply stating the correct answer at the outset.
+
+    Example Format:
+    QUESTION: question here
+    TRUE ANSWER: true answer here
+    STUDENT ANSWER: student's answer here
+    GRADE: CORRECT or INCORRECT here
+
+    Grade the student answers based ONLY on their factual accuracy. Ignore differences in punctuation and phrasing between the student answer and true answer. It is OK if the student answer contains more information than the true answer, as long as it does not contain any conflicting statements. Begin! 
+
+    QUESTION: {query}
+    TRUE ANSWER: {answer}
+    STUDENT ANSWER: {result}
+    GRADE:"""
+    input = st.text_area(label="Evaluation Prompt", value=template, )
+    PROMPT = PromptTemplate(
+        input_variables=["query", "result", "answer"], template=input
+    )
+
+    # Upload file to generate Q&A pairs
     file_paths = st.file_uploader("1.Upload document files to generate QAs",
                                   type=["pdf"],
                                   accept_multiple_files=False)
@@ -195,7 +227,7 @@ def main():
                         elif aa_retriver == "TFIDF":
                             tmpdocsearch = TFIDFRetriever.from_documents(texts)
                         elif aa_retriver == "Azure Cognitive Search":
-                            tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=4)
+                            tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
 
                         if i == 0:
                             docsearch = tmpdocsearch
@@ -217,6 +249,24 @@ def main():
                 if len(uploaded_paths) > 0:
                     st.write(f"✅ " + ", ".join(uploaded_paths) + " uploaed")
 
+    # Generate Q&A
+    if st.button("Generate Q&A", type="primary"):
+        # Hard - coded examples
+        examples = [
+            {
+                "query": "What did the president say about Ketanji Brown Jackson",
+                "answer": "He praised her legal ability and said he nominated her for the supreme court.",
+            },
+            {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
+        ]
+
+        example_gen_chain = QAGenerateChain.from_llm(LlmModel)
+        new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:5]])
+        print(new_examples[0])
+
+        # Combine examples
+        examples += new_examples
+        save_csv(examples)
 
 if __name__ == "__main__":
     main()
