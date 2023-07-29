@@ -15,6 +15,7 @@ from langchain.document_loaders import (
 from langchain.retrievers import (
     SVMRetriever,
     AzureCognitiveSearchRetriever,
+    TFIDFRetriever,
 )
 
 work_path = os.path.abspath('.')
@@ -65,9 +66,11 @@ def define_llm(model: str):
 
 
 def define_retriver(retriver: str):
-    if retriver == "OpenAI":
+    if retriver == "Similarity Search":
         pass
     elif retriver == "Azure Cognitive Search":
+        pass
+    elif retriver == "SVM":
         pass
     return retriver
 
@@ -129,7 +132,7 @@ def main():
 
         # 3. Retriver
         aa_retriver = st.radio(label="`Choose retriever`",
-                               options=["Azure Cognitive Search", "OpenAI", "SVM"],
+                               options=["Azure Cognitive Search", "Similarity Search", "SVM", "TFIDF"],
                                index=0,
                                on_change=set_reload_setting_flag)
         aa_chunk_num = st.select_slider("`Choose # chunks to retrieve`",
@@ -152,7 +155,7 @@ def main():
     st.header("`Demo auto-evaluator`")
     file_paths = st.file_uploader("1.Upload document files to generate QAs",
                                   type=["pdf"],
-                                  accept_multiple_files=True)
+                                  accept_multiple_files=False)
 
     if st.button("Upload"):
         if file_paths is not None or len(file_paths) > 0:
@@ -179,24 +182,40 @@ def main():
                     uploaded_path = uploaded_paths[i]
                     texts = TextSplitter.split_documents(documents)
 
-                    # save documents as index, and then load them
+                    # search & retriver
+                    # FAISS: save documents as index, and then load them(not use the save function)
+                    # Others do not support save for now
                     single_index_name = Path(uploaded_path).stem + ".index"
                     if Path(single_index_name).is_file() == False:
-                        tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel)
-                        tmpdocsearch.save_local("./index/", Path(uploaded_path).stem)
+                        if aa_retriver == "Similarity Search":
+                            tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel)
+                            tmpdocsearch.save_local("./index/", Path(uploaded_path).stem)
+                        elif aa_retriver == "SVM":
+                            tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel)
+                        elif aa_retriver == "TFIDF":
+                            tmpdocsearch = TFIDFRetriever.from_documents(texts)
+                        elif aa_retriver == "Azure Cognitive Search":
+                            tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=4)
+
                         if i == 0:
                             docsearch = tmpdocsearch
                         else:
+                            # not used
                             docsearch.merge_from(tmpdocsearch)
                     else:
+                        # not used
                         if i == 0:
                             docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
                         else:
+                            # not used
                             docsearch.merge_from(FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
 
+                # make chain
+                qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
 
-                if os.path.exists(uploaded_path) == True:
-                    st.write(f"✅ {Path(uploaded_path).name} uploaed")
+
+                if len(uploaded_paths) > 0:
+                    st.write(f"✅ " + ", ".join(uploaded_paths) + " uploaed")
 
 
 if __name__ == "__main__":
