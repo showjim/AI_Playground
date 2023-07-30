@@ -20,6 +20,7 @@ from langchain.retrievers import (
 from langchain.prompts.prompt import PromptTemplate
 import pandas as pd
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
+from evaluate import load, combine
 
 work_path = os.path.abspath('.')
 
@@ -281,7 +282,7 @@ def main():
 
         example_gen_chain = QAGenerateChain.from_llm(LlmModel)
         new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
-        print(new_examples[0])
+        # print(new_examples[0])
 
         # Combine examples
         examples += [tmp["qa_pairs"] for tmp in new_examples]
@@ -297,13 +298,13 @@ def main():
         eval_chain = QAEvalChain.from_llm(LlmModel, prompt=PROMPT)
         # eval_chain = CotQAEvalChain.from_llm(llm2)
         graded_outputs = eval_chain.evaluate(examples, predictions)
-        for i, eg in enumerate(examples[:3]):
-            print(f"Example {i}:")
-            print("Question: " + predictions[i]["query"])
-            print("Real Answer: " + predictions[i]["answer"])
-            print("Predicted Answer: " + predictions[i]["result"])
-            print("Predicted Grade: " + graded_outputs[i]["results"])
-            print()
+        # for i, eg in enumerate(examples[:3]):
+        #     print(f"Example {i}:")
+        #     print("Question: " + predictions[i]["query"])
+        #     print("Real Answer: " + predictions[i]["answer"])
+        #     print("Predicted Answer: " + predictions[i]["result"])
+        #     print("Predicted Grade: " + graded_outputs[i]["results"])
+        #     print()
 
         # output with binary eval
         outputs = [
@@ -315,8 +316,51 @@ def main():
             }
             for i, example in enumerate(examples)
         ]
-        show_csv(outputs)
+        # show_csv(outputs)
         # save_csv(outputs, "grade_result.csv")
+
+        # perform SQUaD Eval
+        # Some data munging to get the examples in the right format
+        for i, eg in enumerate(examples):
+            eg["id"] = str(i)
+            eg["answers"] = {"text": [eg["answer"]], "answer_start": [0]}
+            predictions[i]["id"] = str(i)
+            predictions[i]["prediction_text"] = predictions[i]["result"]
+
+        for p in predictions:
+            del p["result"]
+            del p["query"]
+            del p["answer"]
+            # del p["text"]
+
+        new_examples = examples.copy()
+        for eg in new_examples:
+            del eg["query"]
+            del eg["answer"]
+
+        squad_metric = load("squad")
+        results = []
+        for i in range(len(new_examples)):
+            results.append(squad_metric.compute(
+                references=[new_examples[i]],
+                predictions=[predictions[i]],
+            ))
+
+        print(results)
+
+        new_outputs = [
+            {
+                "query": outputs[i]["query"],
+                "answer": outputs[i]["answer"],
+                "predict result": outputs[i]["predict result"],
+                "grade": outputs[i]["grade"],
+                "exact_match": results[i]["exact_match"],
+                "f1": results[i]["f1"]
+            }
+            for i, example in enumerate(outputs)
+        ]
+        show_csv(new_outputs)
+        # save_csv(new_outputs, "f1_grade_result.csv")
 
 if __name__ == "__main__":
     main()
