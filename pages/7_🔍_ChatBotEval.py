@@ -19,9 +19,9 @@ from langchain.retrievers import (
 )
 from langchain.prompts.prompt import PromptTemplate
 import pandas as pd
+from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
 
 work_path = os.path.abspath('.')
-
 
 def setup_env():
     # Load OpenAI key
@@ -79,7 +79,7 @@ def define_retriver(retriver: str):
 
 def define_splitter(splitter: str, chunk_size, chunk_overlap):
     text_splitter = None
-    if splitter == "RecursiveCharacterTextSplitter":
+    if splitter == "RecursiveTextSplitter":
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     elif splitter == "CharacterTextSplitter":
         text_splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -89,7 +89,11 @@ def define_splitter(splitter: str, chunk_size, chunk_overlap):
 def define_embedding(embedding_method: str):
     embeddings = None
     if embedding_method == "OpenAI":
-        embeddings = OpenAIEmbeddings(deployment="text-embedding-ada-002", chunk_size=1)
+        embeddings = OpenAIEmbeddings(deployment="text-embedding-ada-002",
+                                      model="text-embedding-ada-002",
+                                      openai_api_base=openai.api_base,
+                                      openai_api_type=openai.api_type,
+                                      chunk_size=1,)
     elif embedding_method == "Azure Cognitive Search":
         pass
     return embeddings
@@ -104,11 +108,21 @@ def save_csv(examples, filename:str="generated_QA.csv"):
     df = pd.DataFrame(examples)
     df.to_csv(filename)
 
+def show_csv(examples):
+    df = pd.DataFrame(examples)
+    st.dataframe(df)
+
 def main():
     # Initial
     setup_env()
     if "evalreloadflag" not in st.session_state:
         st.session_state["evalreloadflag"] = True
+    if "EvalTexts" not in st.session_state:
+        st.session_state["EvalTexts"] = None
+    if "EvalQAs" not in st.session_state:
+        st.session_state["EvalQAs"] = None
+    if "EvalQAChain" not in st.session_state:
+        st.session_state["EvalQAChain"] = None
 
     # Setup Side Bar
     with st.sidebar:
@@ -130,8 +144,8 @@ def main():
                                   on_change=set_reload_setting_flag)
         aa_overlap_size = st.slider(label="`Choose overlap for splitting`",
                                     min_value=0,
-                                    max_value=100,
-                                    value=200,
+                                    max_value=200,
+                                    value=0,
                                     on_change=set_reload_setting_flag)
         aa_split_methods = st.radio(label="`Split method`",
                                     options=["RecursiveTextSplitter", "CharacterTextSplitter"],
@@ -140,7 +154,7 @@ def main():
 
         # 3. Retriver
         aa_retriver = st.radio(label="`Choose retriever`",
-                               options=["Azure Cognitive Search", "Similarity Search", "SVM", "TFIDF"],
+                               options=["Similarity Search", "Azure Cognitive Search", "SVM", "TFIDF"],
                                index=0,
                                on_change=set_reload_setting_flag)
         aa_chunk_num = st.select_slider("`Choose # chunks to retrieve`",
@@ -149,11 +163,11 @@ def main():
 
         # 4. Embedding
         aa_embedding_method = st.radio(label="`Choose embeddings`",
-                                       options=["Azure Cognitive Search", "OpenAI"],
+                                       options=["OpenAI", "Azure Cognitive Search"],
                                        index=0,
                                        on_change=set_reload_setting_flag)
 
-    if st.session_state["evalreloadflag"] == True:
+        # if st.session_state["evalreloadflag"] == True:
         LlmModel = define_llm(aa_llm_model)
         EmbeddingModel = define_embedding(aa_embedding_method)
         TextSplitter = define_splitter(aa_split_methods, aa_chunk_size, aa_overlap_size)
@@ -181,13 +195,13 @@ def main():
     GRADE:"""
     input = st.text_area(label="Evaluation Prompt", value=template, )
     PROMPT = PromptTemplate(
-        input_variables=["query", "result", "answer"], template=input
+        input_variables=["query", "answer", "result"], template=input
     )
 
     # Upload file to generate Q&A pairs
-    file_paths = st.file_uploader("1.Upload document files to generate QAs",
+    file_paths = [st.file_uploader("1.Upload document files to generate QAs",
                                   type=["pdf"],
-                                  accept_multiple_files=False)
+                                  accept_multiple_files=False)]
 
     if st.button("Upload"):
         if file_paths is not None or len(file_paths) > 0:
@@ -204,7 +218,7 @@ def main():
             with st.spinner('Create vector DB'):
                 # load documents
                 documents = []
-                with tqdm(total=len(uploaded_path), desc='Loading new documents', ncols=80) as pbar:
+                with tqdm(total=len(uploaded_paths), desc='Loading new documents', ncols=80) as pbar:
                     for uploaded_path in uploaded_paths:
                         documents = documents + load_single_document(uploaded_path)
                         pbar.update()
@@ -213,11 +227,12 @@ def main():
                 for i in range(len(uploaded_paths)):
                     uploaded_path = uploaded_paths[i]
                     texts = TextSplitter.split_documents(documents)
+                    st.session_state["EvalTexts"] = texts
 
                     # search & retriver
                     # FAISS: save documents as index, and then load them(not use the save function)
                     # Others do not support save for now
-                    single_index_name = Path(uploaded_path).stem + ".index"
+                    single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
                     if Path(single_index_name).is_file() == False:
                         if aa_retriver == "Similarity Search":
                             tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel)
@@ -235,15 +250,18 @@ def main():
                             # not used
                             docsearch.merge_from(tmpdocsearch)
                     else:
-                        # not used
+                        # only used for FAISS
                         if i == 0:
-                            docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                            if aa_retriver == "Similarity Search":
+                                docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
                         else:
                             # not used
                             docsearch.merge_from(FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
 
                 # make chain
-                qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
+                # qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
+                qa_chain = RetrievalQA.from_llm(llm=LlmModel, retriever=docsearch.as_retriever())
+                st.session_state["EvalQAChain"] = qa_chain
 
 
                 if len(uploaded_paths) > 0:
@@ -251,6 +269,7 @@ def main():
 
     # Generate Q&A
     if st.button("Generate Q&A", type="primary"):
+        texts = st.session_state["EvalTexts"]
         # Hard - coded examples
         examples = [
             {
@@ -261,12 +280,43 @@ def main():
         ]
 
         example_gen_chain = QAGenerateChain.from_llm(LlmModel)
-        new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:5]])
+        new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
         print(new_examples[0])
 
         # Combine examples
-        examples += new_examples
-        save_csv(examples)
+        examples += [tmp["qa_pairs"] for tmp in new_examples]
+        st.session_state["EvalQAs"] = examples
+        show_csv(examples)
+        # save_csv(examples)
+
+    # Start predict
+    if st.button("Start EVAL", type="primary"):
+        examples = st.session_state["EvalQAs"]
+        qa_chain = st.session_state["EvalQAChain"]
+        predictions = qa_chain.apply(examples)
+        eval_chain = QAEvalChain.from_llm(LlmModel, prompt=PROMPT)
+        # eval_chain = CotQAEvalChain.from_llm(llm2)
+        graded_outputs = eval_chain.evaluate(examples, predictions)
+        for i, eg in enumerate(examples[:3]):
+            print(f"Example {i}:")
+            print("Question: " + predictions[i]["query"])
+            print("Real Answer: " + predictions[i]["answer"])
+            print("Predicted Answer: " + predictions[i]["result"])
+            print("Predicted Grade: " + graded_outputs[i]["results"])
+            print()
+
+        # output with binary eval
+        outputs = [
+            {
+                "query": predictions[i]["query"],
+                "answer": predictions[i]["answer"],
+                "predict result": predictions[i]["result"],
+                "grade": graded_outputs[i]["results"]
+            }
+            for i, example in enumerate(examples)
+        ]
+        show_csv(outputs)
+        # save_csv(outputs, "grade_result.csv")
 
 if __name__ == "__main__":
     main()
