@@ -112,6 +112,7 @@ def save_csv(examples, filename:str="generated_QA.csv"):
 def show_csv(examples):
     df = pd.DataFrame(examples)
     st.dataframe(df)
+    return df
 
 def main():
     # Initial
@@ -124,6 +125,8 @@ def main():
         st.session_state["EvalQAs"] = None
     if "EvalQAChain" not in st.session_state:
         st.session_state["EvalQAChain"] = None
+    if "EvalUploadFile" not in st.session_state:
+        st.session_state["EvalUploadFile"] = None
 
     # Setup Side Bar
     with st.sidebar:
@@ -199,168 +202,208 @@ def main():
         input_variables=["query", "answer", "result"], template=input
     )
 
-    # Upload file to generate Q&A pairs
-    file_paths = [st.file_uploader("1.Upload document files to generate QAs",
-                                  type=["pdf"],
-                                  accept_multiple_files=False)]
 
-    if st.button("Upload"):
-        if file_paths is not None or len(file_paths) > 0:
-            # save file
-            with st.spinner('Reading file'):
-                uploaded_paths = []
-                for file_path in file_paths:
-                    uploaded_paths.append(os.path.join(work_path + "/tempDir/output", file_path.name))
-                    uploaded_path = uploaded_paths[-1]
-                    with open(uploaded_path, mode="wb") as f:
-                        f.write(file_path.getbuffer())
+    qa_gen_container = st.container()
+    # st.write("2. Upload QA pairs")
+    qa_upload_container = st.container()
+    st.write("3. Run EVAL")
+    eval_container = st.container()
 
-            # process file
-            with st.spinner('Create vector DB'):
-                # load documents
-                documents = []
-                with tqdm(total=len(uploaded_paths), desc='Loading new documents', ncols=80) as pbar:
-                    for uploaded_path in uploaded_paths:
-                        documents = documents + load_single_document(uploaded_path)
-                        pbar.update()
+    with qa_gen_container:
+        # Upload file to generate Q&A pairs
+        file_paths = [st.file_uploader("1.Upload document files to generate QAs",
+                                      type=["pdf"],
+                                      accept_multiple_files=False)]
 
-                # split documents
-                for i in range(len(uploaded_paths)):
-                    uploaded_path = uploaded_paths[i]
-                    texts = TextSplitter.split_documents(documents)
-                    st.session_state["EvalTexts"] = texts
+        if st.button("Upload Ref Document", type="primary"):
+            if file_paths is not None or len(file_paths) > 0:
+                # save file
+                with st.spinner('Reading file'):
+                    uploaded_paths = []
+                    for file_path in file_paths:
+                        uploaded_paths.append(os.path.join(work_path + "/tempDir/output", file_path.name))
+                        uploaded_path = uploaded_paths[-1]
+                        with open(uploaded_path, mode="wb") as f:
+                            f.write(file_path.getbuffer())
 
-                    # search & retriver
-                    # FAISS: save documents as index, and then load them(not use the save function)
-                    # Others do not support save for now
-                    single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
-                    if Path(single_index_name).is_file() == False:
-                        if aa_retriver == "Similarity Search":
-                            tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel)
-                            tmpdocsearch.save_local("./index/", Path(uploaded_path).stem)
-                        elif aa_retriver == "SVM":
-                            tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel)
-                        elif aa_retriver == "TFIDF":
-                            tmpdocsearch = TFIDFRetriever.from_documents(texts)
-                        elif aa_retriver == "Azure Cognitive Search":
-                            tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
+                # process file
+                with st.spinner('Create vector DB'):
+                    # load documents
+                    documents = []
+                    with tqdm(total=len(uploaded_paths), desc='Loading new documents', ncols=80) as pbar:
+                        for uploaded_path in uploaded_paths:
+                            documents = documents + load_single_document(uploaded_path)
+                            pbar.update()
 
-                        if i == 0:
-                            docsearch = tmpdocsearch
-                        else:
-                            # not used
-                            docsearch.merge_from(tmpdocsearch)
-                    else:
-                        # only used for FAISS
-                        if i == 0:
+                    # split documents
+                    for i in range(len(uploaded_paths)):
+                        uploaded_path = uploaded_paths[i]
+                        texts = TextSplitter.split_documents(documents)
+                        st.session_state["EvalTexts"] = texts
+
+                        # search & retriver
+                        # FAISS: save documents as index, and then load them(not use the save function)
+                        # Others do not support save for now
+                        single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
+                        if Path(single_index_name).is_file() == False:
                             if aa_retriver == "Similarity Search":
-                                docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                                tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel)
+                                tmpdocsearch.save_local("./index/", Path(uploaded_path).stem)
+                            elif aa_retriver == "SVM":
+                                tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel)
+                            elif aa_retriver == "TFIDF":
+                                tmpdocsearch = TFIDFRetriever.from_documents(texts)
+                            elif aa_retriver == "Azure Cognitive Search":
+                                tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
+
+                            if i == 0:
+                                docsearch = tmpdocsearch
+                            else:
+                                # not used
+                                docsearch.merge_from(tmpdocsearch)
                         else:
-                            # not used
-                            docsearch.merge_from(FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
+                            # only used for FAISS
+                            if i == 0:
+                                if aa_retriver == "Similarity Search":
+                                    docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                            else:
+                                # not used
+                                docsearch.merge_from(FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
 
-                # make chain
-                # qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
-                qa_chain = RetrievalQA.from_llm(llm=LlmModel, retriever=docsearch.as_retriever())
-                st.session_state["EvalQAChain"] = qa_chain
+                    # make chain
+                    # qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
+                    qa_chain = RetrievalQA.from_llm(llm=LlmModel, retriever=docsearch.as_retriever())
+                    st.session_state["EvalQAChain"] = qa_chain
 
+                    if len(uploaded_paths) > 0:
+                        st.session_state["EvalUploadFile"] = file_path.name
+                        st.write(f"✅ " + ", ".join(uploaded_paths) + " uploaed")
 
-                if len(uploaded_paths) > 0:
-                    st.write(f"✅ " + ", ".join(uploaded_paths) + " uploaed")
+        # Generate Q&A
+        if st.button("Generate Q&A"):
+            with st.spinner('Generating QnA pairs...'):
+                texts = st.session_state["EvalTexts"]
+                # Hard - coded examples
+                examples = [
+                    {
+                        "query": "What did the president say about Ketanji Brown Jackson",
+                        "answer": "He praised her legal ability and said he nominated her for the supreme court.",
+                    },
+                    {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
+                ]
 
-    # Generate Q&A
-    if st.button("Generate Q&A", type="primary"):
-        texts = st.session_state["EvalTexts"]
-        # Hard - coded examples
-        examples = [
-            {
-                "query": "What did the president say about Ketanji Brown Jackson",
-                "answer": "He praised her legal ability and said he nominated her for the supreme court.",
-            },
-            {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
-        ]
+                example_gen_chain = QAGenerateChain.from_llm(LlmModel)
+                new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
+                # print(new_examples[0])
 
-        example_gen_chain = QAGenerateChain.from_llm(LlmModel)
-        new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
-        # print(new_examples[0])
+                # Combine examples
+                examples += [tmp["qa_pairs"] for tmp in new_examples]
+                st.session_state["EvalQAs"] = examples
+                df = show_csv(examples)
+                # save_csv(examples)
+                # export srt file
+                csv = df.to_csv(index=False)
+                st.download_button("Download .csv file", data=csv, file_name=f"{Path(uploaded_path).stem}_QA_autogen_pairs.csv")
 
-        # Combine examples
-        examples += [tmp["qa_pairs"] for tmp in new_examples]
-        st.session_state["EvalQAs"] = examples
-        show_csv(examples)
-        # save_csv(examples)
+    # upload QA pairs
+    with qa_upload_container:
+        # Upload QA file to EVAL
+        file_paths = [st.file_uploader("2.Upload ground TRUE QAs",
+                                       type=["csv"],
+                                       accept_multiple_files=False)]
+        if st.button("Upload QnA pairs", type="primary"):
+            if file_paths is not None or len(file_paths) > 0:
+                # save file
+                with st.spinner('Reading QnA pairs file'):
+                    for file_path in file_paths:
+                        upload_qa_df = pd.read_csv(file_path)
+                        list_dicts = upload_qa_df.to_dict("records")
+                        st.session_state["EvalQAs"] = list_dicts
+                        # print(st.session_state["EvalQAs"])
 
-    # Start predict
-    if st.button("Start EVAL", type="primary"):
-        examples = st.session_state["EvalQAs"]
-        qa_chain = st.session_state["EvalQAChain"]
-        predictions = qa_chain.apply(examples)
-        eval_chain = QAEvalChain.from_llm(LlmModel, prompt=PROMPT)
-        # eval_chain = CotQAEvalChain.from_llm(llm2)
-        graded_outputs = eval_chain.evaluate(examples, predictions)
-        # for i, eg in enumerate(examples[:3]):
-        #     print(f"Example {i}:")
-        #     print("Question: " + predictions[i]["query"])
-        #     print("Real Answer: " + predictions[i]["answer"])
-        #     print("Predicted Answer: " + predictions[i]["result"])
-        #     print("Predicted Grade: " + graded_outputs[i]["results"])
-        #     print()
+    with eval_container:
+        # Start EVAL
+        if st.button("Start EVAL", type="primary"):
+            with st.spinner('Evaluating the LLM setting...'):
+                if st.session_state["EvalQAs"] is not None:
+                    examples = st.session_state["EvalQAs"]
+                else:
+                    st.toast("No QnA pairs are uploaded or generated!")
+                if st.session_state["EvalQAChain"] is not None:
+                    qa_chain = st.session_state["EvalQAChain"]
+                else:
+                    st.toast("No qa chain is created!")
 
-        # output with binary eval
-        outputs = [
-            {
-                "query": predictions[i]["query"],
-                "answer": predictions[i]["answer"],
-                "predict result": predictions[i]["result"],
-                "grade": graded_outputs[i]["results"]
-            }
-            for i, example in enumerate(examples)
-        ]
-        # show_csv(outputs)
-        # save_csv(outputs, "grade_result.csv")
+                predictions = qa_chain.apply(examples)
+                eval_chain = QAEvalChain.from_llm(LlmModel, prompt=PROMPT)
+                # eval_chain = CotQAEvalChain.from_llm(llm2)
+                graded_outputs = eval_chain.evaluate(examples, predictions)
+                # for i, eg in enumerate(examples[:3]):
+                #     print(f"Example {i}:")
+                #     print("Question: " + predictions[i]["query"])
+                #     print("Real Answer: " + predictions[i]["answer"])
+                #     print("Predicted Answer: " + predictions[i]["result"])
+                #     print("Predicted Grade: " + graded_outputs[i]["results"])
+                #     print()
 
-        # perform SQUaD Eval
-        # Some data munging to get the examples in the right format
-        for i, eg in enumerate(examples):
-            eg["id"] = str(i)
-            eg["answers"] = {"text": [eg["answer"]], "answer_start": [0]}
-            predictions[i]["id"] = str(i)
-            predictions[i]["prediction_text"] = predictions[i]["result"]
+                # output with binary eval
+                outputs = [
+                    {
+                        "query": predictions[i]["query"],
+                        "answer": predictions[i]["answer"],
+                        "predict result": predictions[i]["result"],
+                        "grade": graded_outputs[i]["results"]
+                    }
+                    for i, example in enumerate(examples)
+                ]
+                # show_csv(outputs)
+                # save_csv(outputs, "grade_result.csv")
 
-        for p in predictions:
-            del p["result"]
-            del p["query"]
-            del p["answer"]
-            # del p["text"]
+                # perform SQUaD Eval
+                # Some data munging to get the examples in the right format
+                for i, eg in enumerate(examples):
+                    eg["id"] = str(i)
+                    eg["answers"] = {"text": [eg["answer"]], "answer_start": [0]}
+                    predictions[i]["id"] = str(i)
+                    predictions[i]["prediction_text"] = predictions[i]["result"]
 
-        new_examples = examples.copy()
-        for eg in new_examples:
-            del eg["query"]
-            del eg["answer"]
+                for p in predictions:
+                    del p["result"]
+                    del p["query"]
+                    del p["answer"]
+                    # del p["text"]
 
-        squad_metric = load("squad")
-        results = []
-        for i in range(len(new_examples)):
-            results.append(squad_metric.compute(
-                references=[new_examples[i]],
-                predictions=[predictions[i]],
-            ))
+                new_examples = examples.copy()
+                for eg in new_examples:
+                    del eg["query"]
+                    del eg["answer"]
 
-        print(results)
+                squad_metric = load("squad")
+                results = []
+                for i in range(len(new_examples)):
+                    results.append(squad_metric.compute(
+                        references=[new_examples[i]],
+                        predictions=[predictions[i]],
+                    ))
 
-        new_outputs = [
-            {
-                "query": outputs[i]["query"],
-                "answer": outputs[i]["answer"],
-                "predict result": outputs[i]["predict result"],
-                "grade": outputs[i]["grade"],
-                "exact_match": results[i]["exact_match"],
-                "f1": results[i]["f1"]
-            }
-            for i, example in enumerate(outputs)
-        ]
-        show_csv(new_outputs)
-        # save_csv(new_outputs, "f1_grade_result.csv")
+                print(results)
+
+                new_outputs = [
+                    {
+                        "query": outputs[i]["query"],
+                        "answer": outputs[i]["answer"],
+                        "predict result": outputs[i]["predict result"],
+                        "grade": outputs[i]["grade"],
+                        "exact_match": results[i]["exact_match"],
+                        "f1": results[i]["f1"]
+                    }
+                    for i, example in enumerate(outputs)
+                ]
+                df = show_csv(new_outputs)
+                # save_csv(new_outputs, "f1_grade_result.csv")
+                csv = df.to_csv()
+                tmpfile = st.session_state["EvalUploadFile"]
+                st.download_button("Download EVAL file", data=csv, file_name=f"{tmpfile}_EVAL.csv")
 
 if __name__ == "__main__":
     main()
