@@ -142,7 +142,12 @@ class OpenAIAzure():
 
 
         # You need to deploy your own embedding model as well as your own chat completion model
-        embeddings = OpenAIEmbeddings(deployment=self.config_details['EMBEDDING_MODEL'], chunk_size=1)
+        embeddings = OpenAIEmbeddings(deployment=self.config_details['EMBEDDING_MODEL'],
+                                      model=self.config_details['EMBEDDING_MODEL'],
+                                      openai_api_base=openai.api_base,
+                                      openai_api_type=openai.api_type,
+                                      chunk_size=1,
+        )
 
 
         return llm, embeddings
