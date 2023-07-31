@@ -276,7 +276,7 @@ def main():
                     st.session_state["EvalQAChain"] = qa_chain
 
                     if len(uploaded_paths) > 0:
-                        st.session_state["EvalUploadFile"] = file_path.name
+                        st.session_state["EvalUploadFile"] = Path(uploaded_path).stem
                         st.write(f"✅ " + ", ".join(uploaded_paths) + " uploaed")
 
         # Generate Q&A
@@ -303,7 +303,8 @@ def main():
                 # save_csv(examples)
                 # export srt file
                 csv = df.to_csv(index=False)
-                st.download_button("Download .csv file", data=csv, file_name=f"{Path(uploaded_path).stem}_QA_autogen_pairs.csv")
+                tmpfile = st.session_state["EvalUploadFile"]
+                st.download_button("Download .csv file", data=csv, file_name=f"{tmpfile}_QA_autogen_pairs.csv")
 
     # upload QA pairs
     with qa_upload_container:
