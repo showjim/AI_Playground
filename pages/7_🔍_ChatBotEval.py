@@ -267,7 +267,7 @@ def main():
                         elif aa_retriver == "Azure Cognitive Search":
                             tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
 
-                        docsearch = tmpdocsearch
+                    docsearch = tmpdocsearch
 
                     # make chain
                     # qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
