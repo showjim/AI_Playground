@@ -245,35 +245,36 @@ def main():
                         # FAISS: save documents as index, and then load them(not use the save function)
                         # Others do not support save for now
                         single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
-                        if Path(single_index_name).is_file() == False:
-                            if aa_retriver == "Similarity Search":
-                                tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel)
-                                tmpdocsearch.save_local("./index/", Path(uploaded_path).stem)
-                            elif aa_retriver == "SVM":
-                                tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel)
-                            elif aa_retriver == "TFIDF":
-                                tmpdocsearch = TFIDFRetriever.from_documents(texts)
-                            elif aa_retriver == "Azure Cognitive Search":
-                                tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
 
-                            if i == 0:
-                                docsearch = tmpdocsearch
+                        if aa_retriver == "Similarity Search":
+                            if Path(single_index_name).is_file() == False:
+                                tmpdocsearch = FAISS.from_documents(texts, EmbeddingModel).as_retriever(search_kwargs={"k": aa_chunk_num})
+                                # tmpdocsearch.save_local("./index/", Path(uploaded_path).stem)
                             else:
-                                # not used
-                                docsearch.merge_from(tmpdocsearch)
+                                if i == 0:
+                                    docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem).as_retriever(search_kwargs={"k": aa_chunk_num})
+                                else:
+                                    # not used
+                                    pass
+                                    # docsearch.merge_from(
+                                    #     FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
+                        elif aa_retriver == "SVM":
+                            tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel, k=aa_chunk_num)
+                        elif aa_retriver == "TFIDF":
+                            tmpdocsearch = TFIDFRetriever.from_documents(texts, k=aa_chunk_num)
+                        elif aa_retriver == "Azure Cognitive Search":
+                            tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
+
+                        if i == 0:
+                            docsearch = tmpdocsearch
                         else:
-                            # only used for FAISS
-                            if i == 0:
-                                if aa_retriver == "Similarity Search":
-                                    docsearch = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
-                            else:
-                                # not used
-                                docsearch.merge_from(FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
+                            # not used
+                            docsearch.merge_from(tmpdocsearch)
 
-                    # make chain
-                    # qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
-                    qa_chain = RetrievalQA.from_llm(llm=LlmModel, retriever=docsearch.as_retriever())
-                    st.session_state["EvalQAChain"] = qa_chain
+                        # make chain
+                        # qa_chain = RetrievalQA.from_chain_type(LlmModel, retriever=docsearch)
+                        qa_chain = RetrievalQA.from_llm(llm=LlmModel, retriever=docsearch)
+                        st.session_state["EvalQAChain"] = qa_chain
 
                     if len(uploaded_paths) > 0:
                         st.session_state["EvalUploadFile"] = Path(uploaded_path).stem
