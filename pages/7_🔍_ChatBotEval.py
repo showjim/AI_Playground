@@ -241,36 +241,30 @@ def main():
                             pbar.update()
 
                     # split documents
-                    for i in range(len(uploaded_paths)):
-                        uploaded_path = uploaded_paths[i]
-                        texts = TextSplitter.split_documents(documents)
-                        st.session_state["EvalTexts"] = texts
+                    # for i in range(len(uploaded_paths)):
+                    uploaded_path = uploaded_paths[0]
+                    texts = TextSplitter.split_documents(documents)
+                    st.session_state["EvalTexts"] = texts
 
-                        # search & retriver
-                        # FAISS: save documents as index, and then load them(not use the save function)
-                        # Others do not support save for now
-                        single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
+                    # search & retriver
+                    # FAISS: save documents as index, and then load them(not use the save function)
+                    # Others do not support save for now
+                    single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
 
-                        if aa_retriver == "Similarity Search":
-                            if Path(single_index_name).is_file() == False:
-                                tmpdb = FAISS.from_documents(texts, EmbeddingModel)
-                                tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
-                                # tmpdb.save_local("./index/", Path(uploaded_path).stem)
-                            else:
-                                if i == 0:
-                                    tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
-                                else:
-                                    # not used
-                                    pass
-                                    tmpdb.merge_from(
-                                        FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem))
-                                tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
-                        elif aa_retriver == "SVM":
-                            tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel, k=aa_chunk_num)
-                        elif aa_retriver == "TFIDF":
-                            tmpdocsearch = TFIDFRetriever.from_documents(texts, k=aa_chunk_num)
-                        elif aa_retriver == "Azure Cognitive Search":
-                            tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
+                    if aa_retriver == "Similarity Search":
+                        if Path(single_index_name).is_file() == False:
+                            tmpdb = FAISS.from_documents(texts, EmbeddingModel)
+                            tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                            # tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                        else:
+                            tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                            tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                    elif aa_retriver == "SVM":
+                        tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel, k=aa_chunk_num)
+                    elif aa_retriver == "TFIDF":
+                        tmpdocsearch = TFIDFRetriever.from_documents(texts, k=aa_chunk_num)
+                    elif aa_retriver == "Azure Cognitive Search":
+                        tmpdocsearch = AzureCognitiveSearchRetriever(content_key="content", top_k=aa_chunk_num)
 
                     docsearch = tmpdocsearch
 
