@@ -254,11 +254,11 @@ def main():
                     if aa_retriver == "Similarity Search":
                         if Path(single_index_name).is_file() == False:
                             tmpdb = FAISS.from_documents(texts, EmbeddingModel)
-                            tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                            # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
                             # tmpdb.save_local("./index/", Path(uploaded_path).stem)
                         else:
                             tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
-                            tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                        tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
                     elif aa_retriver == "SVM":
                         tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel, k=aa_chunk_num)
                     elif aa_retriver == "TFIDF":
