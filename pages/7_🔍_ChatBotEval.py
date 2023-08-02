@@ -316,7 +316,7 @@ def main():
                     for file_path in file_paths:
                         upload_qa_df = pd.read_csv(file_path)
                         list_dicts += upload_qa_df.to_dict("records")
-                    st.session_state["EvalUploadFile"] = Path(file_paths[0]).stem
+                    st.session_state["EvalUploadFile"] = Path(file_path.name).stem
                     st.session_state["EvalQAs"] = list_dicts
                     # print(st.session_state["EvalQAs"])
 
