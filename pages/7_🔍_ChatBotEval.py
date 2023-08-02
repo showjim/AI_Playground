@@ -307,18 +307,18 @@ def main():
     # upload QA pairs
     with qa_upload_container:
         # Upload QA file to EVAL
-        file_paths = [st.file_uploader("2.Upload ground TRUE QAs",
-                                       type=["csv"],
-                                       accept_multiple_files=False)]
+        file_paths = [st.file_uploader("2.Upload ground TRUE QAs", type=["csv"], accept_multiple_files=False)]
         if st.button("Upload QnA pairs", type="primary"):
             if file_paths is not None or len(file_paths) > 0:
-                # save file
+                # load csv file to list of dict
                 with st.spinner('Reading QnA pairs file'):
+                    list_dicts = []
                     for file_path in file_paths:
                         upload_qa_df = pd.read_csv(file_path)
-                        list_dicts = upload_qa_df.to_dict("records")
-                        st.session_state["EvalQAs"] = list_dicts
-                        # print(st.session_state["EvalQAs"])
+                        list_dicts += upload_qa_df.to_dict("records")
+                    st.session_state["EvalUploadFile"] = Path(file_paths[0]).stem
+                    st.session_state["EvalQAs"] = list_dicts
+                    # print(st.session_state["EvalQAs"])
 
     with eval_container:
         # Start EVAL
