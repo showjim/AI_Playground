@@ -29,7 +29,7 @@ To configure the application, you will need to create a `key.txt` file containin
 
 ### key.txt
 
-Create a file named `key.txt` and add your Azure OpenAI API key as a single line in the file.
+Create a file named `key.txt` and add your Azure OpenAI API key, BING_SUBSCRIPTION_KEY(optional) and AZURE_COGNITIVE_SEARCH_API_KEY(optional).
 
 ### config.json (Only For Azure)
 
@@ -41,7 +41,10 @@ Create a `config.json` file with the following configuration:
     "OPENAI_API_BASE": "https://xxxxxx.openai.azure.com/",
     "OPENAI_API_VERSION": "xxxxx",
     "EMBEDDING_MODEL": "xxxxx",
-    "EMBEDDING_MODEL_VERSION": "xxxxx"
+    "EMBEDDING_MODEL_VERSION": "xxxxx",
+    "BING_SEARCH_URL": "https://api.bing.microsoft.com/v7.0/search",
+    "AZURE_COGNITIVE_SEARCH_SERVICE_NAME": "xxxxxxxxxxxx",
+    "AZURE_COGNITIVE_SEARCH_INDEX_NAME": "xxxxxxxxxx"
 }
 ```
 
