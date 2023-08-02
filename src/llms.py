@@ -122,10 +122,10 @@ class OpenAIAzure():
             os.environ["BING_SUBSCRIPTION_KEY"] = os.getenv("BING_SUBSCRIPTION_KEY")
             os.environ["BING_SEARCH_URL"] = self.config_details['BING_SEARCH_URL']
 
-            # Aure Cognitive Search
-            os.environ["AZURE_COGNITIVE_SEARCH_SERVICE_NAME"] = self.config_details['AZURE_COGNITIVE_SEARCH_SERVICE_NAME']
-            os.environ["AZURE_COGNITIVE_SEARCH_INDEX_NAME"] = self.config_details['AZURE_COGNITIVE_SEARCH_INDEX_NAME']
-            os.environ["AZURE_COGNITIVE_SEARCH_API_KEY"] = self.config_details['AZURE_COGNITIVE_SEARCH_API_KEY']
+            # # Aure Cognitive Search
+            # os.environ["AZURE_COGNITIVE_SEARCH_SERVICE_NAME"] = self.config_details['AZURE_COGNITIVE_SEARCH_SERVICE_NAME']
+            # os.environ["AZURE_COGNITIVE_SEARCH_INDEX_NAME"] = self.config_details['AZURE_COGNITIVE_SEARCH_INDEX_NAME']
+            # os.environ["AZURE_COGNITIVE_SEARCH_API_KEY"] = os.getenv('AZURE_COGNITIVE_SEARCH_API_KEY')
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 

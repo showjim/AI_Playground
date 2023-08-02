@@ -43,6 +43,11 @@ def setup_env():
         openai.api_base = config_details['OPENAI_API_BASE']
         openai.api_version = config_details['OPENAI_API_VERSION']
         openai.api_key = os.getenv("OPENAI_API_KEY")
+
+        # Aure Cognitive Search
+        os.environ["AZURE_COGNITIVE_SEARCH_SERVICE_NAME"] = config_details['AZURE_COGNITIVE_SEARCH_SERVICE_NAME']
+        os.environ["AZURE_COGNITIVE_SEARCH_INDEX_NAME"] = config_details['AZURE_COGNITIVE_SEARCH_INDEX_NAME']
+        os.environ["AZURE_COGNITIVE_SEARCH_API_KEY"] = os.getenv('AZURE_COGNITIVE_SEARCH_API_KEY')
     else:
         print("config.json with Azure OpenAI config is required")
 
