@@ -8,7 +8,10 @@ from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import (
+    OpenAIEmbeddings,
+    HuggingFaceEmbeddings,
+)
 from langchain.document_loaders import (
     PyMuPDFLoader,
 )
@@ -100,8 +103,8 @@ def define_embedding(embedding_method: str):
                                       openai_api_base=openai.api_base,
                                       openai_api_type=openai.api_type,
                                       chunk_size=1,)
-    elif embedding_method == "Azure Cognitive Search":
-        pass
+    elif embedding_method == "HuggingFace":
+        embeddings = HuggingFaceEmbeddings()
     return embeddings
 
 
@@ -132,6 +135,8 @@ def main():
         st.session_state["EvalQAChain"] = None
     if "EvalUploadFile" not in st.session_state:
         st.session_state["EvalUploadFile"] = None
+    if "EvalQAresults" not in st.session_state:
+        st.session_state["EvalQAresults"] = None
 
     # Setup Side Bar
     with st.sidebar:
@@ -172,7 +177,7 @@ def main():
 
         # 4. Embedding
         aa_embedding_method = st.radio(label="`Choose embeddings`",
-                                       options=["OpenAI", "Azure Cognitive Search"],
+                                       options=["OpenAI", "HuggingFace"],
                                        index=0,
                                        on_change=set_reload_setting_flag)
 
@@ -281,14 +286,15 @@ def main():
         if st.button("Generate Q&A"):
             with st.spinner('Generating QnA pairs...'):
                 texts = st.session_state["EvalTexts"]
-                # Hard - coded examples
-                examples = [
-                    {
-                        "query": "What did the president say about Ketanji Brown Jackson",
-                        "answer": "He praised her legal ability and said he nominated her for the supreme court.",
-                    },
-                    {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
-                ]
+                examples = []
+                # # Hard - coded examples
+                # examples = [
+                #     {
+                #         "query": "What did the president say about Ketanji Brown Jackson",
+                #         "answer": "He praised her legal ability and said he nominated her for the supreme court.",
+                #     },
+                #     {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
+                # ]
 
                 example_gen_chain = QAGenerateChain.from_llm(LlmModel)
                 new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
@@ -297,12 +303,13 @@ def main():
                 # Combine examples
                 examples += [tmp["qa_pairs"] for tmp in new_examples]
                 st.session_state["EvalQAs"] = examples
-                df = show_csv(examples)
-                # save_csv(examples)
-                # export srt file
-                csv = df.to_csv(index=False)
-                tmpfile = st.session_state["EvalUploadFile"]
-                st.download_button("Download .csv file", data=csv, file_name=f"{tmpfile}_QA_autogen_pairs.csv")
+        if st.session_state["EvalQAs"] is not None:
+            df = show_csv(st.session_state["EvalQAs"])
+            # save_csv(examples)
+            # export srt file
+            csv_QA = df.to_csv(index=False)
+            tmpQAfile = st.session_state["EvalUploadFile"]
+            st.download_button("Download .csv file", data=csv_QA, file_name=f"{tmpQAfile}_QA_autogen_pairs.csv")
 
     # upload QA pairs
     with qa_upload_container:
@@ -398,11 +405,15 @@ def main():
                     }
                     for i, example in enumerate(outputs)
                 ]
-                df = show_csv(new_outputs)
-                # save_csv(new_outputs, "f1_grade_result.csv")
-                csv = df.to_csv()
-                tmpfile = st.session_state["EvalUploadFile"]
-                st.download_button("Download EVAL file", data=csv, file_name=f"{tmpfile}_EVAL.csv")
+
+                st.session_state["EvalQAresults"] = new_outputs
+
+        if st.session_state["EvalQAresults"] is not None:
+            df = show_csv(st.session_state["EvalQAresults"])
+            # save_csv(new_outputs, "f1_grade_result.csv")
+            csv_eval = df.to_csv()
+            tmpEVALfile = st.session_state["EvalUploadFile"]
+            st.download_button("Download EVAL file", data=csv_eval, file_name=f"{tmpEVALfile}_EVAL.csv")
 
 if __name__ == "__main__":
     main()
