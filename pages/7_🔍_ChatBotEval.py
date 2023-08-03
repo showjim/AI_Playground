@@ -19,7 +19,9 @@ from langchain.retrievers import (
     SVMRetriever,
     AzureCognitiveSearchRetriever,
     TFIDFRetriever,
+    ContextualCompressionRetriever,
 )
+from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.prompts.prompt import PromptTemplate
 import pandas as pd
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
@@ -168,7 +170,7 @@ def main():
 
         # 3. Retriver
         aa_retriver = st.radio(label="`Choose retriever`",
-                               options=["Similarity Search", "Azure Cognitive Search", "SVM", "TFIDF"],
+                               options=["Similarity Search", "MMR", "Contextual Compression","Azure Cognitive Search", "SVM", "TFIDF"],
                                index=0,
                                on_change=set_reload_setting_flag)
         aa_chunk_num = st.select_slider("`Choose # chunks to retrieve`",
@@ -260,10 +262,32 @@ def main():
                         if Path(single_index_name).is_file() == False:
                             tmpdb = FAISS.from_documents(texts, EmbeddingModel)
                             # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
-                            # tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                            tmpdb.save_local("./index/", Path(uploaded_path).stem)
                         else:
                             tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
-                        tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                        tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num}) # default is "similarity"
+                    elif aa_retriver == "MMR":
+                        # like "Similarity Search" but fetch more splits and return a more diversity smaller splits
+                        if Path(single_index_name).is_file() == False:
+                            tmpdb = FAISS.from_documents(texts, EmbeddingModel)
+                            # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                            tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                        else:
+                            tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                        tmpdocsearch = tmpdb.as_retriever(search_type="mmr", search_kwargs={"k": aa_chunk_num}) # default fetch_k = 20
+                    elif aa_retriver == "Contextual Compression":
+                        # find the splits and compress them, then return only the relevant info
+                        if Path(single_index_name).is_file() == False:
+                            tmpdb = FAISS.from_documents(texts, EmbeddingModel)
+                            # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                            tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                        else:
+                            tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                        compressor = LLMChainExtractor.from_llm(LlmModel)
+                        tmpdocsearch = ContextualCompressionRetriever(
+                            base_compressor=compressor,
+                            base_retriever=tmpdb.as_retriever(search_type="mmr")
+                        )
                     elif aa_retriver == "SVM":
                         tmpdocsearch = SVMRetriever.from_documents(texts, EmbeddingModel, k=aa_chunk_num)
                     elif aa_retriver == "TFIDF":
