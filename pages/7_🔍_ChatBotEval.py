@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 from dotenv import load_dotenv
 from langchain.evaluation.qa import QAGenerateChain
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import FAISS, Qdrant
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
@@ -169,6 +169,10 @@ def main():
                                     on_change=set_reload_setting_flag)
 
         # 3. Retriver
+        aa_vector_store = st.radio(label="`Choose vector store`",
+                                   options=["FAISS", "Qdrant"],
+                                   index=0,
+                                   on_change=set_reload_setting_flag)
         aa_retriver = st.radio(label="`Choose retriever`",
                                options=["Similarity Search", "MMR", "Contextual Compression","Azure Cognitive Search", "SVM", "TFIDF"],
                                index=0,
@@ -254,35 +258,49 @@ def main():
                     st.session_state["EvalTexts"] = texts
 
                     # search & retriver
-                    # FAISS: save documents as index, and then load them(not use the save function)
+                    # FAISS/Qdrant: save documents as index, and then load them(not use the save function)
                     # Others do not support save for now
-                    single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
-
-                    if aa_retriver == "Similarity Search":
+                    if aa_vector_store == "FAISS":
+                        single_index_name = "./index/" + Path(uploaded_path).stem + ".faiss"
                         if Path(single_index_name).is_file() == False:
                             tmpdb = FAISS.from_documents(texts, EmbeddingModel)
                             # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
                             tmpdb.save_local("./index/", Path(uploaded_path).stem)
                         else:
                             tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                    elif aa_vector_store == "Qdrant":
+                        single_index_name = "./index/" + Path(uploaded_path).stem + ".qdrant"
+                        tmpdb = Qdrant.from_documents(texts,
+                                                      EmbeddingModel,
+                                                      path="./index/",
+                                                      collection_name=Path(uploaded_path).stem
+                                                      )
+
+                    if aa_retriver == "Similarity Search":
+                        # if Path(single_index_name).is_file() == False:
+                        #     tmpdb = FAISS.from_documents(texts, EmbeddingModel)
+                        #     # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                        #     tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                        # else:
+                        #     tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
                         tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num}) # default is "similarity"
                     elif aa_retriver == "MMR":
                         # like "Similarity Search" but fetch more splits and return a more diversity smaller splits
-                        if Path(single_index_name).is_file() == False:
-                            tmpdb = FAISS.from_documents(texts, EmbeddingModel)
-                            # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
-                            tmpdb.save_local("./index/", Path(uploaded_path).stem)
-                        else:
-                            tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                        # if Path(single_index_name).is_file() == False:
+                        #     tmpdb = FAISS.from_documents(texts, EmbeddingModel)
+                        #     # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                        #     tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                        # else:
+                        #     tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
                         tmpdocsearch = tmpdb.as_retriever(search_type="mmr", search_kwargs={"k": aa_chunk_num}) # default fetch_k = 20
                     elif aa_retriver == "Contextual Compression":
                         # find the splits and compress them, then return only the relevant info
-                        if Path(single_index_name).is_file() == False:
-                            tmpdb = FAISS.from_documents(texts, EmbeddingModel)
-                            # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
-                            tmpdb.save_local("./index/", Path(uploaded_path).stem)
-                        else:
-                            tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
+                        # if Path(single_index_name).is_file() == False:
+                        #     tmpdb = FAISS.from_documents(texts, EmbeddingModel)
+                        #     # tmpdocsearch = tmpdb.as_retriever(search_kwargs={"k": aa_chunk_num})
+                        #     tmpdb.save_local("./index/", Path(uploaded_path).stem)
+                        # else:
+                        #     tmpdb = FAISS.load_local("./index/", EmbeddingModel, Path(uploaded_path).stem)
                         compressor = LLMChainExtractor.from_llm(LlmModel)
                         tmpdocsearch = ContextualCompressionRetriever(
                             base_compressor=compressor,
