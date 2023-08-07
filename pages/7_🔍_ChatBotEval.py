@@ -435,6 +435,15 @@ def main():
                     ))
 
                 print(results)
+                # https://huggingface.co/spaces/evaluate-metric/rouge
+                rouge_metric = load('rouge')
+                rouge_results = []
+                for i in range(len(new_examples)):
+                    rouge_results.append(rouge_metric.compute(
+                        references=[new_examples[i]],
+                        predictions=[predictions[i]],
+                    ))
+                    print(rouge_results["rouge1"])
 
                 new_outputs = [
                     {
