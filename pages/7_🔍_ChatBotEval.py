@@ -150,8 +150,8 @@ def main():
         # 2. Split
         aa_eval_q = st.slider(label="`Number of eval questions`",
                               min_value=1,
-                              max_value=10,
-                              value=5,
+                              max_value=100,
+                              value=50,
                               on_change=set_reload_setting_flag)
         aa_chunk_size = st.slider(label="`Choose chunk size for splitting`",
                                   min_value=500,
@@ -161,7 +161,7 @@ def main():
         aa_overlap_size = st.slider(label="`Choose overlap for splitting`",
                                     min_value=0,
                                     max_value=200,
-                                    value=0,
+                                    value=100,
                                     on_change=set_reload_setting_flag)
         aa_split_methods = st.radio(label="`Split method`",
                                     options=["RecursiveTextSplitter", "CharacterTextSplitter"],
@@ -227,9 +227,9 @@ def main():
 
     with qa_gen_container:
         # Upload file to generate Q&A pairs
-        file_paths = [st.file_uploader("1.Upload document files to generate QAs",
+        file_paths = st.file_uploader("1.Upload document files to generate QAs",
                                       type=["pdf"],
-                                      accept_multiple_files=False)]
+                                      accept_multiple_files=True)
 
         if st.button("Upload Ref Document", type="primary"):
             if file_paths is not None or len(file_paths) > 0:
@@ -273,7 +273,9 @@ def main():
                         tmpdb = Qdrant.from_documents(texts,
                                                       EmbeddingModel,
                                                       path="./index/",
-                                                      collection_name=Path(uploaded_path).stem
+                                                      collection_name=Path(uploaded_path).stem,
+                                                      on_disk_payload=True,
+                                                      force_recreate=False
                                                       )
 
                     if aa_retriver == "Similarity Search":
@@ -440,10 +442,10 @@ def main():
                 rouge_results = []
                 for i in range(len(new_examples)):
                     rouge_results.append(rouge_metric.compute(
-                        references=[new_examples[i]],
-                        predictions=[predictions[i]],
+                        references=new_examples[i]["answers"]["text"],
+                        predictions=[predictions[i]["prediction_text"]],
                     ))
-                    print(rouge_results["rouge1"])
+                    print(rouge_results[i]["rouge1"])
 
                 new_outputs = [
                     {
@@ -452,7 +454,8 @@ def main():
                         "predict result": outputs[i]["predict result"],
                         "grade": outputs[i]["grade"],
                         "exact_match": results[i]["exact_match"],
-                        "f1": results[i]["f1"]
+                        "f1": results[i]["f1"],
+                        "rouge1": rouge_results[i]["rouge1"]
                     }
                     for i, example in enumerate(outputs)
                 ]
