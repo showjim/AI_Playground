@@ -124,6 +124,26 @@ def show_csv(examples):
     st.dataframe(df)
     return df
 
+def eval_metric_squad(new_examples, predictions):
+    squad_metric = load("squad")
+    results = []
+    for i in range(len(new_examples)):
+        results.append(squad_metric.compute(
+            references=[new_examples[i]],
+            predictions=[predictions[i]],
+        ))
+    return results
+
+def eval_metric_rouge(new_examples, predictions):
+    rouge_metric = load('rouge')
+    rouge_results = []
+    for i in range(len(new_examples)):
+        rouge_results.append(rouge_metric.compute(
+            references=new_examples[i]["answers"]["text"],
+            predictions=[predictions[i]["prediction_text"]],
+        ))
+    return rouge_results
+
 def main():
     # Initial
     setup_env()
@@ -207,7 +227,9 @@ def main():
     STUDENT ANSWER: student's answer here
     GRADE: CORRECT or INCORRECT here
 
-    Grade the student answers based ONLY on their factual accuracy. Ignore differences in punctuation and phrasing between the student answer and true answer. It is OK if the student answer contains more information than the true answer, as long as it does not contain any conflicting statements. Begin! 
+    Grade the student answers based ONLY on their factual accuracy. Ignore differences in punctuation and phrasing 
+    between the student answer and true answer. It is OK if the student answer contains more information than the true answer, 
+    as long as it does not contain any conflicting statements. Begin! 
 
     QUESTION: {query}
     TRUE ANSWER: {answer}
@@ -428,24 +450,26 @@ def main():
                     del eg["query"]
                     del eg["answer"]
 
-                squad_metric = load("squad")
-                results = []
-                for i in range(len(new_examples)):
-                    results.append(squad_metric.compute(
-                        references=[new_examples[i]],
-                        predictions=[predictions[i]],
-                    ))
-
+                # squad_metric = load("squad")
+                # results = []
+                # for i in range(len(new_examples)):
+                #     results.append(squad_metric.compute(
+                #         references=[new_examples[i]],
+                #         predictions=[predictions[i]],
+                #     ))
+                results = eval_metric_squad(new_examples, predictions)
                 print(results)
-                # https://huggingface.co/spaces/evaluate-metric/rouge
-                rouge_metric = load('rouge')
-                rouge_results = []
-                for i in range(len(new_examples)):
-                    rouge_results.append(rouge_metric.compute(
-                        references=new_examples[i]["answers"]["text"],
-                        predictions=[predictions[i]["prediction_text"]],
-                    ))
-                    print(rouge_results[i]["rouge1"])
+
+                # # https://huggingface.co/spaces/evaluate-metric/rouge
+                # rouge_metric = load('rouge')
+                # rouge_results = []
+                # for i in range(len(new_examples)):
+                #     rouge_results.append(rouge_metric.compute(
+                #         references=new_examples[i]["answers"]["text"],
+                #         predictions=[predictions[i]["prediction_text"]],
+                #     ))
+                #     print(rouge_results[i]["rouge1"])
+                rouge_results = eval_metric_rouge(new_examples, predictions)
 
                 new_outputs = [
                     {
