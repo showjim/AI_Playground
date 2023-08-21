@@ -213,7 +213,7 @@ class ChatBot():
                memory_key="chat_history",
                input_key='question',
                output_key='answer',
-               # k=5,
+               k=5,
                return_messages=True),
             verbose=True,
             return_source_documents=True,
