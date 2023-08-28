@@ -26,6 +26,7 @@ from langchain.prompts.prompt import PromptTemplate
 import pandas as pd
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
 from evaluate import load, combine
+from langchain.output_parsers import CommaSeparatedListOutputParser
 
 work_path = os.path.abspath('.')
 
@@ -362,7 +363,33 @@ def main():
                 #     {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
                 # ]
 
-                example_gen_chain = QAGenerateChain.from_llm(LlmModel)
+                template_QAGen = """You are a teacher coming up with questions to ask on a quiz.
+                Use the following process to generate question and answer pairs. 
+                1) Search the document snippet for specific, concrete facts or concepts. 
+                2) construct a concise statement of the fact or concept.
+                3) construct a question for which the concise statement is the answer. 
+                Finally, output the question and answer in the following format:
+                <Begin Document>
+                ...
+                <End Document>
+                QUESTION: question here
+                ANSWER: answer here
+
+                Please iteratively search for concrete, specific facts or concepts and keep iterating and generating until you can't find any more concrete facts or concepts. 
+                These questions should be detailed and be based explicitly on information in the document. Begin!
+
+                <Begin Document>
+                {doc}
+                <End Document>"""
+                PROMPT_QAGen = PromptTemplate(
+                    input_variables=["doc"],
+                    template=template_QAGen,
+                )
+
+                example_gen_chain = QAGenerateChain.from_llm(LlmModel, prompt=PROMPT_QAGen)
+                outputs = example_gen_chain.generate([{"doc": t} for t in texts[:aa_eval_q]]) #.apply([{"doc": t} for t in texts[:aa_eval_q]])
+                output_parser = CommaSeparatedListOutputParser()
+                print(output_parser.parse(outputs.generations[0]))
                 new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
                 # print(new_examples[0])
 
