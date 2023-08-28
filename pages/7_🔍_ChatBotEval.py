@@ -1,3 +1,5 @@
+import re
+
 import streamlit as st
 import json, os, shutil, openai, csv
 from pathlib import Path
@@ -26,7 +28,7 @@ from langchain.prompts.prompt import PromptTemplate
 import pandas as pd
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
 from evaluate import load, combine
-from langchain.output_parsers import CommaSeparatedListOutputParser
+from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 
 work_path = os.path.abspath('.')
 
@@ -216,32 +218,6 @@ def main():
 
     ## Main
     st.header("`Demo auto-evaluator`")
-
-    # Prompt for evaluation
-    template = """You are a teacher grading a quiz.
-    You are given a question, the student's answer, and the true answer, and are asked to score the student answer as either CORRECT or INCORRECT.
-    Write out in a step by step manner your reasoning to be sure that your conclusion is correct. Avoid simply stating the correct answer at the outset.
-
-    Example Format:
-    QUESTION: question here
-    TRUE ANSWER: true answer here
-    STUDENT ANSWER: student's answer here
-    GRADE: CORRECT or INCORRECT here
-
-    Grade the student answers based ONLY on their factual accuracy. Ignore differences in punctuation and phrasing 
-    between the student answer and true answer. It is OK if the student answer contains more information than the true answer, 
-    as long as it does not contain any conflicting statements. Begin! 
-
-    QUESTION: {query}
-    TRUE ANSWER: {answer}
-    STUDENT ANSWER: {result}
-    GRADE:"""
-    input = st.text_area(label="Evaluation Prompt", value=template, )
-    PROMPT = PromptTemplate(
-        input_variables=["query", "answer", "result"], template=input
-    )
-
-
     qa_gen_container = st.container()
     # st.write("2. Upload QA pairs")
     qa_upload_container = st.container()
@@ -349,11 +325,36 @@ def main():
                         st.session_state["EvalUploadFile"] = Path(uploaded_path).stem
                         st.write(f"✅ " + ", ".join(uploaded_paths) + " uploaed")
 
+        # Prompt for QA generation
+        template_QAGen = """You are a teacher coming up with questions to ask on a quiz.
+        Use the following process to generate question and answer pairs. 
+        1) Search the document snippet for specific, concrete facts or concepts. 
+        2) construct a concise statement of the fact or concept.
+        3) construct a question for which the concise statement is the answer. 
+        Finally, output the question and answer in the following format:
+        <Begin Document>
+        ...
+        <End Document>
+        QUESTION: question here
+        ANSWER: answer here
+
+        Please iteratively search for concrete, specific facts or concepts and keep iterating and generating until you can't find any more concrete facts or concepts. 
+        These questions should be detailed and be based explicitly on information in the document. Begin!
+
+        <Begin Document>
+        {doc}
+        <End Document>"""
+        input_QAGen = st.text_area(label="QA Generation Prompt", value=template_QAGen, )
+        PROMPT_QAGen = PromptTemplate(
+            input_variables=["doc"],
+            template=input_QAGen,
+        )
         # Generate Q&A
         if st.button("Generate Q&A"):
             with st.spinner('Generating QnA pairs...'):
                 texts = st.session_state["EvalTexts"]
                 examples = []
+                use_custom_prompt = True if input_QAGen != "" else False
                 # # Hard - coded examples
                 # examples = [
                 #     {
@@ -362,35 +363,28 @@ def main():
                 #     },
                 #     {"query": "What did the president say about Michael Jackson", "answer": "Nothing"},
                 # ]
+                if use_custom_prompt == False:
+                    example_gen_chain = QAGenerateChain.from_llm(LlmModel)
+                    new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
+                else:
+                    example_gen_chain = QAGenerateChain.from_llm(LlmModel, prompt=PROMPT_QAGen)
+                    outputs = example_gen_chain.generate([{"doc": t} for t in texts[:aa_eval_q]]) #.apply([{"doc": t} for t in texts[:aa_eval_q]])
 
-                template_QAGen = """You are a teacher coming up with questions to ask on a quiz.
-                Use the following process to generate question and answer pairs. 
-                1) Search the document snippet for specific, concrete facts or concepts. 
-                2) construct a concise statement of the fact or concept.
-                3) construct a question for which the concise statement is the answer. 
-                Finally, output the question and answer in the following format:
-                <Begin Document>
-                ...
-                <End Document>
-                QUESTION: question here
-                ANSWER: answer here
+                    output_keys = ["query", "answer"]
+                    regex = r"QUESTION: (.*?)\n+ANSWER: (.*)"
+                    for generation in outputs.generations:
 
-                Please iteratively search for concrete, specific facts or concepts and keep iterating and generating until you can't find any more concrete facts or concepts. 
-                These questions should be detailed and be based explicitly on information in the document. Begin!
-
-                <Begin Document>
-                {doc}
-                <End Document>"""
-                PROMPT_QAGen = PromptTemplate(
-                    input_variables=["doc"],
-                    template=template_QAGen,
-                )
-
-                example_gen_chain = QAGenerateChain.from_llm(LlmModel, prompt=PROMPT_QAGen)
-                outputs = example_gen_chain.generate([{"doc": t} for t in texts[:aa_eval_q]]) #.apply([{"doc": t} for t in texts[:aa_eval_q]])
-                output_parser = CommaSeparatedListOutputParser()
-                print(output_parser.parse(outputs.generations[0]))
-                new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
+                        tmptext = generation[0].text
+                        match = re.findall(regex, tmptext)
+                        if match:
+                            output_parser = []
+                            for item in match:
+                                output_parser.append({"qa_pairs": {key: item[i] for i, key in enumerate(output_keys)}})
+                        else:
+                            raise ValueError(f"Could not parse output: {tmptext}")
+                    # print(output_parser.parse(outputs.generations[0]))
+                    # new_examples = example_gen_chain.apply_and_parse([{"doc": t} for t in texts[:aa_eval_q]])
+                    new_examples = output_parser
                 # print(new_examples[0])
 
                 # Combine examples
@@ -421,6 +415,29 @@ def main():
                     # print(st.session_state["EvalQAs"])
 
     with eval_container:
+        # Prompt for evaluation
+        template = """You are a teacher grading a quiz.
+        You are given a question, the student's answer, and the true answer, and are asked to score the student answer as either CORRECT or INCORRECT.
+        Write out in a step by step manner your reasoning to be sure that your conclusion is correct. Avoid simply stating the correct answer at the outset.
+
+        Example Format:
+        QUESTION: question here
+        TRUE ANSWER: true answer here
+        STUDENT ANSWER: student's answer here
+        GRADE: CORRECT or INCORRECT here
+
+        Grade the student answers based ONLY on their factual accuracy. Ignore differences in punctuation and phrasing 
+        between the student answer and true answer. It is OK if the student answer contains more information than the true answer, 
+        as long as it does not contain any conflicting statements. Begin! 
+
+        QUESTION: {query}
+        TRUE ANSWER: {answer}
+        STUDENT ANSWER: {result}
+        GRADE:"""
+        input = st.text_area(label="Evaluation Prompt", value=template, )
+        PROMPT = PromptTemplate(
+            input_variables=["query", "answer", "result"], template=input
+        )
         # Start EVAL
         if st.button("Start EVAL", type="primary"):
             with st.spinner('Evaluating the LLM setting...'):
