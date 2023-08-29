@@ -65,14 +65,14 @@ def set_reload_setting_flag():
     st.session_state["evalreloadflag"] = True
 
 
-def define_llm(model: str):
+def define_llm(model: str, max_token: int):
     if "gpt-35-turbo" in model:
         llm = AzureChatOpenAI(deployment_name=model,
                               openai_api_key=openai.api_key,
                               openai_api_base=openai.api_base,
                               openai_api_type=openai.api_type,
                               openai_api_version=openai.api_version,
-                              max_tokens=1024,
+                              max_tokens=max_token,
                               temperature=0.2,
                               # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
                               )
@@ -170,6 +170,11 @@ def main():
                                 options=["gpt-35-turbo", "gpt-35-turbo-16k"],
                                 index=0,
                                 on_change=set_reload_setting_flag)
+        aa_max_token = st.slider(label="`Max token`",
+                                 min_value=1024,
+                                 max_value=16*1024,
+                                 value=4096,
+                                 on_change=set_reload_setting_flag)
         # 2. Split
         aa_eval_q = st.slider(label="`Number of eval questions`",
                               min_value=1,
@@ -211,7 +216,7 @@ def main():
                                        on_change=set_reload_setting_flag)
 
         # if st.session_state["evalreloadflag"] == True:
-        LlmModel = define_llm(aa_llm_model)
+        LlmModel = define_llm(aa_llm_model, aa_max_token)
         EmbeddingModel = define_embedding(aa_embedding_method)
         TextSplitter = define_splitter(aa_split_methods, aa_chunk_size, aa_overlap_size)
         st.session_state["evalreloadflag"] = False
