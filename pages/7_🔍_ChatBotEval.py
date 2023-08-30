@@ -15,7 +15,7 @@ from langchain.embeddings import (
     HuggingFaceEmbeddings,
 )
 from langchain.document_loaders import (
-    PyMuPDFLoader,
+    PyMuPDFLoader, Textloader
 )
 from langchain.retrievers import (
     SVMRetriever,
@@ -29,6 +29,9 @@ import pandas as pd
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
 from evaluate import load, combine
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+
+from src.html_preprocess import get_document_text, split_text_html
+from langchain.docstore.document import Document
 
 work_path = os.path.abspath('.')
 
@@ -116,7 +119,6 @@ def define_embedding(embedding_method: str):
 def load_single_document(file_path):
     loader = PyMuPDFLoader(file_path)
     return loader.load()  # [0]
-
 
 def save_csv(examples, filename:str="generated_QA.csv"):
     df = pd.DataFrame(examples)
@@ -232,7 +234,7 @@ def main():
     with qa_gen_container:
         # Upload file to generate Q&A pairs
         file_paths = st.file_uploader("1.Upload document files to generate QAs",
-                                      type=["pdf"],
+                                      type=["pdf", "html"],
                                       accept_multiple_files=True)
 
         if st.button("Upload Ref Document", type="primary"):
@@ -240,8 +242,14 @@ def main():
                 # save file
                 with st.spinner('Reading file'):
                     uploaded_paths = []
+
+                    # Ensure tempDir exists
+                    tempOutputDir = work_path + "/tempDir/output"
+                    if not os.path.exists(tempOutputDir):
+                        os.makedirs(tempOutputDir)
+
                     for file_path in file_paths:
-                        uploaded_paths.append(os.path.join(work_path + "/tempDir/output", file_path.name))
+                        uploaded_paths.append(os.path.join(tempOutputDir, file_path.name))
                         uploaded_path = uploaded_paths[-1]
                         with open(uploaded_path, mode="wb") as f:
                             f.write(file_path.getbuffer())
@@ -252,7 +260,15 @@ def main():
                     documents = []
                     with tqdm(total=len(uploaded_paths), desc='Loading new documents', ncols=80) as pbar:
                         for uploaded_path in uploaded_paths:
-                            documents = documents + load_single_document(uploaded_path)
+                            # file is pdf
+                            if Path(uploaded_path).suffix == ".pdf":
+                                documents = documents + load_single_document(uploaded_path)
+                            elif Path(uploaded_path).suffix == ".html":
+                                page_map = get_document_text(uploaded_path)
+                                for i, (content, pagenum) in enumerate(split_text_html(page_map)):
+                                    doc = Document(page_content=content, metadata={"source": uploaded_path})
+                                    documents = documents + [doc]
+
                             pbar.update()
 
                     # split documents
