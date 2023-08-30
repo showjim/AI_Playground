@@ -15,7 +15,8 @@ from langchain.embeddings import (
     HuggingFaceEmbeddings,
 )
 from langchain.document_loaders import (
-    PyMuPDFLoader, Textloader
+    PyMuPDFLoader,
+    TextLoader,
 )
 from langchain.retrievers import (
     SVMRetriever,
@@ -275,6 +276,7 @@ def main():
                     # for i in range(len(uploaded_paths)):
                     uploaded_path = uploaded_paths[0]
                     texts = TextSplitter.split_documents(documents)
+                    #texts = documents
                     st.session_state["EvalTexts"] = texts
 
                     # search & retriver
@@ -393,12 +395,12 @@ def main():
 
                     output_keys = ["query", "answer"]
                     regex = r"QUESTION: (.*?)\n+ANSWER: (.*)"
+                    output_parser = []
                     for generation in outputs.generations:
-
                         tmptext = generation[0].text
                         match = re.findall(regex, tmptext)
                         if match:
-                            output_parser = []
+                            # output_parser = []
                             for item in match:
                                 output_parser.append({"qa_pairs": {key: item[i] for i, key in enumerate(output_keys)}})
                         else:
