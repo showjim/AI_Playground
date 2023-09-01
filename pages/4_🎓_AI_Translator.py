@@ -39,7 +39,7 @@ def main():
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for AI Translator")
         aa_llm_model = st.sidebar.selectbox(label="1. LLM Model",
-                                            options=["gpt-35-turbo", "gpt-35-turbo-16k"],
+                                            options=["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4"],
                                             index=0,
                                             on_change=set_reload_flag)
         # aa_combine_type = st.sidebar.radio(label="1.Types of combine document chains", options=["stuff", "map_reduce"],
