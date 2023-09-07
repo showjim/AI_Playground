@@ -367,6 +367,28 @@ def main():
         <Begin Document>
         {doc}
         <End Document>"""
+
+# """
+# You are a teacher coming up with questions to ask on a quiz.
+# Use the following process to generate question and answer pairs.
+# 1) Search the document snippet for specific, concrete facts or concepts.
+# 2) construct a concise statement of the fact or concept.
+# 3) construct a very hard and comprehensive question-answer pair based on the concise statements.
+# Finally, output the question and answer in the following format:
+# <Begin Document>
+# ...
+# <End Document>
+# QUESTION: question here
+# ANSWER: answer here
+#
+# Please create one question-answer pair per chuck.
+# These questions should be detailed and be based explicitly on information in the document. Begin!
+#
+# <Begin Document>
+# {doc}
+# <End Document>
+# """
+
         input_QAGen = st.text_area(label="QA Generation Prompt", value=template_QAGen, )
         PROMPT_QAGen = PromptTemplate(
             input_variables=["doc"],
