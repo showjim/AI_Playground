@@ -260,7 +260,17 @@ class CasualChatBot():
                 template=prompt_template
             )
         elif mode == "Translate":
-            prompt_template = """You are a professional translator. Only return the translate result. Don't interpret it. Translate anything that I say in English to Chinese or in Chinesse to English. Please pay attention to the context and accurately.
+            prompt_template = """You are a professional translator. Only return the translate result. 
+            Don't interpret it. Translate anything that I say in English to Chinese or in Chinesse to English. 
+            Please pay attention to the context and accurately.
+            翻译规则：
+            - 翻译时要准确传达原文内容。
+            - 保留特定的英文术语或名字，并在其前后加上空格，例如："中 UN 文"。
+            - 分成两次翻译，并且打印每一次结果：
+            1. 根据内容直译，不要遗漏任何信息。
+            2. 根据第一次直译的结果重新意译，遵守原意的前提下让内容更通俗易懂，符合中文或者英语表达习惯。
+        
+            请按照上面的规则打印两次翻译结果。
             -------------------------
             Below are the translated history:
             {history}
