@@ -6,6 +6,9 @@ from pathlib import Path
 from src.chat import ChatBot, StreamHandler
 import nltk
 import ssl
+from langchain.retrievers import (
+    AzureCognitiveSearchRetriever,
+)
 
 # try:
 #     _create_unverified_https_context = ssl._create_unverified_context
@@ -77,6 +80,11 @@ def main():
     # main page
         with tab1:
             # with setup_container:
+            aa_retriver = st.radio(label="`Choose retriever`",
+                                   options=["Local Vector DB",
+                                            "Azure Cognitive Search"],
+                                   index=0,
+                                   on_change=set_reload_setting_flag)
             # upload file & create index base
             st.subheader("Please upload your file below.")
             if "vectordb" not in st.session_state:
@@ -84,37 +92,44 @@ def main():
             file_paths = st.file_uploader("1.Upload a document file",
                                           type=["pdf", "txt", "pptx", "docx", "html"],
                                           accept_multiple_files=True)#, on_change=is_upload_status_changed)
-            if st.button("Upload"):
-                if file_paths is not None or len(file_paths) > 0:
-                    # save file
-                    with st.spinner('Reading file'):
-                        uploaded_paths = []
-                        for file_path in file_paths:
-                            uploaded_paths.append(os.path.join(work_path + "/tempDir/output", file_path.name))
-                            uploaded_path = uploaded_paths[-1]
-                            with open(uploaded_path, mode="wb") as f:
-                                f.write(file_path.getbuffer())
-                    with st.spinner('Create vector DB'):
-                        for uploaded_path in uploaded_paths:
-                            st.session_state["vectordb"] = st.session_state["FileChat"].setup_vectordb(uploaded_path)
-                            if os.path.exists(uploaded_path) == True:
-                                st.write(f"✅ {Path(uploaded_path).name} uploaed")
 
-            # select the specified index base(s)
-            index_file_list = st.session_state["FileChat"].get_all_files_list("./index", "faiss")
-            options = st.multiselect('2.What file do you want to exam?',
-                                     index_file_list,
-                                     # [Path(file_path.name).stem],
-                                     on_change=set_reload_db_flag)
-            if len(options) > 0:
-                if st.session_state["index_db_reload_flag"] == True:
-                    with st.spinner('Load Index DB'):
-                        st.session_state["vectordb"] = st.session_state["FileChat"].load_vectordb(options)
-                    # st.session_state["index_db_reload_flag"] = False
-                if (st.session_state["vectordb"] is not None):
-                    st.write("✅ " + ", ".join(options) + " Index DB Loaded")
+            # if select Azure Cognitive Search or local DB
+            if aa_retriver == "Azure Cognitive Search":
+                st.session_state["vectordb"] = AzureCognitiveSearchRetriever(content_key="content")
             else:
-                st.session_state["vectordb"] = None
+
+                if st.button("Upload"):
+                    if file_paths is not None or len(file_paths) > 0:
+                        # save file
+                        with st.spinner('Reading file'):
+                            uploaded_paths = []
+                            for file_path in file_paths:
+                                uploaded_paths.append(os.path.join(work_path + "/tempDir/output", file_path.name))
+                                uploaded_path = uploaded_paths[-1]
+                                with open(uploaded_path, mode="wb") as f:
+                                    f.write(file_path.getbuffer())
+                        with st.spinner('Create vector DB'):
+                            for uploaded_path in uploaded_paths:
+                                tmp_vecter_db_index = st.session_state["FileChat"].setup_vectordb(uploaded_path)
+                                st.session_state["vectordb"] = tmp_vecter_db_index.as_retriever()
+                                if os.path.exists(uploaded_path) == True:
+                                    st.write(f"✅ {Path(uploaded_path).name} uploaed")
+
+                # select the specified index base(s)
+                index_file_list = st.session_state["FileChat"].get_all_files_list("./index", "faiss")
+                options = st.multiselect('2.What file do you want to exam?',
+                                         index_file_list,
+                                         # [Path(file_path.name).stem],
+                                         on_change=set_reload_db_flag)
+                if len(options) > 0:
+                    if st.session_state["index_db_reload_flag"] == True:
+                        with st.spinner('Load Index DB'):
+                            st.session_state["vectordb"] = st.session_state["FileChat"].load_vectordb(options)
+                        # st.session_state["index_db_reload_flag"] = False
+                    if (st.session_state["vectordb"] is not None):
+                        st.write("✅ " + ", ".join(options) + " Index DB Loaded")
+                else:
+                    st.session_state["vectordb"] = None
 
     # Initialize chat history
     if "F_messages" not in st.session_state:
