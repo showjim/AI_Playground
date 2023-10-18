@@ -111,7 +111,7 @@ def main():
                         with st.spinner('Create vector DB'):
                             for uploaded_path in uploaded_paths:
                                 tmp_vecter_db_index = st.session_state["FileChat"].setup_vectordb(uploaded_path)
-                                st.session_state["vectordb"] = tmp_vecter_db_index.as_retriever()
+                                st.session_state["vectordb"] = tmp_vecter_db_index #.as_retriever()
                                 if os.path.exists(uploaded_path) == True:
                                     st.write(f"✅ {Path(uploaded_path).name} uploaed")
 

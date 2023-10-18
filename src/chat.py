@@ -138,7 +138,7 @@ class ChatBot():
         # resp = qa({"question": query_str})
         return qa_chain
 
-    def chat_QA_with_type_select(self, doc_summary_index_retriver, chain_type:str="stuff"):
+    def chat_QA_with_type_select(self, doc_summary_index, chain_type:str="stuff"):
         # prompt_template = """Given the following extracted parts of a long document and a question,
         # create a final answer in the same language as the question. If you don't know the answer, just say that you don't know.
         # Don't try to make up an answer.
@@ -206,7 +206,7 @@ class ChatBot():
                                                    chain_type=chain_type,
                                                    verbose=True)
         chain = ConversationalRetrievalChain(
-            retriever=doc_summary_index_retriver, #doc_summary_index.as_retriever(),
+            retriever=doc_summary_index.as_retriever(), #doc_summary_index_retriver, #
             question_generator=question_generator,
             combine_docs_chain=doc_chain,
             memory=ConversationBufferMemory(
