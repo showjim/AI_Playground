@@ -43,7 +43,8 @@ from tqdm import tqdm
 from langchain import LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.llms import AzureOpenAI
-from langchain.agents import create_pandas_dataframe_agent
+# from langchain.agents import create_pandas_dataframe_agent
+from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain.callbacks.base import BaseCallbackHandler
 
 
