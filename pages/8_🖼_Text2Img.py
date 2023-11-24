@@ -1,15 +1,17 @@
 import streamlit as st
 import os, json, requests, datetime
 from openai import AzureOpenAI
+from dotenv import load_dotenv
 
 env_path = os.path.abspath('.')
+load_dotenv()
 st.set_page_config(page_title="Text2Pic - Draw what you say")
 
 def initial_llm():
     client = AzureOpenAI(
         api_version="2023-12-01-preview",
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
-        azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT']
+        api_key=os.environ["AZURE_OPENAI_API_KEY_SWC"],
+        azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT_SWC']
     )
     return client
 def set_reload_flag():
@@ -43,12 +45,17 @@ def main():
 
     # Initialize chat history
     if "messages" not in st.session_state:
-        st.session_state['messages'] = [{"role": "assistant", "content": "I'm Text2Pic, what would you like to draw?"}]
+        st.session_state['messages'] = [{"role": "assistant", "content": ["I'm Text2Pic, what would you like to draw?"]}]
 
     # Display chat messages from history on app rerun
     for message in st.session_state["messages"]:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            if message["role"] == "user":
+                st.markdown(message["content"])
+            else:
+                st.markdown(message["content"][0])
+                if len(message["content"]) > 1:
+                    st.image(message["content"][1], width=256)
 
     # Accept user input
     if prompt := st.chat_input("Type you input here"):
@@ -78,9 +85,10 @@ def main():
                                                                                     n=1
                                                                                 )
                 json_response = json.loads(full_response.model_dump_json())
+                revised_prompt = json_response["data"][0]["revised_prompt"]
                 # Retrieve the generated image
                 image_url = json_response["data"][0]["url"]  # extract image URL from response
-
+            st.markdown(revised_prompt)
             message_placeholder.image(image_url)
             with st.spinner('Prepare the download button'):
                 generated_image = requests.get(image_url).content  # download the image
@@ -90,11 +98,11 @@ def main():
                     btn = st.download_button(
                         label="Download image",
                         data=file,
-                        file_name="flower.png",
+                        # file_name="flower.png",
                         mime="image/png"
                     )
 
-        st.session_state['messages'].append({"role": "assistant", "content": image_path})
+        st.session_state['messages'].append({"role": "assistant", "content": [revised_prompt, image_path]})
 
 
 if __name__ == "__main__":
