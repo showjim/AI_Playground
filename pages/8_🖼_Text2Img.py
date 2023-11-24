@@ -44,11 +44,11 @@ def main():
             st.session_state["text2picreloadflag"] = False
 
     # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state['messages'] = [{"role": "assistant", "content": ["I'm Text2Pic, what would you like to draw?"]}]
+    if "text2pic_messages" not in st.session_state:
+        st.session_state['text2pic_messages'] = [{"role": "assistant", "content": ["I'm Text2Pic, what would you like to draw?"]}]
 
     # Display chat messages from history on app rerun
-    for message in st.session_state["messages"]:
+    for message in st.session_state["text2pic_messages"]:
         with st.chat_message(message["role"]):
             if message["role"] == "user":
                 st.markdown(message["content"])
@@ -60,7 +60,7 @@ def main():
     # Accept user input
     if prompt := st.chat_input("Type you input here"):
         # Add user message to chat history
-        st.session_state["messages"].append({"role": "user", "content": prompt})
+        st.session_state["text2pic_messages"].append({"role": "user", "content": prompt})
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -102,7 +102,7 @@ def main():
                         mime="image/png"
                     )
 
-        st.session_state['messages'].append({"role": "assistant", "content": [revised_prompt, image_path]})
+        st.session_state['text2pic_messages'].append({"role": "assistant", "content": [revised_prompt, image_path]})
 
 
 if __name__ == "__main__":
