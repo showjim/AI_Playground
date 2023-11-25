@@ -1,7 +1,7 @@
 import time
 
 import streamlit as st
-from streamlit_chat import message
+# from streamlit_chat import message
 from src.chat import CasualChatBot, StreamHandler
 import os
 

@@ -123,11 +123,11 @@ class OpenAIAzure():
             os.environ["BING_SUBSCRIPTION_KEY"] = os.getenv("BING_SUBSCRIPTION_KEY")
             os.environ["BING_SEARCH_URL"] = self.config_details['BING_SEARCH_URL']
 
-            # LangSmith
-            os.environ["LANGCHAIN_TRACING_V2"] = self.config_details['LANGCHAIN_TRACING_V2']
-            os.environ["LANGCHAIN_ENDPOINT"] = self.config_details['LANGCHAIN_ENDPOINT']
-            os.environ["LANGCHAIN_API_KEY"] = os.getenv('LANGCHAIN_API_KEY')
-            os.environ["LANGCHAIN_PROJECT"] = self.config_details['LANGCHAIN_PROJECT']
+            # # LangSmith
+            # os.environ["LANGCHAIN_TRACING_V2"] = self.config_details['LANGCHAIN_TRACING_V2']
+            # os.environ["LANGCHAIN_ENDPOINT"] = self.config_details['LANGCHAIN_ENDPOINT']
+            # os.environ["LANGCHAIN_API_KEY"] = os.getenv('LANGCHAIN_API_KEY')
+            # os.environ["LANGCHAIN_PROJECT"] = self.config_details['LANGCHAIN_PROJECT']
 
             # # Aure Cognitive Search
             # os.environ["AZURE_COGNITIVE_SEARCH_SERVICE_NAME"] = self.config_details['AZURE_COGNITIVE_SEARCH_SERVICE_NAME']
