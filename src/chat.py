@@ -3,7 +3,7 @@ import os.path
 from pathlib import Path
 from src.llms import OpenAI, OpenAIAzure
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
-from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory, ConversationBufferMemory
 
 from langchain.chains import LLMChain

@@ -11,7 +11,7 @@ from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.embeddings import (
-    OpenAIEmbeddings,
+    AzureOpenAIEmbeddings,
     HuggingFaceEmbeddings,
 )
 from langchain.document_loaders import (
@@ -25,7 +25,7 @@ from langchain.retrievers import (
     ContextualCompressionRetriever,
 )
 from langchain.retrievers.document_compressors import LLMChainExtractor
-from langchain.prompts.prompt import PromptTemplate
+from langchain.prompts import PromptTemplate
 import pandas as pd
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
 from evaluate import load, combine
@@ -73,7 +73,7 @@ def define_llm(model: str, max_token: int):
     if "gpt-" in model:
         llm = AzureChatOpenAI(deployment_name=model,
                               openai_api_key=openai.api_key,
-                              openai_api_base=openai.api_base,
+                              azure_endpoint=openai.api_base,
                               openai_api_type=openai.api_type,
                               openai_api_version=openai.api_version,
                               max_tokens=max_token,
@@ -107,9 +107,8 @@ def define_splitter(splitter: str, chunk_size, chunk_overlap):
 def define_embedding(embedding_method: str):
     embeddings = None
     if embedding_method == "OpenAI":
-        embeddings = OpenAIEmbeddings(deployment="text-embedding-ada-002",
-                                      model="text-embedding-ada-002",
-                                      openai_api_base=openai.api_base,
+        embeddings = AzureOpenAIEmbeddings(deployment="text-embedding-ada-002",
+                                      azure_endpoint=openai.api_base,
                                       openai_api_type=openai.api_type,
                                       chunk_size=1,)
     elif embedding_method == "HuggingFace":

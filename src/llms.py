@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.schema import HumanMessage
 
 from langchain.document_loaders import (
@@ -30,7 +30,7 @@ from langchain.document_loaders import (
     DirectoryLoader,
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 # The vectorstore we'll be using
 from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
@@ -40,7 +40,7 @@ from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 from tqdm import tqdm
 
-from langchain import LLMChain, PromptTemplate
+from langchain.chains import LLMChain
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.llms import AzureOpenAI
 # from langchain.agents import create_pandas_dataframe_agent
@@ -143,7 +143,7 @@ class OpenAIAzure():
         # max_chunk_overlap = 20
         llm = AzureChatOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
-                               openai_api_base=openai.api_base,
+                               azure_endpoint=openai.api_base,
                                openai_api_type=openai.api_type,
                                openai_api_version=self.config_details['OPENAI_API_VERSION'],
                                max_tokens=num_output,
@@ -152,11 +152,10 @@ class OpenAIAzure():
 
 
         # You need to deploy your own embedding model as well as your own chat completion model
-        embeddings = OpenAIEmbeddings(deployment=self.config_details['EMBEDDING_MODEL'],
-                                      model=self.config_details['EMBEDDING_MODEL'],
-                                      openai_api_base=openai.api_base,
+        embeddings = AzureOpenAIEmbeddings(deployment=self.config_details['EMBEDDING_MODEL'],
+                                      azure_endpoint=openai.api_base,
                                       openai_api_type=openai.api_type,
-                                      chunk_size=1,
+                                      # chunk_size=1,
         )
 
 
@@ -263,7 +262,7 @@ class OpenAIAzure():
 
         llm = AzureChatOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
                               openai_api_key=openai.api_key,
-                              openai_api_base=openai.api_base,
+                              azure_endpoint=openai.api_base,
                               openai_api_type=openai.api_type,
                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
                               max_tokens=num_output,
@@ -274,7 +273,7 @@ class OpenAIAzure():
         # llm = AzureOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
         #                   model_name=self.config_details['CHATGPT_MODEL'],
         #                   # openai_api_key=openai.api_key,
-        #                   # openai_api_base=openai.api_base,
+        #                   # azure_endpoint=openai.api_base,
         #                   # openai_api_type=openai.api_type,
         #                   # openai_api_version=self.config_details['OPENAI_API_VERSION'],
         #                   # max_tokens=num_output,
@@ -296,7 +295,7 @@ class OpenAIAzure():
         num_output = 1024  # 512
         llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
                               openai_api_key=openai.api_key,
-                              openai_api_base=openai.api_base,
+                              azure_endpoint=openai.api_base,
                               openai_api_type=openai.api_type,
                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
                               max_tokens=num_output,
@@ -305,7 +304,7 @@ class OpenAIAzure():
         # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
         #                   model_name=self.config_details['CHATGPT_MODEL'],
         #                   openai_api_key=openai.api_key,
-        #                   openai_api_base=openai.api_base,
+        #                   azure_endpoint=openai.api_base,
         #                   openai_api_type=openai.api_type,
         #                   openai_api_version=self.config_details['OPENAI_API_VERSION'],
         #                   max_tokens=num_output,
@@ -325,7 +324,7 @@ class OpenAIAzure():
     def create_complete_model(self, model_name, num_output:int=1024, temperature:float=0.2):
         llm = AzureChatOpenAI(deployment_name=model_name,
                               openai_api_key=openai.api_key,
-                              openai_api_base=openai.api_base,
+                              azure_endpoint=openai.api_base,
                               openai_api_type=openai.api_type,
                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
                               max_tokens=num_output,
@@ -335,7 +334,7 @@ class OpenAIAzure():
         # llm = AzureOpenAI(deployment_name=model_name,
         #                   model_name=model_name,
         #                   openai_api_key=openai.api_key,
-        #                   openai_api_base=openai.api_base,
+        #                   azure_endpoint=openai.api_base,
         #                   openai_api_type=openai.api_type,
         #                   openai_api_version=self.config_details['OPENAI_API_VERSION'],
         #                   max_tokens=num_output,

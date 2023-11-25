@@ -9,10 +9,10 @@ from langchain.document_loaders import (
 )
 from langchain.evaluation.qa import QAEvalChain, CotQAEvalChain
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.llms import AzureOpenAI
 
-from langchain.prompts.prompt import PromptTemplate
+from langchain.prompts import PromptTemplate
 import pandas as pd
 from evaluate import load, combine
 
@@ -66,7 +66,7 @@ else:
 
 llm = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
-                               openai_api_base=openai.api_base,
+                               azure_endpoint=openai.api_base,
                                openai_api_type=openai.api_type,
                                openai_api_version=config_details['OPENAI_API_VERSION'],
                                max_tokens=1024,
@@ -74,7 +74,7 @@ llm = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
                               # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
                                )
 
-embeddings = OpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chunk_size=1)
+embeddings = AzureOpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chunk_size=1)
 
 loader = PyMuPDFLoader("./An Introduction to Scan Test for Test Engineers_1.pdf")
 documents = loader.load()
@@ -108,7 +108,7 @@ save_csv(examples)
 predictions = qa.apply(examples)
 llm2 = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
-                               openai_api_base=openai.api_base,
+                               azure_endpoint=openai.api_base,
                                openai_api_type=openai.api_type,
                                openai_api_version=config_details['OPENAI_API_VERSION'],
                                max_tokens=1024,

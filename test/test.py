@@ -5,12 +5,12 @@ from dotenv import load_dotenv
 
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.schema import HumanMessage
 from langchain.chains.summarize import load_summarize_chain
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 # The vectorstore we'll be using
 from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
@@ -41,14 +41,14 @@ else:
 
 llm = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
-                               openai_api_base=openai.api_base,
+                               azure_endpoint=openai.api_base,
                                openai_api_type=openai.api_type,
                                openai_api_version=config_details['OPENAI_API_VERSION'],
                                max_tokens=512,
                                temperature=0.2,
                               # model_kwargs={'engine': self.config_details['CHATGPT_MODEL']},
                                )
-embeddings = OpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chunk_size=1)
+embeddings = AzureOpenAIEmbeddings(deployment=config_details['EMBEDDING_MODEL'], chunk_size=1)
 # summary_chain = load_summarize_chain(src, chain_type="map_reduce")
 # text = "This is a test document."
 # query_result = embeddings.embed_query(text)
