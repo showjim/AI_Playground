@@ -8,7 +8,7 @@ pyannote-core
 streamlit==1.25.0
 streamlit-chat==0.1.0
 transformers
-openai~=0.27.8
+openai
 tiktoken
 faiss-cpu
 pymupdf
