@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 env_path = os.path.abspath('.')
 load_dotenv()
-st.set_page_config(page_title="Text2Pic - Draw what you say")
+st.set_page_config(page_title="Text2Img - Draw what you say")
 
 def initial_llm():
     client = AzureOpenAI(
@@ -19,7 +19,7 @@ def set_reload_flag():
     st.session_state["text2picreloadflag"] = True
 
 def main():
-    st.title('🖼 Text2Pic Web-UI App')
+    st.title('🖼 Text2Img - Draw what you say')
     # Sidebar contents
     if "text2picreloadflag" not in st.session_state:
         st.session_state["text2picreloadflag"] = None
