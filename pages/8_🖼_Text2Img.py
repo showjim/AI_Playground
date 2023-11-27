@@ -1,11 +1,37 @@
 import streamlit as st
-import os, json, requests, datetime
+import os, json, requests, datetime, shutil
+import openai
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 
 env_path = os.path.abspath('.')
-load_dotenv()
 st.set_page_config(page_title="Text2Img - Draw what you say")
+
+def setup_env():
+    # Load OpenAI key
+    if os.path.exists("key.txt"):
+        shutil.copyfile("key.txt", ".env")
+        load_dotenv()
+    else:
+        print("key.txt with OpenAI API is required")
+
+    # Load config values
+    if os.path.exists(os.path.join(r'config.json')):
+        with open(r'config.json') as config_file:
+            config_details = json.load(config_file)
+
+        # Setting up the embedding model
+        embedding_model_name = config_details['EMBEDDING_MODEL']
+        openai.api_type = "azure"
+        openai.api_base = config_details['OPENAI_API_BASE']
+        openai.api_version = config_details['OPENAI_API_VERSION']
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+
+        # Dalle-E-3
+        os.environ["AZURE_OPENAI_API_KEY_SWC"] = os.getenv("AZURE_OPENAI_API_KEY_SWC")
+        os.environ["AZURE_OPENAI_ENDPOINT_SWC"] = config_details['AZURE_OPENAI_ENDPOINT_SWC']
+    else:
+        print("config.json with Azure OpenAI config is required")
 
 def initial_llm():
     client = AzureOpenAI(
@@ -19,6 +45,7 @@ def set_reload_flag():
     st.session_state["text2picreloadflag"] = True
 
 def main():
+    setup_env()
     st.title('🖼 Text2Img - Draw what you say')
     # Sidebar contents
     if "text2picreloadflag" not in st.session_state:

@@ -169,7 +169,7 @@ def main():
     with st.sidebar:
         # 1. Model
         aa_llm_model = st.radio(label="`LLM Model`",
-                                options=["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4"],
+                                options=["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-turbo"],
                                 index=0,
                                 on_change=set_reload_setting_flag)
         aa_max_token = st.slider(label="`Max token`",

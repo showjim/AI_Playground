@@ -54,7 +54,7 @@ def main():
         with tab2:
             st.subheader("Parameter for document chains")
             aa_llm_model = st.selectbox(label="1.LLM Model",
-                                                options=["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4"],
+                                                options=["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-turbo"],
                                                 index=0,
                                                 on_change=set_reload_setting_flag)
             aa_combine_type = st.radio(label="2.Types of combine document chains",
