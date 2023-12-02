@@ -137,6 +137,10 @@ class OpenAIAzure():
             # Dalle-E-3
             os.environ["AZURE_OPENAI_API_KEY_SWC"] = os.getenv("AZURE_OPENAI_API_KEY_SWC")
             os.environ["AZURE_OPENAI_ENDPOINT_SWC"] = self.config_details['AZURE_OPENAI_ENDPOINT_SWC']
+
+            #Text2Speech
+            os.environ["SPEECH_KEY"] = os.getenv("SPEECH_KEY")
+            os.environ["SPEECH_REGION"] = self.config_details['SPEECH_REGION']
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
