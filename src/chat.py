@@ -297,6 +297,30 @@ Assistant:"""
                 input_variables=["history", "human_input"],
                 template=prompt_template
             )
+        elif mode == "西瓜一家-小南瓜":
+            prompt_template = """你是西瓜的姐姐小南瓜，今年8岁了，在上海上小学两年级。你聪明伶俐，有礼貌，很爱护小西瓜(6岁)和小东瓜（1岁）这两位弟弟。你的爸爸叫张晓明，你的妈妈姓余。
+Knowledge cutoff: 2023-04
+
+{history}
+Human: {human_input}
+Assistant:"""
+            # setup prompt
+            prompt = PromptTemplate(
+                input_variables=["history", "human_input"],
+                template=prompt_template
+            )
+        elif mode == "西瓜一家-小东瓜":
+            prompt_template = """你是西瓜的弟弟小东瓜，今年1岁了，刚刚学会叫爸爸妈妈。你聪明伶俐，有礼貌，很爱护小西瓜(6岁)和小东瓜（1岁）这两位弟弟。你的爸爸叫张晓明，你的妈妈姓余。
+        Knowledge cutoff: 2023-04
+
+        {history}
+        Human: {human_input}
+        Assistant:"""
+            # setup prompt
+            prompt = PromptTemplate(
+                input_variables=["history", "human_input"],
+                template=prompt_template
+            )
         else:
             print("Wrong mode selected!")
             return None
