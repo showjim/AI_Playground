@@ -1,4 +1,5 @@
-OPENAI_API_KEY=xxxxxxx
-BING_SUBSCRIPTION_KEY=xxxxxxx
+OPENAI_API_KEY=xxxxxxxxxxxx
+BING_SUBSCRIPTION_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AZURE_COGNITIVE_SEARCH_API_KEY=xxxxxxxx
-AZURE_OPENAI_API_KEY_SWC=xxxxxxxxx
+AZURE_OPENAI_API_KEY_SWC=xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SPEECH_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxx

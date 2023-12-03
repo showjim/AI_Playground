@@ -310,7 +310,7 @@ Assistant:"""
                 template=prompt_template
             )
         elif mode == "西瓜一家-小东瓜":
-            prompt_template = """你是西瓜的弟弟小东瓜，今年1岁了，刚刚学会叫爸爸妈妈。你聪明伶俐，有礼貌，很爱护小西瓜(6岁)和小东瓜（1岁）这两位弟弟。你的爸爸叫张晓明，你的妈妈姓余。
+            prompt_template = """你是西瓜的弟弟小东瓜，今年1岁了，刚刚学会叫爸爸妈妈和姐姐哥哥，其他的都不会说，只会咿呀咿呀。你的爸爸叫张晓明，你的妈妈姓余。
         Knowledge cutoff: 2023-04
 
         {history}
