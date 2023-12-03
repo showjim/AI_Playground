@@ -35,6 +35,8 @@ def set_reload_flag():
 def text_2_speech(text:str, voice_name:str):
     # The language of the voice that speaks.
     audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+    if voice_name == "None":
+        voice_name = "zh-CN-XiaoyiNeural"
     speech_config.speech_synthesis_voice_name = voice_name #"zh-CN-XiaoyiNeural"  # "zh-CN-YunxiaNeural"
     speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
 
@@ -86,7 +88,7 @@ def main():
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
         aa_chat_model = st.sidebar.selectbox(label="`0. Chat Model`",
-                                            options=["CasualChat", "西瓜一家-小南瓜"],
+                                            options=["CasualChat", "西瓜一家-小南瓜", "西瓜一家-小东瓜"],
                                             index=0,
                                             on_change=set_reload_flag)
         aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
@@ -113,11 +115,11 @@ def main():
 
         # Text2Speech
         aa_voice_name = st.sidebar.selectbox(label="`4. Voice Name`",
-                                             options=["小南瓜", "小东瓜"],
+                                             options=["None", "小南瓜", "小东瓜"],
                                              index=0)
         if aa_voice_name == "小南瓜":
             aa_voice_name = "zh-CN-XiaoyiNeural"
-        else:
+        elif aa_voice_name == "小东瓜":
             aa_voice_name = "zh-CN-YunxiaNeural"
 
         # Speech2Text
@@ -159,7 +161,8 @@ def main():
                     time.sleep(0.001)
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
-            text_2_speech(full_response, aa_voice_name)
+            if aa_voice_name != "None":
+                text_2_speech(full_response, aa_voice_name)
             btn_placeholder.button(label="Play", key="current", on_click=text_2_speech, args=(full_response, aa_voice_name,))
 
         st.session_state['messages'].append({"role": "assistant", "content": full_response})
