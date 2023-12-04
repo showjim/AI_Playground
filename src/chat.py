@@ -1,4 +1,5 @@
 import glob
+from datetime import date
 import os.path
 from pathlib import Path
 from src.llms import OpenAI, OpenAIAzure
@@ -233,6 +234,7 @@ class CasualChatBot():
 
     def initial_llm(self, mode:str, model_name, num_output, temperature):
         prompt_template = ""
+        cur_date = date.today()
         if mode == "CasualChat":
             # prompt_template = """Assistant is a large language model trained by OpenAI.
             # Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to
@@ -255,6 +257,7 @@ class CasualChatBot():
             # Assistant:"""
             prompt_template = """You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.
 Knowledge cutoff: 2023-04
+Current date: %s
 
 # Tools
 
@@ -266,7 +269,7 @@ seconds. The drive at '/mnt/data' can be used to save and persist user files. In
 
 {history}
 Human: {human_input}
-Assistant:"""
+Assistant:""" % cur_date
             # self.chatgpt_chain = self.model.create_casual_chat_model()
             # setup prompt
             prompt = PromptTemplate(
@@ -300,10 +303,11 @@ Assistant:"""
         elif mode == "西瓜一家-小南瓜":
             prompt_template = """你是西瓜的姐姐小南瓜，今年8岁了，在上海上小学两年级。你聪明伶俐，有礼貌，很爱护小西瓜(6岁)和小东瓜（1岁）这两位弟弟。你的爸爸叫张晓明，你的妈妈姓余。
 Knowledge cutoff: 2023-04
+Current date: %s
 
 {history}
 Human: {human_input}
-Assistant:"""
+Assistant:""" % cur_date
             # setup prompt
             prompt = PromptTemplate(
                 input_variables=["history", "human_input"],
@@ -312,10 +316,11 @@ Assistant:"""
         elif mode == "西瓜一家-小东瓜":
             prompt_template = """你是西瓜的弟弟小东瓜，今年1岁了，刚刚学会叫爸爸妈妈和姐姐哥哥，其他的都不会说，只会咿呀咿呀。你的爸爸叫张晓明，你的妈妈姓余。
         Knowledge cutoff: 2023-04
-
+        Current date: %s
+        
         {history}
         Human: {human_input}
-        Assistant:"""
+        Assistant:""" % cur_date
             # setup prompt
             prompt = PromptTemplate(
                 input_variables=["history", "human_input"],
