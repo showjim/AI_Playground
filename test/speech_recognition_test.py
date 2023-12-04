@@ -1,4 +1,4 @@
-import os
+import os, time
 import azure.cognitiveservices.speech as speechsdk
 
 def recognize_from_microphone():
@@ -23,4 +23,32 @@ def recognize_from_microphone():
             print("Error details: {}".format(cancellation_details.error_details))
             print("Did you set the speech resource key and region values?")
 
-recognize_from_microphone()
+def recognize_from_microphone_continuous():
+    speech_config = speechsdk.SpeechConfig(subscription="9a79bff682884b9c9355604526a1ba01", region="eastasia")
+    speech_config.speech_recognition_language="zh-CN"
+
+    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+
+    done = False
+
+    def stop_cb(evt):
+        """callback that stops continuous recognition upon receiving an event `evt`"""
+        print('CLOSING on {}'.format(evt))
+        speech_recognizer.stop_continuous_recognition()
+        nonlocal done
+        done = True
+
+    speech_recognizer.recognized.connect(lambda evt: print('Recognized: {}'.format(evt.result.text)))
+
+    speech_recognizer.session_stopped.connect(stop_cb)
+    speech_recognizer.canceled.connect(stop_cb)
+
+    # Start continuous speech recognition
+    speech_recognizer.start_continuous_recognition()
+    
+    while not done:
+        time.sleep(0.5)
+
+recognize_from_microphone_continuous()
+# recognize_from_microphone()
