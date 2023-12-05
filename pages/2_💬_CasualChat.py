@@ -36,7 +36,7 @@ def text_2_speech(text:str, voice_name:str):
     # The language of the voice that speaks.
     audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
     if voice_name == "None":
-        voice_name = "zh-CN-XiaoyiNeural"
+        voice_name = "zh-CN-XiaoyouNeural" #"zh-CN-XiaoyiNeural"
     speech_config.speech_synthesis_voice_name = voice_name #"zh-CN-XiaoyiNeural"  # "zh-CN-YunxiaNeural"
     speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
 
