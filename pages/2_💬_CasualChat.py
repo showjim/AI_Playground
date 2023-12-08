@@ -15,7 +15,7 @@ casual_chat_bot = CasualChatBot(env_path)
 # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
 speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
                                        region=os.environ.get('SPEECH_REGION'))
-speech_config.speech_recognition_language="zh-CN" #"en-US"
+# speech_config.speech_recognition_language="zh-CN" #"en-US"
 
 st.set_page_config(page_title="CasualChat -  Personal Chatbot based on Streamlit")
 
@@ -54,8 +54,6 @@ def text_2_speech(text:str, voice_name:str):
 
 def speech_2_text():
     # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-    speech_config.speech_recognition_language="zh-CN" #"en-US"
-
     audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
     speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
@@ -88,7 +86,7 @@ def main():
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
         aa_chat_model = st.sidebar.selectbox(label="`0. Chat Model`",
-                                            options=["CasualChat", "西瓜一家-小南瓜", "西瓜一家-小东瓜"],
+                                            options=["CasualChat", "西瓜一家-小南瓜", "西瓜一家-小东瓜", "西瓜一家-Ana"],
                                             index=0,
                                             on_change=set_reload_flag)
         aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
@@ -115,12 +113,16 @@ def main():
 
         # Text2Speech
         aa_voice_name = st.sidebar.selectbox(label="`4. Voice Name`",
-                                             options=["None", "小南瓜", "小东瓜"],
+                                             options=["None", "小南瓜", "小东瓜", "Ana"],
                                              index=0)
+        speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
         if aa_voice_name == "小南瓜":
             aa_voice_name = "zh-CN-XiaoyiNeural"
         elif aa_voice_name == "小东瓜":
             aa_voice_name = "zh-CN-YunxiaNeural"
+        elif aa_voice_name == "Ana":
+            aa_voice_name = "en-US-AnaNeural"
+            speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
         # Speech2Text
         speech_txt = ""
