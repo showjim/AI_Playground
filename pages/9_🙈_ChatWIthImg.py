@@ -78,6 +78,15 @@ def main():
     if "ImgChatMessages" not in st.session_state:
         st.session_state['ImgChatMessages'] = [
             {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "You are an AI assistant that helps people find information."
+                    }
+                ]
+            },
+            {
                 "role": "assistant",
                 "content": [
                     {
@@ -178,7 +187,7 @@ def main():
         if message["role"] == "assistant":
             with st.chat_message(message["role"]):
                 st.markdown(message["content"][0]["text"])
-        else:
+        elif message["role"] == "user":
             with st.chat_message(message["role"]):
                 for content in message["content"]:
                     if content["type"] == "image_url":
