@@ -126,7 +126,7 @@ def main():
             if "IMGChatSetting" not in st.session_state:
                 st.session_state["IMGChatSetting"] = {}
             st.session_state["IMGChatSetting"] = {"model":aa_llm_model, "max_tokens": aa_max_resp,
-                                                  "temperature": aa_temperature, "detail": aa_detail}
+                                                  "temperature": float(aa_temperature), "detail": aa_detail}
         # with setup_container:
         # upload file & create index base
         st.subheader("Please upload your file below.")
