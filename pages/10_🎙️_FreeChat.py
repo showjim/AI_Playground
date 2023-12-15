@@ -8,6 +8,7 @@ env_path = os.path.abspath('.')
 
 chatbot = ChatRobot()
 chatbot.setup_env()
+tools = chatbot.initial_tools()
 
 # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
 speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
@@ -161,7 +162,9 @@ def main():
                     max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
                     # default max tokens is low so set higher
                     temperature=st.session_state["FreeChatSetting"]["temperature"],
-                    stream=True
+                    stream=True,
+                    tools=tools,
+                    tool_choice="auto",  # auto is default, but we'll be explicit
                 )
                 for chunk in response:
                     if chunk.choices[0].delta.content is not None:

@@ -10,20 +10,20 @@ class ChatRobot():
     def __init__(self):
         super().__init__()
         self.config_details = {}
-        self.setup_env()
+        # self.setup_env()
 
-    def setup_env(self):
+    def setup_env(self, key_file="key.txt", config_file="config.json"):
         # Load OpenAI key
-        if os.path.exists("key.txt"):
-            shutil.copyfile("key.txt", ".env")
+        if os.path.exists(key_file):
+            shutil.copyfile(key_file, ".env")
             load_dotenv()
         else:
             print("key.txt with OpenAI API is required")
             raise APIKeyNotFoundError("key.txt with OpenAI API is required")
 
         # Load config values
-        if os.path.exists(r'config.json'):
-            with open(r'config.json') as config_file:
+        if os.path.exists(config_file):
+            with open(config_file) as config_file:
                 self.config_details = json.load(config_file)
 
             # Setting up the embedding model
@@ -115,3 +115,43 @@ class ChatRobot():
         else:
             print("Wrong mode selected!")
         return prompt_template
+
+    def initial_tools(self):
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g. San Francisco, CA",
+                            },
+                            "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                        },
+                        "required": ["location"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_img_by_dalle3",
+                    "description": "Create image by call to Dall-E3 with prompt",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "prompt": {
+                                "type": "string",
+                                "description": "The description of image to be created, e.g. a cute panda",
+                            }
+                        },
+                        "required": ["prompt"],
+                    },
+                },
+            }
+        ]
+        return tools
