@@ -80,6 +80,16 @@ class ChatRobot():
             When you send a message containing Python code to python, it will be executed in a
             stateful Jupyter notebook environment. Python will respond with the output of the execution or time out after 60.0
             seconds. The drive at '/mnt/data' can be used to save and persist user files. Internet access for this session is disabled. Do not make external web requests or API calls as they will fail.
+            
+            ## dalle
+
+            Whenever a description of an image is given, create a prompt that dalle can use to generate the image.
+            # Create images from a text-only prompt.
+            create_img_by_dalle3 = (
+            # The user's original image description, potentially modified to abide by the dalle policies. If the user does not suggest a number of captions to create, create four of them. If creating multiple captions, make them as diverse as possible. If the user requested modifications to previous images, the captions should not simply be longer, but rather it should be refactored to integrate the suggestions into each of the captions. Generate no more than 4 images, even if the user requests more.
+            prompts: str
+            ) => str
+            Please display the image in markdown with size 512X512.
             """ % cur_date
         elif mode == "Translate":
             prompt_template = """You are a professional translator. Only return the translate result. 

@@ -1,5 +1,5 @@
 import streamlit as st
-import os, time
+import os, time, json
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot
 
@@ -8,6 +8,7 @@ env_path = os.path.abspath('.')
 
 chatbot = ChatRobot()
 chatbot.setup_env()
+client = chatbot.initial_llm()
 tools = chatbot.initial_tools()
 
 # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
@@ -63,6 +64,45 @@ def speech_2_text():
         result_txt = "Speech Recognition canceled"
     return result_txt
 
+def get_current_weather(location, unit="fahrenheit"):
+    """Get the current weather in a given location"""
+    if "tokyo" in location.lower():
+        return json.dumps({"location": "Tokyo", "temperature": "10", "unit": unit})
+    elif "san francisco" in location.lower():
+        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": unit})
+    elif "paris" in location.lower():
+        return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
+    else:
+        return json.dumps({"location": location, "temperature": "unknown"})
+
+def create_img_by_dalle3(prompt):
+    """Create image by call to Dall-E3"""
+    result = client.images.generate(
+        model="Dalle3",  # the name of your DALL-E 3 deployment
+        prompt=prompt,  # "a close-up of a bear walking through the forest",
+        size='1024x1024',
+        style="vivid",  # "vivid", "natural"
+        quality="hd",  # "standard" "hd"
+        n=1
+    )
+    json_response = json.loads(result.model_dump_json())
+    # Retrieve the generated image
+    image_url = json_response["data"][0]["url"]  # extract image URL from response
+    revised_prompt = json_response["data"][0]["revised_prompt"]
+    print("Dall-E3: " + revised_prompt)
+    return image_url
+
+
+def execute_function_call(available_functions, tool_call):
+    function_name = tool_call["function"]["name"]
+    function_to_call = available_functions.get(function_name, None)
+    if function_to_call:
+        function_args = json.loads(tool_call["function"]["arguments"])
+        function_response = function_to_call(**function_args)
+    else:
+        function_response = f"Error: function {function_name} does not exist"
+    return function_response
+
 def main():
     index = 0
     st.title('🎙️Free Chat Web-UI App')
@@ -74,8 +114,8 @@ def main():
         st.session_state['FreeChatMessages'] = []
     # chain = chatbot.initial_llm()
     if "FreeChatChain" not in st.session_state:
-        chain = chatbot.initial_llm()
-        st.session_state["FreeChatChain"] = chain
+        # client = chatbot.initial_llm()
+        st.session_state["FreeChatChain"] = client
 
     with st.sidebar:
         st.sidebar.expander("Settings")
@@ -155,6 +195,8 @@ def main():
             message_placeholder = st.empty()
             btn_placeholder = st.empty()
             full_response = ""
+            tool_calls = []
+            cur_func_call = {"id": None, "type": "function", "function": {"arguments": "", "name": None}}
             with st.spinner('preparing answer'): #st.session_state["FreeChatChain"]
                 response = st.session_state["FreeChatChain"].chat.completions.create(
                     model=st.session_state["FreeChatSetting"]["model"],
@@ -167,11 +209,68 @@ def main():
                     tool_choice="auto",  # auto is default, but we'll be explicit
                 )
                 for chunk in response:
-                    if chunk.choices[0].delta.content is not None:
-                        full_response += chunk.choices[
-                            0].delta.content  # ["answer"]  # .choices[0].delta.get("content", "")
-                    time.sleep(0.001)
-                    message_placeholder.markdown(full_response + "▌")
+                    # process normal response and tool_calls response
+                    deltas = chunk.choices[0].delta
+                    if deltas.content is not None:
+                        full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                        time.sleep(0.001)
+                        message_placeholder.markdown(full_response + "▌")
+                    elif deltas.tool_calls is not None:
+                        if deltas.tool_calls[0].id is not None:
+                            if cur_func_call["id"] is not None:
+                                if cur_func_call["id"] != deltas.tool_calls[0].id:
+                                    tool_calls.append(cur_func_call)
+                                    cur_func_call = {"id": None, "type": "function",
+                                                     "function": {"arguments": "", "name": None}}
+                            cur_func_call["id"] = deltas.tool_calls[0].id
+                        if deltas.tool_calls[0].function.name is not None:
+                            cur_func_call["function"]["name"] = deltas.tool_calls[0].function.name
+                        if deltas.tool_calls[0].function.arguments is not None:
+                            cur_func_call["function"]["arguments"] += deltas.tool_calls[0].function.arguments
+                    elif chunk.choices[0].finish_reason == "tool_calls":
+                        tool_calls.append(cur_func_call)
+                        cur_func_call = {"name": None, "arguments": "", "id": None}
+                        # function call here using func_call
+                        # print("call tool here")
+                        response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
+
+                # Step 2: check if the model wanted to call a function
+                if tool_calls:
+                    # Step 3: call the function
+                    # Note: the JSON response may not always be valid; be sure to handle errors
+                    available_functions = {
+                        "get_current_weather": get_current_weather,
+                        "create_img_by_dalle3": create_img_by_dalle3,
+                    }  # only one function in this example, but you can have multiple
+                    st.session_state['FreeChatMessages'].append(response_message)  # extend conversation with assistant's reply
+                    # Step 4: send the info for each function call and function response to the model
+                    for tool_call in tool_calls:
+                        function_name = tool_call["function"]["name"]
+                        function_response = execute_function_call(available_functions, tool_call)
+                        st.session_state['FreeChatMessages'].append(
+                            {
+                                "tool_call_id": tool_call["id"],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": function_response,
+                            }
+                        )  # extend conversation with function response
+                    second_response = st.session_state["FreeChatChain"].chat.completions.create(
+                        model=st.session_state["FreeChatSetting"]["model"],
+                        messages=st.session_state['FreeChatMessages'],
+                        max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
+                        # default max tokens is low so set higher
+                        temperature=st.session_state["FreeChatSetting"]["temperature"],
+                        stream=True,
+                    )  # get a new response from the model where it can see the function response
+                    for chunk in second_response:
+                        deltas = chunk.choices[0].delta
+                        if deltas.content is not None:
+                            full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                            time.sleep(0.001)
+                            message_placeholder.markdown(full_response + "▌")
+                else:
+                    full_response = full_response
             message_placeholder.markdown(full_response)
             print("AI: " + full_response)
             if aa_voice_name != "None":

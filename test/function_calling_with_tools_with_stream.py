@@ -99,7 +99,6 @@ def run_conversation(client_input, messages_input, model_name="gpt-4-turbo"):
         stream=True
     )
     full_response = ""
-    tool_calls_str = ""
     tool_calls = []
     cur_func_call = {"id": None, "type": "function", "function": {"arguments": "", "name": None}}
     for chunk in response:
@@ -123,33 +122,36 @@ def run_conversation(client_input, messages_input, model_name="gpt-4-turbo"):
             # function call here using func_call
             print("call tool here")
             response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
-            # Step 2: check if the model wanted to call a function
-            if tool_calls:
-                # Step 3: call the function
-                # Note: the JSON response may not always be valid; be sure to handle errors
-                available_functions = {
-                    "get_current_weather": get_current_weather,
-                    "create_img_by_dalle3": create_img_by_dalle3,
-                }  # only one function in this example, but you can have multiple
-                messages.append(response_message)  # extend conversation with assistant's reply
-                # Step 4: send the info for each function call and function response to the model
-                for tool_call in tool_calls:
-                    function_name = tool_call["function"]["name"]
-                    function_response = execute_function_call(available_functions, tool_call)
-                    messages.append(
-                        {
-                            "tool_call_id": tool_call["id"],
-                            "role": "tool",
-                            "name": function_name,
-                            "content": function_response,
-                        }
-                    )  # extend conversation with function response
-                second_response = client.chat.completions.create(
-                    model=model_name,
-                    messages=messages,
-                )  # get a new response from the model where it can see the function response
-                return second_response
+
+    # Step 2: check if the model wanted to call a function
+    if tool_calls:
+        # Step 3: call the function
+        # Note: the JSON response may not always be valid; be sure to handle errors
+        available_functions = {
+            "get_current_weather": get_current_weather,
+            "create_img_by_dalle3": create_img_by_dalle3,
+        }  # only one function in this example, but you can have multiple
+        messages.append(response_message)  # extend conversation with assistant's reply
+        # Step 4: send the info for each function call and function response to the model
+        for tool_call in tool_calls:
+            function_name = tool_call["function"]["name"]
+            function_response = execute_function_call(available_functions, tool_call)
+            messages.append(
+                {
+                    "tool_call_id": tool_call["id"],
+                    "role": "tool",
+                    "name": function_name,
+                    "content": function_response,
+                }
+            )  # extend conversation with function response
+        second_response = client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+        )  # get a new response from the model where it can see the function response
+        return second_response.choices[0].message.content
+    else:
+        return full_response
 
 
-messages = [{"role": "user", "content": "What's the weather like in San Francisco, Tokyo, and Paris?"}]
+messages = [{"role": "user", "content": "请画一张可口的苹果"}] #"What's the weather like in San Francisco, Tokyo, and Paris?"
 print(run_conversation(client, messages))
