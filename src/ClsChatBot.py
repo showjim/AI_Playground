@@ -86,10 +86,10 @@ class ChatRobot():
             Whenever a description of an image is given, create a prompt that dalle can use to generate the image.
             # Create images from a text-only prompt.
             create_img_by_dalle3 = (
-            # The user's original image description, potentially modified to abide by the dalle policies. If the user does not suggest a number of captions to create, create four of them. If creating multiple captions, make them as diverse as possible. If the user requested modifications to previous images, the captions should not simply be longer, but rather it should be refactored to integrate the suggestions into each of the captions. Generate no more than 4 images, even if the user requests more.
+            # The user's original image description, potentially modified to abide by the dalle policies. If the user requested modifications to previous images, the captions should not simply be longer, but rather it should be refactored to integrate the suggestions into each of the captions.
             prompts: str
             ) => str
-            Please display the image in markdown with size 512X512.
+            Please display the image in HTML with size 512X512.
             """ % cur_date
         elif mode == "Translate":
             prompt_template = """You are a professional translator. Only return the translate result. 
