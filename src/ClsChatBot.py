@@ -147,6 +147,7 @@ prompt: string
 // 5. Do not create more than 1 image, even if the user requests more.
 // 6. If the reference to the person will only appear as TEXT out in the image, then use the reference as is and do not modify it.
 // 7. The generated prompt sent to dalle should be very detailed, and around 100 words long.
+// 8. Do not create any imagery that would be offensive.
 
 // Create only cartoon images from a text-only prompt.
 create_img_by_dalle3(
