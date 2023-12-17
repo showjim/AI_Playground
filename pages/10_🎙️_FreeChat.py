@@ -1,5 +1,6 @@
 import streamlit as st
 import os, time, json
+from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot
 
@@ -109,6 +110,11 @@ def execute_function_call(available_functions, tool_call):
         function_response = f"Error: function {function_name} does not exist"
     return function_response
 
+def control_msg_hsitory_szie(msglist:List, max_cnt=10):
+    while len(msglist) > max_cnt:
+        msglist.pop(1)
+    return msglist
+
 
 def main():
     index = 0
@@ -152,12 +158,17 @@ def main():
                                         max_value=aa_max_resp_max_val,
                                         value=2048,
                                         on_change=set_reload_flag)
+        aa_context_msg = st.sidebar.slider(label="`4. Context message`",
+                                        min_value=10,
+                                        max_value=100,
+                                        value=20,
+                                        on_change=set_reload_flag)
 
         if st.session_state["FreeChatReloadFlag"] == True:
             if "FreeChatSetting" not in st.session_state:
                 st.session_state["FreeChatSetting"] = {}
             st.session_state["FreeChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
-                                                   "temperature": float(aa_temperature)}
+                                                   "temperature": float(aa_temperature), "context_msg": aa_context_msg}
             system_prompt = chatbot.select_chat_mode(aa_chat_model)
             st.session_state['FreeChatMessages'] = [
                 {"role": "system", "content": system_prompt},
@@ -205,8 +216,11 @@ def main():
     # Accept user input
     if (prompt := st.chat_input("Type you input here")) or (prompt := speech_txt):
         # Add user message to chat history
+        max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
+        st.session_state["FreeChatMessages"] = control_msg_hsitory_szie(st.session_state["FreeChatMessages"], max_cnt)
         st.session_state["FreeChatMessages"].append({"role": "user", "content": prompt})
         st.session_state["FreeChatMessagesDisplay"].append({"role": "user", "content": prompt})
+
         print("HUMAN: " + prompt)
         # Display user message in chat message container
         with st.chat_message("user"):
