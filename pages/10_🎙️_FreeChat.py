@@ -136,7 +136,7 @@ def main():
     with st.sidebar:
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
-        aa_chat_model = st.sidebar.selectbox(label="`0. Chat Model`",
+        aa_chat_mode = st.sidebar.selectbox(label="`0. Chat Mode`",
                                              options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
                                                       "西瓜一家-Ana"],
                                              index=0,
@@ -169,7 +169,7 @@ def main():
                 st.session_state["FreeChatSetting"] = {}
             st.session_state["FreeChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
                                                    "temperature": float(aa_temperature), "context_msg": aa_context_msg}
-            system_prompt = chatbot.select_chat_mode(aa_chat_model)
+            system_prompt = chatbot.select_chat_mode(aa_chat_mode)
             st.session_state['FreeChatMessages'] = [
                 {"role": "system", "content": system_prompt},
                 {"role": "assistant", "content": "I'm FreeChatBot, How may I help you?"}
