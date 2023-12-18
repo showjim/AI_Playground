@@ -137,7 +137,7 @@ def main():
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
         aa_chat_model = st.sidebar.selectbox(label="`0. Chat Model`",
-                                             options=["CasualChat", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
+                                             options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
                                                       "西瓜一家-Ana"],
                                              index=0,
                                              on_change=set_reload_flag)
@@ -181,7 +181,7 @@ def main():
             st.session_state["FreeChatReloadFlag"] = False
 
         # Text2Speech
-        aa_voice_name = st.sidebar.selectbox(label="`4. Voice Name`",
+        aa_voice_name = st.sidebar.selectbox(label="`5. Voice Name`",
                                              options=["None", "小南瓜", "小东瓜", "Ana"],
                                              index=0)
         speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
