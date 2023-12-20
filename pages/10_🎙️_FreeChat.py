@@ -72,6 +72,77 @@ def speech_2_text():
         result_txt = "Speech Recognition canceled"
     return result_txt
 
+def speech_2_text_continous():
+    # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+    done = False
+    full_text = ""  # Variable to store the full recognized text
+    last_speech_time = time.time()  # Initialize the last speech time
+
+    def recognized_cb(evt):
+        nonlocal full_text
+        nonlocal done
+        nonlocal last_speech_time
+        # Append the recognized text to the full_text variable
+        full_text += evt.result.text + " "
+        # Check the recognized text for the stop phrase
+        print("OK")
+        print('RECOGNIZED: {}'.format(evt))
+        last_speech_time = time.time()  # Reset the last speech time
+        if "停止录音" in evt.result.text:
+            print("Stop phrase recognized, stopping continuous recognition.")
+            speech_recognizer.stop_continuous_recognition_async()
+            done = True
+
+    def recognizing_cb(evt):
+        # This callback can be used to show intermediate results.
+        nonlocal last_speech_time
+        last_speech_time = time.time()  # Reset the last speech time
+
+    def canceled_cb(evt):
+        print("Canceled: {}".format(evt.reason))
+        if evt.reason == speechsdk.CancellationReason.Error:
+            print("Cancellation Error Details: {}".format(evt.error_details))
+        # speech_recognizer.stop_continuous_recognition()
+        nonlocal done
+        done = True
+
+    def stop_cb(evt):
+        print('CLOSING on {}'.format(evt))
+        # speech_recognizer.stop_continuous_recognition()
+        nonlocal done
+        done = True
+
+    # # Connect callbacks to the events fired by the speech recognizer
+    # speech_recognizer.recognizing.connect(lambda evt: print('RECOGNIZING: {}'.format(evt)))
+    # speech_recognizer.recognized.connect(lambda evt: print('RECOGNIZED: {}'.format(evt)))
+    # speech_recognizer.session_started.connect(lambda evt: print('SESSION STARTED: {}'.format(evt)))
+    # speech_recognizer.session_stopped.connect(lambda evt: print('SESSION STOPPED {}'.format(evt)))
+    # speech_recognizer.canceled.connect(lambda evt: print('CANCELED {}'.format(evt)))
+    # Stop continuous recognition on either session stopped or canceled events
+    speech_recognizer.session_stopped.connect(stop_cb)
+    speech_recognizer.canceled.connect(canceled_cb)
+
+    # Connect callbacks to the events fired by the speech recognizer
+    speech_recognizer.recognized.connect(recognized_cb)
+    speech_recognizer.recognizing.connect(recognizing_cb)
+    # speech_recognizer.session_stopped.connect(stop_cb)
+    # speech_recognizer.canceled.connect(canceled_cb)
+
+    # Start continuous speech recognition
+    speech_recognizer.start_continuous_recognition_async()
+    while not done:
+        time.sleep(.5)  # You can also use time.sleep() to wait for a short amount of time
+        if time.time() - last_speech_time > 3:  # If it's been more than 3 seconds since last speech
+            print("3 seconds of silence detected, stopping continuous recognition.")
+            speech_recognizer.stop_continuous_recognition_async()
+            done = True
+
+    # Stop recognition to clean up
+    speech_recognizer.stop_continuous_recognition_async()
+
+    return full_text.strip()  # Return the full text without leading/trailing spaces
 
 def get_current_weather(location, unit="fahrenheit"):
     """Get the current weather in a given location"""
@@ -205,7 +276,7 @@ def main():
         # Speech2Text
         speech_txt = ""
         if st.sidebar.button("`Speak`"):
-            speech_txt = speech_2_text()
+            speech_txt = speech_2_text_continous() #speech_2_text()
 
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:
