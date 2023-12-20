@@ -51,7 +51,7 @@ def recognize_from_microphone_continuous():
         time.sleep(0.5)
 
 def recognize_from_microphone_continuous2():
-    speech_config = speechsdk.SpeechConfig(subscription="13b373f485be46c3a5f2639a3fc757e4", region="eastasia")
+    speech_config = speechsdk.SpeechConfig(subscription="SPEECH_KEY", region="eastasia")
     speech_config.speech_recognition_language = "zh-CN"
     # speech_config.set_property(speechsdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "1000")
     # speech_config.set_property(speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "1000")
