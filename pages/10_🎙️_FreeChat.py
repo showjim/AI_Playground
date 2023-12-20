@@ -18,6 +18,10 @@ speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY')
 st.set_page_config(page_title="FreeChat - Chatbot With Native APIs")
 
 
+def set_reload_mode():
+    st.session_state["FreeChatReloadMode"] = True
+
+
 def set_reload_flag():
     # st.write("New document need upload")
     st.session_state["FreeChatReloadFlag"] = True
@@ -110,7 +114,8 @@ def execute_function_call(available_functions, tool_call):
         function_response = f"Error: function {function_name} does not exist"
     return function_response
 
-def control_msg_hsitory_szie(msglist:List, max_cnt=10):
+
+def control_msg_hsitory_szie(msglist: List, max_cnt=10):
     while len(msglist) > max_cnt:
         msglist.pop(1)
     return msglist
@@ -120,6 +125,8 @@ def main():
     index = 0
     st.title('🎙️Free Chat Web-UI App')
     # Sidebar contents
+    if "FreeChatReloadMode" not in st.session_state:
+        st.session_state["FreeChatReloadMode"] = True
     if "FreeChatReloadFlag" not in st.session_state:
         st.session_state["FreeChatReloadFlag"] = True
     # Initialize chat history
@@ -137,10 +144,10 @@ def main():
         st.sidebar.expander("Settings")
         st.sidebar.subheader("Parameter for Chatbot")
         aa_chat_mode = st.sidebar.selectbox(label="`0. Chat Mode`",
-                                             options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
-                                                      "西瓜一家-Ana"],
-                                             index=0,
-                                             on_change=set_reload_flag)
+                                            options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
+                                                     "西瓜一家-Ana"],
+                                            index=0,
+                                            on_change=set_reload_mode)
         aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
                                             options=["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-turbo"],
                                             index=0,
@@ -156,19 +163,15 @@ def main():
         aa_max_resp = st.sidebar.slider(label="`3. Max response`",
                                         min_value=256,
                                         max_value=aa_max_resp_max_val,
-                                        value=2048,
+                                        value=256,
                                         on_change=set_reload_flag)
         aa_context_msg = st.sidebar.slider(label="`4. Context message`",
-                                        min_value=10,
-                                        max_value=100,
-                                        value=20,
-                                        on_change=set_reload_flag)
+                                           min_value=10,
+                                           max_value=100,
+                                           value=20,
+                                           on_change=set_reload_flag)
 
-        if st.session_state["FreeChatReloadFlag"] == True:
-            if "FreeChatSetting" not in st.session_state:
-                st.session_state["FreeChatSetting"] = {}
-            st.session_state["FreeChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
-                                                   "temperature": float(aa_temperature), "context_msg": aa_context_msg}
+        if st.session_state["FreeChatReloadMode"] == True:
             system_prompt = chatbot.select_chat_mode(aa_chat_mode)
             st.session_state['FreeChatMessages'] = [
                 {"role": "system", "content": system_prompt},
@@ -178,6 +181,12 @@ def main():
                 {"role": "system", "content": system_prompt},
                 {"role": "assistant", "content": "I'm FreeChatBot, How may I help you?"}
             ]
+            st.session_state["FreeChatReloadMode"] = False
+        if st.session_state["FreeChatReloadFlag"] == True:
+            if "FreeChatSetting" not in st.session_state:
+                st.session_state["FreeChatSetting"] = {}
+            st.session_state["FreeChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
+                                                   "temperature": float(aa_temperature), "context_msg": aa_context_msg}
             st.session_state["FreeChatReloadFlag"] = False
 
         # Text2Speech
