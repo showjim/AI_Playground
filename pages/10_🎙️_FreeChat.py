@@ -134,8 +134,8 @@ def speech_2_text_continous():
     speech_recognizer.start_continuous_recognition_async()
     while not done:
         time.sleep(.1)  # You can also use time.sleep() to wait for a short amount of time
-        if time.time() - last_speech_time > 3:  # If it's been more than 3 seconds since last speech
-            print("3 seconds of silence detected, stopping continuous recognition.")
+        if time.time() - last_speech_time > 2.5:  # If it's been more than 3 seconds since last speech
+            print("2.5 seconds of silence detected, stopping continuous recognition.")
             speech_recognizer.stop_continuous_recognition_async()
             done = True
 
