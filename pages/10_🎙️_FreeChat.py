@@ -274,9 +274,15 @@ def main():
             speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
         # Speech2Text
+        aa_audio_mode = st.sidebar.selectbox(label="`6. Audio Input Mode`",
+                                             options=["Single", "Continuous"],
+                                             index=0)
         speech_txt = ""
         if st.sidebar.button("`Speak`"):
-            speech_txt = speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+            if aa_audio_mode == "Single":
+                speech_txt = speech_2_text()
+            else:
+                speech_txt = speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
 
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:
