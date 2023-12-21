@@ -87,7 +87,7 @@ def speech_2_text_continous():
         # Append the recognized text to the full_text variable
         full_text += evt.result.text + " "
         # Check the recognized text for the stop phrase
-        print("OK")
+        # print("OK")
         print('RECOGNIZED: {}'.format(evt))
         last_speech_time = time.time()  # Reset the last speech time
         if "停止录音" in evt.result.text:
@@ -133,7 +133,7 @@ def speech_2_text_continous():
     # Start continuous speech recognition
     speech_recognizer.start_continuous_recognition_async()
     while not done:
-        time.sleep(.5)  # You can also use time.sleep() to wait for a short amount of time
+        time.sleep(.1)  # You can also use time.sleep() to wait for a short amount of time
         if time.time() - last_speech_time > 3:  # If it's been more than 3 seconds since last speech
             print("3 seconds of silence detected, stopping continuous recognition.")
             speech_recognizer.stop_continuous_recognition_async()
@@ -163,7 +163,7 @@ def create_img_by_dalle3(prompt):
         prompt=prompt,  # "a close-up of a bear walking through the forest",
         size='1024x1024',
         style="vivid",  # "vivid", "natural"
-        quality="hd",  # "standard" "hd"
+        quality="auto",  # "standard" "hd"
         n=1
     )
     json_response = json.loads(result.model_dump_json())
@@ -276,7 +276,7 @@ def main():
         # Speech2Text
         speech_txt = ""
         if st.sidebar.button("`Speak`"):
-            speech_txt = speech_2_text_continous() #speech_2_text()
+            speech_txt = speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
 
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:
