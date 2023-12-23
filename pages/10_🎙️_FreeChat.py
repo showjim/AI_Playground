@@ -3,6 +3,7 @@ import os, time, json
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot
+import openai
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath('.')
@@ -163,7 +164,7 @@ def create_img_by_dalle3(prompt):
         prompt=prompt,  # "a close-up of a bear walking through the forest",
         size='1024x1024',
         style="vivid",  # "vivid", "natural"
-        quality="auto",  # "standard" "hd"
+        # quality="auto",  # "standard" "hd"
         n=1
     )
     json_response = json.loads(result.model_dump_json())
@@ -368,25 +369,31 @@ def main():
                     st.session_state['FreeChatMessages'].append(response_message)
                     st.session_state['FreeChatMessagesDisplay'].append(response_message)
                     # Step 4: send the info for each function call and function response to the model
-                    for tool_call in tool_calls:
-                        function_name = tool_call["function"]["name"]
-                        function_response = execute_function_call(available_functions, tool_call)
-                        st.session_state['FreeChatMessages'].append(
-                            {
-                                "tool_call_id": tool_call["id"],
-                                "role": "tool",
-                                "name": function_name,
-                                "content": function_response,
-                            }
-                        )  # extend conversation with function response
-                        st.session_state['FreeChatMessagesDisplay'].append(
-                            {
-                                "tool_call_id": tool_call["id"],
-                                "role": "tool",
-                                "name": function_name,
-                                "content": function_response,
-                            }
-                        )  # extend conversation with function response
+                    try:
+                        for tool_call in tool_calls:
+                            function_name = tool_call["function"]["name"]
+                            function_response = execute_function_call(available_functions, tool_call)
+                            st.session_state['FreeChatMessages'].append(
+                                {
+                                    "tool_call_id": tool_call["id"],
+                                    "role": "tool",
+                                    "name": function_name,
+                                    "content": function_response,
+                                }
+                            )  # extend conversation with function response
+                            st.session_state['FreeChatMessagesDisplay'].append(
+                                {
+                                    "tool_call_id": tool_call["id"],
+                                    "role": "tool",
+                                    "name": function_name,
+                                    "content": function_response,
+                                }
+                            )  # extend conversation with function response
+                    except openai.BadRequestError as e:
+                        print(e)
+                        st.error(e)
+                        st.session_state['FreeChatMessages'].pop(-1)
+                        st.session_state['FreeChatMessagesDisplay'].pop(-1)
                     second_response = st.session_state["FreeChatChain"].chat.completions.create(
                         model=st.session_state["FreeChatSetting"]["model"],
                         messages=st.session_state['FreeChatMessages'],
