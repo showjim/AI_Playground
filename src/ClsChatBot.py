@@ -1,14 +1,17 @@
-import os, shutil, json
+import os, shutil, json, time
 import openai
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 from src.llms import APIKeyNotFoundError, AzureConfigNotFoundError
-from datetime import date
+from datetime import date, datetime
+import azure.cognitiveservices.speech as speechsdk
+
 
 
 class ChatRobot():
     def __init__(self):
         super().__init__()
+        self.speech_config = None
         self.config_details = {}
         # self.setup_env()
 
@@ -63,15 +66,136 @@ class ChatRobot():
             api_key=os.environ["AZURE_OPENAI_API_KEY_SWC"],
             azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT_SWC']
         )
+        # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+        self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
+                                                    region=os.environ.get('SPEECH_REGION'))
         return client
+
+    def text_2_speech(self, text: str, voice_name: str):
+        # The language of the voice that speaks.
+        audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+        if voice_name == "None":
+            voice_name = "zh-CN-XiaoyouNeural"  # "zh-CN-XiaoyiNeural"
+        self.speech_config.speech_synthesis_voice_name = voice_name  # "zh-CN-XiaoyiNeural"  # "zh-CN-YunxiaNeural"
+        speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=audio_config)
+
+        speech_synthesis_result = speech_synthesizer.speak_text_async(text).get()
+
+        if speech_synthesis_result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+            print("Speech synthesized for text [{}]".format(text))
+        elif speech_synthesis_result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = speech_synthesis_result.cancellation_details
+            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                if cancellation_details.error_details:
+                    print("Error details: {}".format(cancellation_details.error_details))
+                    print("Did you set the speech resource key and region values?")
+
+    def speech_2_text(self):
+        # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+        audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=self.speech_config, audio_config=audio_config)
+
+        print("Speak into your microphone.")
+        speech_recognition_result = speech_recognizer.recognize_once_async().get()
+
+        result_txt = ""
+        if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            print("Recognized: {}".format(speech_recognition_result.text))
+            result_txt = speech_recognition_result.text
+        elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
+            print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
+            result_txt = "No speech could be recognized"
+        elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = speech_recognition_result.cancellation_details
+            print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                print("Error details: {}".format(cancellation_details.error_details))
+                print("Did you set the speech resource key and region values?")
+            result_txt = "Speech Recognition canceled"
+        return result_txt
+
+    def speech_2_text_continous(self):
+        # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+        audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=self.speech_config, audio_config=audio_config)
+        done = False
+        full_text = ""  # Variable to store the full recognized text
+        last_speech_time = time.time()  # Initialize the last speech time
+
+        def recognized_cb(evt):
+            nonlocal full_text
+            nonlocal done
+            nonlocal last_speech_time
+            # Append the recognized text to the full_text variable
+            full_text += evt.result.text + " "
+            # Check the recognized text for the stop phrase
+            # print("OK")
+            print('RECOGNIZED: {}'.format(evt))
+            last_speech_time = time.time()  # Reset the last speech time
+            if "停止录音" in evt.result.text:
+                print("Stop phrase recognized, stopping continuous recognition.")
+                speech_recognizer.stop_continuous_recognition_async()
+                done = True
+
+        def recognizing_cb(evt):
+            # This callback can be used to show intermediate results.
+            nonlocal last_speech_time
+            last_speech_time = time.time()  # Reset the last speech time
+
+        def canceled_cb(evt):
+            print("Canceled: {}".format(evt.reason))
+            if evt.reason == speechsdk.CancellationReason.Error:
+                print("Cancellation Error Details: {}".format(evt.error_details))
+            # speech_recognizer.stop_continuous_recognition()
+            nonlocal done
+            done = True
+
+        def stop_cb(evt):
+            print('CLOSING on {}'.format(evt))
+            # speech_recognizer.stop_continuous_recognition()
+            nonlocal done
+            done = True
+
+        # # Connect callbacks to the events fired by the speech recognizer
+        # speech_recognizer.recognizing.connect(lambda evt: print('RECOGNIZING: {}'.format(evt)))
+        # speech_recognizer.recognized.connect(lambda evt: print('RECOGNIZED: {}'.format(evt)))
+        # speech_recognizer.session_started.connect(lambda evt: print('SESSION STARTED: {}'.format(evt)))
+        # speech_recognizer.session_stopped.connect(lambda evt: print('SESSION STOPPED {}'.format(evt)))
+        # speech_recognizer.canceled.connect(lambda evt: print('CANCELED {}'.format(evt)))
+        # Stop continuous recognition on either session stopped or canceled events
+        speech_recognizer.session_stopped.connect(stop_cb)
+        speech_recognizer.canceled.connect(canceled_cb)
+
+        # Connect callbacks to the events fired by the speech recognizer
+        speech_recognizer.recognized.connect(recognized_cb)
+        speech_recognizer.recognizing.connect(recognizing_cb)
+        # speech_recognizer.session_stopped.connect(stop_cb)
+        # speech_recognizer.canceled.connect(canceled_cb)
+
+        # Start continuous speech recognition
+        speech_recognizer.start_continuous_recognition_async()
+        while not done:
+            time.sleep(.1)  # You can also use time.sleep() to wait for a short amount of time
+            if time.time() - last_speech_time > 2.5:  # If it's been more than 3 seconds since last speech
+                print("2.5 seconds of silence detected, stopping continuous recognition.")
+                speech_recognizer.stop_continuous_recognition_async()
+                done = True
+
+        # Stop recognition to clean up
+        speech_recognizer.stop_continuous_recognition_async()
+
+        return full_text.strip()  # Return the full text without leading/trailing spaces
 
     def select_chat_mode(self, mode:str):
         prompt_template = "You are an AI assistant that helps people find information."
         cur_date = date.today()
+        cur_time = datetime.now()
         if mode == "CasualChat":
             prompt_template = """You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.
 Knowledge cutoff: 2023-04
 Current date: %s
+Current time: %s
 
 # Tools
 
@@ -96,7 +220,7 @@ create_img_by_dalle3(
 // The detailed image description, potentially modified to abide by the dalle policies. If the user requested modifications to a previous image, the prompt should not simply be longer, but rather it should be refactored to integrate the user suggestions.
 prompt: string
 ) => URL in string
-            """ % cur_date
+            """ % (cur_date, cur_time)
             # """
             # # Tools
             #
@@ -130,11 +254,11 @@ Translation rules:
 Please print the two translation results according to the above rules.
             """
         elif mode == "西瓜一家-小南瓜":
-            prompt_template = """你现在是一名叫小南瓜的小姑娘，今年8岁了，在上海上小学两年级。你有两个弟弟，小西瓜和小冬瓜。你很爱护小西瓜(6岁)和小东瓜（1岁）这两位弟弟。你的爸爸叫张晓明，你的妈妈姓余。
-            性格上，你聪明伶俐，有礼貌，活泼可爱。你支持家人，同时鼓励他们独立和学会解决问题。你充满同情心，喜欢用温暖的话语和生动的例子传递爱。你也非常有耐心，擅长倾听，愿意在他人需要时提供心理和情感上的支持。永远无条件支持自己的家人。
-            你的沟通风格温柔而耐心，避免使用复杂术语，倾听他人问题后提出建议，以鼓励和正面态度回应，喜欢用生动的例子和故事让观点更加引人入胜。
-            在行为习惯上，你会主动提供帮助，对超出知识范围的问题推荐专家意见，强调不断学习的重要性。你避免打断别人，先理解和承认对方感受后再给出建议，适时使用温馨话语和幽默活跃气氛，同时注意对方情绪状态。
-            请你扮演小南瓜使用还在上幼儿园的小西瓜能听懂的语言来进行所有对话吧。你的回答要详略得当，避免在不重要的部分说得太长。请你的回答不要带任何网址链接。
+            prompt_template = """你现在是一名叫小南瓜的小姑娘，今年8岁了，在上海上小学两年级，英文名叫Sunny。你有两个弟弟，小西瓜和小东瓜。你很爱护小西瓜(6岁)和小东瓜（1岁）这两位弟弟。你的爸爸叫张晓明，是一名工程师，你的妈妈姓余，是一名小学语文老师。
+性格上，你聪明伶俐，有礼貌，活泼可爱。你支持家人，同时鼓励他们独立和学会解决问题。你充满同情心，喜欢用温暖的话语和生动的例子传递爱。你也非常有耐心，擅长倾听，愿意在他人需要时提供心理和情感上的支持。永远无条件支持自己的家人。
+你的沟通风格温柔而耐心，避免使用复杂术语，倾听他人问题后提出建议，以鼓励和正面态度回应，喜欢用生动的例子和故事让观点更加引人入胜。
+在行为习惯上，你会主动提供帮助，对超出知识范围的问题推荐专家意见，强调不断学习的重要性。你避免打断别人，先理解和承认对方感受后再给出建议，适时使用温馨话语和幽默活跃气氛，同时注意对方情绪状态。
+请你扮演小南瓜使用还在上幼儿园的小西瓜能听懂的语言来进行所有对话吧。你的回答要详略得当，避免在不重要的部分说得太长。请不要回复网址链接。
             
 # Tools
 
@@ -155,17 +279,20 @@ create_img_by_dalle3(
 prompt: string
 ) => URL in string
             Current date: %s
-            """ % cur_date
+            Current time: %s
+            """ % (cur_date, cur_time)
         elif mode == "西瓜一家-小东瓜":
             prompt_template = """你现在是一名叫小东瓜的小孩。今年1岁了，你是小西瓜的弟弟，你还有一个8岁的姐姐，刚刚学会叫爸爸妈妈和姐姐哥哥，其他的都不会说，只会咿呀咿呀。你的爸爸叫张晓明，你的妈妈姓余。
             Current date: %s
-            """ % cur_date
+            Current time: %s
+            """ % (cur_date, cur_time)
         elif mode == "西瓜一家-Ana":
             prompt_template = """You are a little American girl named Ana, you are 6 years old, and 小西瓜(Oscar) is your best friend. 
             Characteristically, you are smart, polite and lively. You speak only English, and your communication style is gentle and patient, 
             avoiding complex terminology, avoiding long sentences, and using the number of words that preschoolers have mastered.
             Current date: %s
-            """ % cur_date
+            Current time: %s
+            """ % (cur_date, cur_time)
         else:
             print("Wrong mode selected!")
         return prompt_template

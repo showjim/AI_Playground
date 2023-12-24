@@ -13,9 +13,7 @@ chatbot.setup_env()
 client = chatbot.initial_llm()
 tools = chatbot.initial_tools()
 
-# This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
-                                       region=os.environ.get('SPEECH_REGION'))
+
 st.set_page_config(page_title="FreeChat - Chatbot With Native APIs")
 
 
@@ -26,124 +24,6 @@ def set_reload_mode():
 def set_reload_flag():
     # st.write("New document need upload")
     st.session_state["FreeChatReloadFlag"] = True
-
-
-def text_2_speech(text: str, voice_name: str):
-    # The language of the voice that speaks.
-    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
-    if voice_name == "None":
-        voice_name = "zh-CN-XiaoyouNeural"  # "zh-CN-XiaoyiNeural"
-    speech_config.speech_synthesis_voice_name = voice_name  # "zh-CN-XiaoyiNeural"  # "zh-CN-YunxiaNeural"
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-
-    speech_synthesis_result = speech_synthesizer.speak_text_async(text).get()
-
-    if speech_synthesis_result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-        print("Speech synthesized for text [{}]".format(text))
-    elif speech_synthesis_result.reason == speechsdk.ResultReason.Canceled:
-        cancellation_details = speech_synthesis_result.cancellation_details
-        print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-        if cancellation_details.reason == speechsdk.CancellationReason.Error:
-            if cancellation_details.error_details:
-                print("Error details: {}".format(cancellation_details.error_details))
-                print("Did you set the speech resource key and region values?")
-
-
-def speech_2_text():
-    # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
-    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-
-    print("Speak into your microphone.")
-    speech_recognition_result = speech_recognizer.recognize_once_async().get()
-
-    result_txt = ""
-    if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        print("Recognized: {}".format(speech_recognition_result.text))
-        result_txt = speech_recognition_result.text
-    elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
-        print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
-        result_txt = "No speech could be recognized"
-    elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
-        cancellation_details = speech_recognition_result.cancellation_details
-        print("Speech Recognition canceled: {}".format(cancellation_details.reason))
-        if cancellation_details.reason == speechsdk.CancellationReason.Error:
-            print("Error details: {}".format(cancellation_details.error_details))
-            print("Did you set the speech resource key and region values?")
-        result_txt = "Speech Recognition canceled"
-    return result_txt
-
-def speech_2_text_continous():
-    # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
-    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-    done = False
-    full_text = ""  # Variable to store the full recognized text
-    last_speech_time = time.time()  # Initialize the last speech time
-
-    def recognized_cb(evt):
-        nonlocal full_text
-        nonlocal done
-        nonlocal last_speech_time
-        # Append the recognized text to the full_text variable
-        full_text += evt.result.text + " "
-        # Check the recognized text for the stop phrase
-        # print("OK")
-        print('RECOGNIZED: {}'.format(evt))
-        last_speech_time = time.time()  # Reset the last speech time
-        if "停止录音" in evt.result.text:
-            print("Stop phrase recognized, stopping continuous recognition.")
-            speech_recognizer.stop_continuous_recognition_async()
-            done = True
-
-    def recognizing_cb(evt):
-        # This callback can be used to show intermediate results.
-        nonlocal last_speech_time
-        last_speech_time = time.time()  # Reset the last speech time
-
-    def canceled_cb(evt):
-        print("Canceled: {}".format(evt.reason))
-        if evt.reason == speechsdk.CancellationReason.Error:
-            print("Cancellation Error Details: {}".format(evt.error_details))
-        # speech_recognizer.stop_continuous_recognition()
-        nonlocal done
-        done = True
-
-    def stop_cb(evt):
-        print('CLOSING on {}'.format(evt))
-        # speech_recognizer.stop_continuous_recognition()
-        nonlocal done
-        done = True
-
-    # # Connect callbacks to the events fired by the speech recognizer
-    # speech_recognizer.recognizing.connect(lambda evt: print('RECOGNIZING: {}'.format(evt)))
-    # speech_recognizer.recognized.connect(lambda evt: print('RECOGNIZED: {}'.format(evt)))
-    # speech_recognizer.session_started.connect(lambda evt: print('SESSION STARTED: {}'.format(evt)))
-    # speech_recognizer.session_stopped.connect(lambda evt: print('SESSION STOPPED {}'.format(evt)))
-    # speech_recognizer.canceled.connect(lambda evt: print('CANCELED {}'.format(evt)))
-    # Stop continuous recognition on either session stopped or canceled events
-    speech_recognizer.session_stopped.connect(stop_cb)
-    speech_recognizer.canceled.connect(canceled_cb)
-
-    # Connect callbacks to the events fired by the speech recognizer
-    speech_recognizer.recognized.connect(recognized_cb)
-    speech_recognizer.recognizing.connect(recognizing_cb)
-    # speech_recognizer.session_stopped.connect(stop_cb)
-    # speech_recognizer.canceled.connect(canceled_cb)
-
-    # Start continuous speech recognition
-    speech_recognizer.start_continuous_recognition_async()
-    while not done:
-        time.sleep(.1)  # You can also use time.sleep() to wait for a short amount of time
-        if time.time() - last_speech_time > 2.5:  # If it's been more than 3 seconds since last speech
-            print("2.5 seconds of silence detected, stopping continuous recognition.")
-            speech_recognizer.stop_continuous_recognition_async()
-            done = True
-
-    # Stop recognition to clean up
-    speech_recognizer.stop_continuous_recognition_async()
-
-    return full_text.strip()  # Return the full text without leading/trailing spaces
 
 def get_current_weather(location, unit="fahrenheit"):
     """Get the current weather in a given location"""
@@ -201,6 +81,8 @@ def main():
         st.session_state["FreeChatReloadMode"] = True
     if "FreeChatReloadFlag" not in st.session_state:
         st.session_state["FreeChatReloadFlag"] = True
+    if "AvatarImg" not in st.session_state:
+        st.session_state["AvatarImg"] = None
     # Initialize chat history
     if "FreeChatMessages" not in st.session_state:
         st.session_state['FreeChatMessages'] = []
@@ -254,6 +136,10 @@ def main():
                 {"role": "assistant", "content": "I'm FreeChatBot, How may I help you?"}
             ]
             st.session_state["FreeChatReloadMode"] = False
+            if aa_chat_mode == "西瓜一家-小南瓜":
+                st.session_state["AvatarImg"] = "./img/Sunny.png"
+            else:
+                st.session_state["AvatarImg"] = None
         if st.session_state["FreeChatReloadFlag"] == True:
             if "FreeChatSetting" not in st.session_state:
                 st.session_state["FreeChatSetting"] = {}
@@ -265,14 +151,14 @@ def main():
         aa_voice_name = st.sidebar.selectbox(label="`5. Voice Name`",
                                              options=["None", "小南瓜", "小东瓜", "Ana"],
                                              index=0)
-        speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
+        chatbot.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
         if aa_voice_name == "小南瓜":
             aa_voice_name = "zh-CN-XiaoyiNeural"
         elif aa_voice_name == "小东瓜":
             aa_voice_name = "zh-CN-YunxiaNeural"
         elif aa_voice_name == "Ana":
             aa_voice_name = "en-US-AnaNeural"
-            speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
+            chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
         # Speech2Text
         aa_audio_mode = st.sidebar.selectbox(label="`6. Audio Input Mode`",
@@ -281,9 +167,9 @@ def main():
         speech_txt = ""
         if st.sidebar.button("`Speak`"):
             if aa_audio_mode == "Single":
-                speech_txt = speech_2_text()
+                speech_txt = chatbot.speech_2_text()
             else:
-                speech_txt = speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+                speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
 
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:
@@ -292,9 +178,9 @@ def main():
                 st.markdown(message["content"])
         elif message["role"] == "assistant":
             if message["content"] is not None:
-                with st.chat_message(message["role"]):
+                with st.chat_message(name=message["role"], avatar=st.session_state["AvatarImg"]):
                     st.markdown(message["content"])
-                    st.button(label="Play", key="history" + str(index), on_click=text_2_speech,
+                    st.button(label="Play", key="history" + str(index), on_click=chatbot.text_2_speech,
                               args=(message["content"], aa_voice_name,))
                     index += 1
                     if "image" in message.keys():
@@ -313,7 +199,7 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
         # Display assistant response in chat message container
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar=st.session_state["AvatarImg"]):
             message_placeholder = st.empty()
             btn_placeholder = st.empty()
             full_response = ""
@@ -321,41 +207,46 @@ def main():
             tool_calls = []
             cur_func_call = {"id": None, "type": "function", "function": {"arguments": "", "name": None}}
             with st.spinner('preparing answer'):  # st.session_state["FreeChatChain"]
-                response = st.session_state["FreeChatChain"].chat.completions.create(
-                    model=st.session_state["FreeChatSetting"]["model"],
-                    messages=st.session_state['FreeChatMessages'],
-                    max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
-                    # default max tokens is low so set higher
-                    temperature=st.session_state["FreeChatSetting"]["temperature"],
-                    stream=True,
-                    tools=tools,
-                    tool_choice="auto",  # auto is default, but we'll be explicit
-                )
-                for chunk in response:
-                    # process normal response and tool_calls response
-                    deltas = chunk.choices[0].delta
-                    if deltas.content is not None:
-                        full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
-                        time.sleep(0.001)
-                        message_placeholder.markdown(full_response + "▌")
-                    elif deltas.tool_calls is not None:
-                        if deltas.tool_calls[0].id is not None:
-                            if cur_func_call["id"] is not None:
-                                if cur_func_call["id"] != deltas.tool_calls[0].id:
-                                    tool_calls.append(cur_func_call)
-                                    cur_func_call = {"id": None, "type": "function",
-                                                     "function": {"arguments": "", "name": None}}
-                            cur_func_call["id"] = deltas.tool_calls[0].id
-                        if deltas.tool_calls[0].function.name is not None:
-                            cur_func_call["function"]["name"] = deltas.tool_calls[0].function.name
-                        if deltas.tool_calls[0].function.arguments is not None:
-                            cur_func_call["function"]["arguments"] += deltas.tool_calls[0].function.arguments
-                    elif chunk.choices[0].finish_reason == "tool_calls":
-                        tool_calls.append(cur_func_call)
-                        cur_func_call = {"name": None, "arguments": "", "id": None}
-                        # function call here using func_call
-                        # print("call tool here")
-                        response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
+                try:
+                    response = st.session_state["FreeChatChain"].chat.completions.create(
+                        model=st.session_state["FreeChatSetting"]["model"],
+                        messages=st.session_state['FreeChatMessages'],
+                        max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
+                        # default max tokens is low so set higher
+                        temperature=st.session_state["FreeChatSetting"]["temperature"],
+                        stream=True,
+                        tools=tools,
+                        tool_choice="auto",  # auto is default, but we'll be explicit
+                    )
+                    for chunk in response:
+                        # process normal response and tool_calls response
+                        deltas = chunk.choices[0].delta
+                        if deltas.content is not None:
+                            full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                            time.sleep(0.001)
+                            message_placeholder.markdown(full_response + "▌")
+                        elif deltas.tool_calls is not None:
+                            if deltas.tool_calls[0].id is not None:
+                                if cur_func_call["id"] is not None:
+                                    if cur_func_call["id"] != deltas.tool_calls[0].id:
+                                        tool_calls.append(cur_func_call)
+                                        cur_func_call = {"id": None, "type": "function",
+                                                         "function": {"arguments": "", "name": None}}
+                                cur_func_call["id"] = deltas.tool_calls[0].id
+                            if deltas.tool_calls[0].function.name is not None:
+                                cur_func_call["function"]["name"] = deltas.tool_calls[0].function.name
+                            if deltas.tool_calls[0].function.arguments is not None:
+                                cur_func_call["function"]["arguments"] += deltas.tool_calls[0].function.arguments
+                        elif chunk.choices[0].finish_reason == "tool_calls":
+                            tool_calls.append(cur_func_call)
+                            cur_func_call = {"name": None, "arguments": "", "id": None}
+                            # function call here using func_call
+                            # print("call tool here")
+                            response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
+                except Exception as e:
+                    print(e)
+                    print(st.session_state['FreeChatMessages'])
+                    st.error(e)
 
                 # Step 2: check if the model wanted to call a function
                 if tool_calls:
@@ -422,8 +313,8 @@ def main():
                     {"role": "assistant", "content": full_response})
             print("AI: " + full_response)
             if aa_voice_name != "None":
-                text_2_speech(full_response, aa_voice_name)
-            btn_placeholder.button(label="Play", key="current", on_click=text_2_speech,
+                chatbot.text_2_speech(full_response, aa_voice_name)
+            btn_placeholder.button(label="Play", key="current", on_click=chatbot.text_2_speech,
                                    args=(full_response, aa_voice_name,))
 
 
