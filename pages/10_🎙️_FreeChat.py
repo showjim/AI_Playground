@@ -130,7 +130,7 @@ def main():
             st.session_state["FreeChatReloadMode"] = False
             if aa_chat_mode == "西瓜一家-小南瓜":
                 st.session_state["AvatarImg"] = "./img/Sunny.png"
-                initial_msg = "我是小南瓜，很高薪见到你！"
+                initial_msg = "我是小南瓜，很高兴见到你！"
             else:
                 st.session_state["AvatarImg"] = None
                 initial_msg = "I'm FreeChatBot, How may I help you?"
