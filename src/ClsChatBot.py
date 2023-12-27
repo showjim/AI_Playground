@@ -2,10 +2,8 @@ import os, shutil, json, time
 import openai
 from openai import AzureOpenAI
 from dotenv import load_dotenv
-from src.llms import APIKeyNotFoundError, AzureConfigNotFoundError
 from datetime import date, datetime
 import azure.cognitiveservices.speech as speechsdk
-
 
 
 class ChatRobot():
@@ -31,7 +29,7 @@ class ChatRobot():
 
             # Setting up the embedding model
             openai.api_type = "azure"
-            openai.api_base = self.config_details['OPENAI_API_BASE']
+            openai.azure_endpoint = self.config_details['OPENAI_API_BASE']
             openai.api_version = self.config_details['OPENAI_API_VERSION']
             openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -63,8 +61,8 @@ class ChatRobot():
     def initial_llm(self):
         client = AzureOpenAI(
             api_version="2023-12-01-preview",
-            api_key=os.environ["AZURE_OPENAI_API_KEY_SWC"],
-            azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT_SWC']
+            api_key=openai.api_key,
+            azure_endpoint=openai.azure_endpoint
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
@@ -187,7 +185,7 @@ class ChatRobot():
 
         return full_text.strip()  # Return the full text without leading/trailing spaces
 
-    def select_chat_mode(self, mode:str):
+    def select_chat_mode(self, mode: str):
         prompt_template = "You are an AI assistant that helps people find information."
         cur_date = date.today()
         cur_time = datetime.now()
@@ -336,3 +334,30 @@ prompt: string
             }
         ]
         return tools
+
+
+class APIKeyNotFoundError(Exception):
+    """
+    Raised when the API key is not defined/declared.
+
+    Args:
+        Exception (Exception): APIKeyNotFoundError
+    """
+
+
+class DirectoryIsNotGivenError(Exception):
+    """
+    Raised when the directory is not given to load_docs
+
+    Args:
+        Exception (Exception): DirectoryIsNotGivenError
+    """
+
+
+class AzureConfigNotFoundError(Exception):
+    """
+    Raised when the API key is not defined/declared.
+
+    Args:
+        Exception (Exception): APIKeyNotFoundError
+    """
