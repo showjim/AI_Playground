@@ -128,6 +128,12 @@ def main():
         if st.session_state["FreeChatReloadMode"] == True:
             system_prompt = chatbot.select_chat_mode(aa_chat_mode)
             st.session_state["FreeChatReloadMode"] = False
+            # set the tool choice in fuction call
+            if aa_chat_mode == "Translate":
+                st.session_state["tool_choice"] = "none"
+            else:
+                st.session_state["tool_choice"] = "auto"
+            # initial the avatar and greeting
             if aa_chat_mode == "西瓜一家-小南瓜":
                 st.session_state["AvatarImg"] = "./img/Sunny.png"
                 initial_msg = "我是小南瓜，很高兴见到你！"
@@ -218,7 +224,7 @@ def main():
                         temperature=st.session_state["FreeChatSetting"]["temperature"],
                         stream=True,
                         tools=tools,
-                        tool_choice="auto",  # auto is default, but we'll be explicit
+                        tool_choice=st.session_state["tool_choice"],  # auto is default, but we'll be explicit
                     )
                     for chunk in response:
                         # process normal response and tool_calls response
