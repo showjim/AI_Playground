@@ -6,7 +6,7 @@ from src.ClsChatBot import ChatRobot
 import openai
 
 # __version__ = "Beta V0.0.2"
-env_path = os.path.abspath('.')
+env_path = os.path.abspath(".")
 
 chatbot = ChatRobot()
 chatbot.setup_env()
@@ -42,7 +42,7 @@ def create_img_by_dalle3(prompt):
     result = client.images.generate(
         model="Dalle3",  # the name of your DALL-E 3 deployment
         prompt=prompt,  # "a close-up of a bear walking through the forest",
-        size='1024x1024',
+        size="1024x1024",
         style="vivid",  # "vivid", "natural"
         # quality="auto",  # "standard" "hd"
         n=1
@@ -75,7 +75,7 @@ def control_msg_hsitory_szie(msglist: List, max_cnt=10):
 
 def main():
     index = 0
-    st.title('🎙️Free Chat Web-UI App')
+    st.title("🎙️Free Chat Web-UI App")
     # Sidebar contents
     if "FreeChatReloadMode" not in st.session_state:
         st.session_state["FreeChatReloadMode"] = True
@@ -85,10 +85,10 @@ def main():
         st.session_state["AvatarImg"] = None
     # Initialize chat history
     if "FreeChatMessages" not in st.session_state:
-        st.session_state['FreeChatMessages'] = []
+        st.session_state["FreeChatMessages"] = []
     if "FreeChatMessagesDispay" not in st.session_state:
         # this is a shadow of "FreeChatMessages" to keep image URL from Dalle3
-        st.session_state['FreeChatMessagesDispay'] = []
+        st.session_state["FreeChatMessagesDispay"] = []
     # chain = chatbot.initial_llm()
     if "FreeChatChain" not in st.session_state:
         # client = chatbot.initial_llm()
@@ -134,11 +134,11 @@ def main():
             else:
                 st.session_state["AvatarImg"] = None
                 initial_msg = "I'm FreeChatBot, How may I help you?"
-            st.session_state['FreeChatMessages'] = [
+            st.session_state["FreeChatMessages"] = [
                 {"role": "system", "content": system_prompt},
                 {"role": "assistant", "content": initial_msg}
             ]
-            st.session_state['FreeChatMessagesDisplay'] = [
+            st.session_state["FreeChatMessagesDisplay"] = [
                 {"role": "system", "content": system_prompt},
                 {"role": "assistant", "content": initial_msg}
             ]
@@ -208,11 +208,11 @@ def main():
             function_response = ""
             tool_calls = []
             cur_func_call = {"id": None, "type": "function", "function": {"arguments": "", "name": None}}
-            with st.spinner('preparing answer'):  # st.session_state["FreeChatChain"]
+            with st.spinner("preparing answer"):  # st.session_state["FreeChatChain"]
                 try:
                     response = st.session_state["FreeChatChain"].chat.completions.create(
                         model=st.session_state["FreeChatSetting"]["model"],
-                        messages=st.session_state['FreeChatMessages'],
+                        messages=st.session_state["FreeChatMessages"],
                         max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
                         # default max tokens is low so set higher
                         temperature=st.session_state["FreeChatSetting"]["temperature"],
@@ -247,7 +247,7 @@ def main():
                             response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
                 except Exception as e:
                     print(e)
-                    print(st.session_state['FreeChatMessages'])
+                    print(st.session_state["FreeChatMessages"])
                     st.error(e)
 
                 # Step 2: check if the model wanted to call a function
@@ -259,14 +259,14 @@ def main():
                         "create_img_by_dalle3": create_img_by_dalle3,
                     }  # only one function in this example, but you can have multiple
                     # extend conversation with assistant's reply
-                    st.session_state['FreeChatMessages'].append(response_message)
-                    st.session_state['FreeChatMessagesDisplay'].append(response_message)
+                    st.session_state["FreeChatMessages"].append(response_message)
+                    st.session_state["FreeChatMessagesDisplay"].append(response_message)
                     # Step 4: send the info for each function call and function response to the model
                     try:
                         for tool_call in tool_calls:
                             function_name = tool_call["function"]["name"]
                             function_response = execute_function_call(available_functions, tool_call)
-                            st.session_state['FreeChatMessages'].append(
+                            st.session_state["FreeChatMessages"].append(
                                 {
                                     "tool_call_id": tool_call["id"],
                                     "role": "tool",
@@ -274,7 +274,7 @@ def main():
                                     "content": function_response,
                                 }
                             )  # extend conversation with function response
-                            st.session_state['FreeChatMessagesDisplay'].append(
+                            st.session_state["FreeChatMessagesDisplay"].append(
                                 {
                                     "tool_call_id": tool_call["id"],
                                     "role": "tool",
@@ -285,11 +285,11 @@ def main():
                     except openai.BadRequestError as e:
                         print(e)
                         st.error(e)
-                        st.session_state['FreeChatMessages'].pop(-1)
-                        st.session_state['FreeChatMessagesDisplay'].pop(-1)
+                        st.session_state["FreeChatMessages"].pop(-1)
+                        st.session_state["FreeChatMessagesDisplay"].pop(-1)
                     second_response = st.session_state["FreeChatChain"].chat.completions.create(
                         model=st.session_state["FreeChatSetting"]["model"],
-                        messages=st.session_state['FreeChatMessages'],
+                        messages=st.session_state["FreeChatMessages"],
                         max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
                         # default max tokens is low so set higher
                         temperature=st.session_state["FreeChatSetting"]["temperature"],
@@ -305,13 +305,13 @@ def main():
                     full_response = full_response
             message_placeholder.markdown(full_response)
 
-            st.session_state['FreeChatMessages'].append({"role": "assistant", "content": full_response})
+            st.session_state["FreeChatMessages"].append({"role": "assistant", "content": full_response})
             if function_response.startswith("https://"):
-                st.session_state['FreeChatMessagesDisplay'].append(
+                st.session_state["FreeChatMessagesDisplay"].append(
                     {"role": "assistant", "content": full_response, "image": function_response})
                 st.image(function_response)
             else:
-                st.session_state['FreeChatMessagesDisplay'].append(
+                st.session_state["FreeChatMessagesDisplay"].append(
                     {"role": "assistant", "content": full_response})
             print("AI: " + full_response)
             if aa_voice_name != "None":
