@@ -1,37 +1,37 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
 import openai
+from src.ClsChatBot import ChatRobot
 
-# This example requires environment variables named "OPEN_AI_KEY" and "OPEN_AI_ENDPOINT"
-# Your endpoint should look like the following https://YOUR_OPEN_AI_RESOURCE_NAME.openai.azure.com/
-openai.api_key = os.environ.get('OPEN_AI_KEY')
-openai.azure_endpoint = os.environ.get('OPEN_AI_ENDPOINT')
-openai.api_type = 'azure'
-openai.api_version = '2023-12-01-preview'
+env_path = os.path.abspath(".")
+chatbot = ChatRobot()
+chatbot.setup_env("../key.txt", "../config.json")
+client = chatbot.initial_llm()
+
+# # This example requires environment variables named "OPEN_AI_KEY" and "OPEN_AI_ENDPOINT"
+# # Your endpoint should look like the following https://YOUR_OPEN_AI_RESOURCE_NAME.openai.azure.com/
+# openai.api_key = os.environ.get('OPEN_AI_KEY')
+# openai.azure_endpoint = os.environ.get('OPEN_AI_ENDPOINT')
+# openai.api_type = 'azure'
+# openai.api_version = '2023-12-01-preview'
 
 # This will correspond to the custom name you chose for your deployment when you deployed a model.
 deployment_id = 'gpt-35-turbo'
 
-client = openai.AzureOpenAI(
-    api_version="2023-12-01-preview",
-    api_key=openai.api_key,
-    azure_endpoint=openai.azure_endpoint
-)
-
 # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
-                                       region=os.environ.get('SPEECH_REGION')
-                                       )
+# speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
+#                                        region=os.environ.get('SPEECH_REGION')
+#                                        )
 audio_output_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
 audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
 
 # Should be the locale for the speaker's language.
-speech_config.speech_recognition_language = "zh-CN"
-speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+chatbot.speech_config.speech_recognition_language = "zh-CN"
+speech_recognizer = speechsdk.SpeechRecognizer(speech_config=chatbot.speech_config, audio_config=audio_config)
 
 # The language of the voice that responds on behalf of Azure OpenAI.
-speech_config.speech_synthesis_voice_name = 'zh-CN-YunxiaNeural'
-speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_output_config)
+chatbot.speech_config.speech_synthesis_voice_name = 'zh-CN-YunxiaNeural'
+speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=chatbot.speech_config, audio_config=audio_output_config)
 
 # tts sentence end mark
 tts_sentence_end = [".", "!", "?", ";", "。", "！", "？", "；", "\n"]
