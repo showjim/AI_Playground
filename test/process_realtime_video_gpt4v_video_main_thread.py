@@ -2,13 +2,17 @@ import os, sys, cv2, base64, openai
 import azure.cognitiveservices.speech as speechsdk
 import threading
 import queue, time
+# For VS Code use src module, need to nop in Pycharm
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
+#########################
 from src.ClsChatBot import ChatRobot
 
 # env_path = os.path.abspath(".")
 chatbot = ChatRobot()
+# For VS Code key.txt & config.json, in Pycharm use key.txt & config.json
 chatbot.setup_env("key.txt", "config.json")
+#########################
 client = chatbot.initial_llm()
 
 is_tts_speaking = False
@@ -173,8 +177,8 @@ def main():
     cap.set(cv2.CAP_PROP_FPS, desired_fps)
 
     # 设置分辨率
-    desired_width = 640  # 例如，设置宽度为640
-    desired_height = 480  # 例如，设置高度为480
+    desired_width = 1280 #640  # 例如，设置宽度为640
+    desired_height = 720 #480  # 例如，设置高度为480
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, desired_height)
 
