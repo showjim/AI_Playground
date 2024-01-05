@@ -117,7 +117,7 @@ def main():
         aa_max_resp = st.sidebar.slider(label="`3. Max response`",
                                         min_value=256,
                                         max_value=aa_max_resp_max_val,
-                                        value=256,
+                                        value=512,
                                         on_change=set_reload_flag)
         aa_context_msg = st.sidebar.slider(label="`4. Context message`",
                                            min_value=10,
