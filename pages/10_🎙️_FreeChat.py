@@ -252,9 +252,12 @@ def main():
                             # print("call tool here")
                             response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
                 except Exception as e:
+                    print("Error found: ")
                     print(e)
                     print(st.session_state["FreeChatMessages"])
                     st.error(e)
+                    st.session_state["FreeChatMessages"].pop(-1)
+                    st.session_state["FreeChatMessagesDisplay"].pop(-1)
 
                 # Step 2: check if the model wanted to call a function
                 if tool_calls:
@@ -289,6 +292,7 @@ def main():
                                 }
                             )  # extend conversation with function response
                     except openai.BadRequestError as e:
+                        print("Error found: ")
                         print(e)
                         st.error(e)
                         st.session_state["FreeChatMessages"].pop(-1)
