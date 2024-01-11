@@ -82,7 +82,7 @@ def main():
         aa_context_msg = st.sidebar.slider(label="`4. Context message`",
                                            min_value=5,
                                            max_value=50,
-                                           value=5,
+                                           value=20,
                                            on_change=set_reload_flag)
 
         if st.session_state["GeminiChatReloadMode"] == True:
