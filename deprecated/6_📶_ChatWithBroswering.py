@@ -1,7 +1,7 @@
 import streamlit as st
 from src.chat import AgentChatBot
 import os, time
-from langchain.callbacks import StreamlitCallbackHandler
+from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 
@@ -18,7 +18,7 @@ class StreamHandler(BaseCallbackHandler):
 
 # __version__ = "Beta V0.0.2"
 
-env_path = os.path.abspath('.')
+env_path = os.path.abspath('../pages')
 casual_chat_bot = AgentChatBot(env_path, "") #CasualChatBot(env_path)
 # casual_chat_bot.setup_langchain() #change to st, then we can use memory function
 

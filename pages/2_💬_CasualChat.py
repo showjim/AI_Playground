@@ -2,7 +2,7 @@ import streamlit as st
 # from streamlit_chat import message
 from src.chat import CasualChatBot, StreamHandler
 import os, time
-from langchain.callbacks import StreamlitCallbackHandler
+from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import azure.cognitiveservices.speech as speechsdk
 

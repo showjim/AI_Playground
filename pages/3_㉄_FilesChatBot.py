@@ -6,7 +6,7 @@ from pathlib import Path
 from src.chat import ChatBot, StreamHandler
 import nltk
 import ssl
-from langchain.retrievers import (
+from langchain_community.retrievers import (
     AzureCognitiveSearchRetriever,
 )
 
@@ -215,76 +215,6 @@ def main():
                     st.markdown(content)
             full_response_n_src = {"answers": full_response, "reference": ref}
         st.session_state['F_messages'].append({"role": "assistant", "content": full_response_n_src})
-
-    if 0:
-        with instruction_container:
-            query_input = st.text_area("Insert your instruction")
-            uploaded_path = ""
-
-            # Generate empty lists for generated and past.
-            ## generated stores AI generated responses
-            if 'answers' not in st.session_state:
-                st.session_state['answers'] = []
-            ## past stores User's questions
-            if 'questions' not in st.session_state:
-                st.session_state['questions'] = []
-            if 'reference' not in st.session_state:
-                st.session_state['reference'] = []
-
-            if st.button("Submit", type="primary"):
-
-                if len(file_paths) > 0 or st.session_state["vectordb"] is not None:
-                    ## generated stores langchain chain, to enable memory function of langchain in streamlit
-                    if ("QA_chain" not in st.session_state) or \
-                            (st.session_state["type_status_changed"] == True) or \
-                            (st.session_state["index_db_reload_flag"] == True):
-
-                        qa_chain = st.session_state["FileChat"].chat_QA_with_type_select(st.session_state["vectordb"], aa_combine_type)
-                        # if aa_combine_type == "stuff":
-                        #     qa_chain = st.session_state["FileChat"].chat_QA(st.session_state["vectordb"])
-                        # else:
-                        #     qa_chain = st.session_state["FileChat"].chat_QA_map_reduce(st.session_state["vectordb"])
-                        st.session_state["QA_chain"] = qa_chain
-                        st.session_state["type_status_changed"] = False
-                        st.session_state["index_db_reload_flag"] = False
-
-                    # Query the agent.
-                    with st.spinner('preparing answer'):
-                        response = st.session_state["QA_chain"]({"question": query_input})
-                    resp = response["answer"]
-                    src_cnt = len(response['source_documents'])
-                    ref = []
-                    for i in range(src_cnt):
-                        ref.append({})
-                        ref[i]['source'] = Path(response['source_documents'][i].metadata['source']).stem
-                        if 'page' in response['source_documents'][i].metadata.keys():
-                            ref[i]['page'] = response['source_documents'][i].metadata['page']
-                        else:
-                            ref[i]['page'] = ""
-                        ref[i]['content'] = response['source_documents'][i].page_content
-                    st.session_state.questions.append(query_input)
-                    st.session_state.answers.append(resp)
-                    st.session_state.reference.append(ref)
-                else:
-                    st.write("Error: " + " No Index DB Is Loaded!")
-
-        with response_container:
-            if st.session_state['answers']:
-                n = len(st.session_state['answers'])
-                for i in range(n):
-                    st.markdown('-----------------')
-                    st.markdown('### ' + str(n-i-1) + '. ' + st.session_state['questions'][n-i-1])
-                    st.markdown(st.session_state["answers"][n-i-1])
-                    ref = st.session_state["reference"][n-i-1]
-                    src_cnt = len(ref)
-                    st.markdown('#### Reference:')
-                    for j in range(src_cnt):
-                        src_file = ref[j]['source']
-                        page = ref[j]['page']
-                        content = ref[j]['content']
-                        st.markdown('##### ' + str(j) + '. ' + src_file + " - page " + str(page) )
-                        with st.expander("See details"):
-                            st.markdown( content)
 
 
 if __name__ == "__main__":

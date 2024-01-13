@@ -22,7 +22,7 @@ from langchain.chains.qa_with_sources.refine_prompts import (
 )
 from langchain.chains.question_answering.map_rerank_prompt import PROMPT as map_rerank_prompt
 
-from langchain.utilities import BingSearchAPIWrapper
+from langchain_community.utilities import BingSearchAPIWrapper
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):

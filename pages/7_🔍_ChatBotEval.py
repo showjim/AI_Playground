@@ -6,24 +6,22 @@ from pathlib import Path
 from tqdm import tqdm
 from dotenv import load_dotenv
 from langchain.evaluation.qa import QAGenerateChain
-from langchain.vectorstores import FAISS, Qdrant
+from langchain_community.vectorstores import FAISS, Qdrant
 from langchain.chains import RetrievalQA
-from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
+from langchain_openai.chat_models import ChatOpenAI, AzureChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from langchain.embeddings import (
-    AzureOpenAIEmbeddings,
-    HuggingFaceEmbeddings,
-)
-from langchain.document_loaders import (
+from langchain_openai.embeddings import AzureOpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.document_loaders import (
     PyMuPDFLoader,
     TextLoader,
 )
-from langchain.retrievers import (
+from langchain_community.retrievers import (
     SVMRetriever,
     AzureCognitiveSearchRetriever,
     TFIDFRetriever,
-    ContextualCompressionRetriever,
 )
+from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.prompts import PromptTemplate
 import pandas as pd

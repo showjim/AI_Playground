@@ -8,12 +8,12 @@ import pandas as pd
 import openai
 from dotenv import load_dotenv
 
-from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
-from langchain.embeddings import AzureOpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 from langchain.schema import HumanMessage
 
-from langchain.document_loaders import (
+from langchain_community.document_loaders import (
     CSVLoader,
     EverNoteLoader,
     PDFMinerLoader,
@@ -32,7 +32,7 @@ from langchain.document_loaders import (
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
 # The vectorstore we'll be using
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
 
 # The LangChain component we'll use to get the documents
@@ -42,7 +42,7 @@ from tqdm import tqdm
 
 from langchain.chains import LLMChain
 from langchain.memory import ConversationBufferWindowMemory
-from langchain.llms import AzureOpenAI
+
 # from langchain.agents import create_pandas_dataframe_agent
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain.callbacks.base import BaseCallbackHandler
