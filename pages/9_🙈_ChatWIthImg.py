@@ -1,47 +1,17 @@
 import time
-
 import streamlit as st
 import os, base64, glob, shutil, json
 from pathlib import Path
 import openai
 from openai import AzureOpenAI
 from dotenv import load_dotenv
+from src.ClsChatBot import ChatRobot
 
 st.title("🙈 Chat with IMG")
 
-def setup_env():
-    # Load OpenAI key
-    if os.path.exists("key.txt"):
-        shutil.copyfile("key.txt", ".env")
-        load_dotenv()
-    else:
-        print("key.txt with OpenAI API is required")
+env_path = os.path.abspath(".")
+chatbot = ChatRobot()
 
-    # Load config values
-    if os.path.exists(os.path.join(r'config.json')):
-        with open(r'config.json') as config_file:
-            config_details = json.load(config_file)
-
-        # Setting up the embedding model
-        embedding_model_name = config_details['EMBEDDING_MODEL']
-        openai.api_type = "azure"
-        openai.api_base = config_details['OPENAI_API_BASE']
-        openai.api_version = config_details['OPENAI_API_VERSION']
-        openai.azure_endpoint = os.getenv("OPENAI_API_KEY")
-
-        # Dalle-E-3
-        os.environ["AZURE_OPENAI_API_KEY_SWC"] = os.getenv("AZURE_OPENAI_API_KEY_SWC")
-        os.environ["AZURE_OPENAI_ENDPOINT_SWC"] = config_details['AZURE_OPENAI_ENDPOINT_SWC']
-    else:
-        print("config.json with Azure OpenAI config is required")
-
-def initial_llm():
-    client = AzureOpenAI(
-        api_version="2023-12-01-preview",
-        api_key=os.environ["AZURE_OPENAI_API_KEY_SWC"],
-        azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT_SWC']
-    )
-    return client
 def set_reload_setting_flag():
     # st.write("New document need upload")
     st.session_state["SettingReloadFlag"] = True
@@ -50,23 +20,11 @@ def set_reload_img_flag():
     # st.write("New document need upload")
     st.session_state["ImgReloadFlag"] = True
 
-def get_keys(d, value):
-    return [k for k,v in d.items() if v == value]
-
-def get_all_files_list(source_dir, exts):
-    all_files = []
-    result = []
-    for ext in exts:
-        all_files.extend(
-            glob.glob(os.path.join(source_dir, f"*.{ext}"), recursive=False)
-        )
-    for filepath in all_files:
-        file_name = Path(filepath).name
-        result.append(file_name)
-    return result
+# def get_keys(d, value):
+#     return [k for k,v in d.items() if v == value]
 
 def main():
-    setup_env()
+    chatbot.setup_env()
     # initial parameter & LLM
     if "ImgReloadFlag" not in st.session_state:
         st.session_state["ImgReloadFlag"] = True
@@ -97,7 +55,8 @@ def main():
             }
         ]
     if "IMGChatChain" not in st.session_state:
-        chain = initial_llm()
+        # chain = initial_llm()
+        chain = chatbot.initial_llm()
         st.session_state["IMGChatChain"] = chain
     work_path = os.path.abspath('.')
 
@@ -130,8 +89,8 @@ def main():
         # with setup_container:
         # upload file & create index base
         st.subheader("Please upload your file below.")
-        if "IMGDB" not in st.session_state:
-            st.session_state["IMGDB"] = None
+        # if "IMGDB" not in st.session_state:
+        #     st.session_state["IMGDB"] = None
         file_path = st.file_uploader("1.Upload a document file",
                                       type=["jpg", "png", "gif", "bmp"],
                                       accept_multiple_files=False)  # , on_change=is_upload_status_changed)
@@ -147,7 +106,7 @@ def main():
                         st.write(f"✅ {Path(uploaded_path).name} uploaed")
 
         # select the specified index base(s)
-        index_file_list = get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
+        index_file_list =chatbot.get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
         options = st.multiselect('2.What img do you want to exam?',
                                  index_file_list,
                                  max_selections=1,
@@ -192,7 +151,7 @@ def main():
                 for content in message["content"]:
                     if content["type"] == "image_url":
                         image_url = content["image_url"]["url"].replace("data:image/jpeg;base64,", "")
-                        img_paths = get_keys(st.session_state["IMGDB"], image_url)
+                        img_paths = chatbot.get_keys(st.session_state["IMGDB"], image_url)
                         st.image(img_paths[0])
                     elif content["type"] == "text":
                         st.markdown(content["text"])

@@ -1,9 +1,10 @@
 import streamlit as st
 import os, time, json
+from pathlib import Path
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot, ChatRobotGemini
-import openai
+import PIL.Image
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
@@ -15,7 +16,6 @@ tools = chatbot.initial_tools()
 # Gemini initial
 chatbot_gemini = ChatRobotGemini()
 chatbot_gemini.setup_env()
-client_gemini = chatbot_gemini.initial_llm()
 
 st.set_page_config(page_title="GeminiChat - Chatbot With Google AI APIs")
 
@@ -29,15 +29,14 @@ def set_reload_flag():
     st.session_state["GeminiChatReloadFlag"] = True
 
 
-# def control_msg_hsitory_szie(msglist: List, max_cnt=10, delcnt=1):
-#     while len(msglist) > max_cnt:
-#         for i in range(delcnt):
-#             msglist.pop(1)
-#     return msglist
+def set_reload_img_flag():
+    # st.write("New document need upload")
+    st.session_state["GeminiChatImgReloadFlag"] = True
 
 
 def main():
     index = 0
+    work_path = os.path.abspath('.')
     st.title("♊️Gemini Chat Web-UI App")
     # Sidebar contents
     if "GeminiChatReloadMode" not in st.session_state:
@@ -52,7 +51,11 @@ def main():
     # chain = chatbot.initial_llm()
     if "GeminiChatChain" not in st.session_state:
         # client = chatbot.initial_llm()
-        st.session_state["GeminiChatChain"] = client_gemini
+        st.session_state["GeminiChatChain"] = None #client_gemini
+    if "GeminiChatImgReloadFlag" not in st.session_state:
+        st.session_state["GeminiChatImgReloadFlag"] = True
+    if "GeminiChatIMGDB" not in st.session_state:
+        st.session_state["GeminiChatIMGDB"] = {}
 
     with st.sidebar:
         st.sidebar.expander("Settings")
@@ -63,20 +66,16 @@ def main():
                                             index=0,
                                             on_change=set_reload_mode)
         aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
-                                            options=["gemini-pro"],
+                                            options=["gemini-pro", "gemini-pro-vision"],
                                             index=0,
                                             on_change=set_reload_flag)
         aa_temperature = st.sidebar.selectbox(label="`2. Temperature (0~1)`",
                                               options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
                                               index=1,
                                               on_change=set_reload_flag)
-        if "16k" in aa_llm_model:
-            aa_max_resp_max_val = 16 * 1024
-        else:
-            aa_max_resp_max_val = 4096
         aa_max_resp = st.sidebar.slider(label="`3. Max response`",
                                         min_value=256,
-                                        max_value=aa_max_resp_max_val,
+                                        max_value=4096,
                                         value=512,
                                         on_change=set_reload_flag)
         aa_context_msg = st.sidebar.slider(label="`4. Context message`",
@@ -86,6 +85,8 @@ def main():
                                            on_change=set_reload_flag)
 
         if st.session_state["GeminiChatReloadMode"] == True:
+            client_gemini = chatbot_gemini.initial_llm(aa_llm_model)
+            st.session_state["GeminiChatChain"] = client_gemini
             system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
             st.session_state["GeminiChatReloadMode"] = False
             # set the tool choice in function call
@@ -106,10 +107,13 @@ def main():
             ]
 
         if st.session_state["GeminiChatReloadFlag"] == True:
+            client_gemini = chatbot_gemini.initial_llm(aa_llm_model)
+            st.session_state["GeminiChatChain"] = client_gemini
             if "GeminiChatSetting" not in st.session_state:
                 st.session_state["GeminiChatSetting"] = {}
             st.session_state["GeminiChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
-                                                     "temperature": float(aa_temperature), "context_msg": aa_context_msg}
+                                                     "temperature": float(aa_temperature),
+                                                     "context_msg": aa_context_msg}
             st.session_state["GeminiChatReloadFlag"] = False
 
         # Text2Speech
@@ -134,13 +138,58 @@ def main():
             if aa_audio_mode == "Single":
                 speech_txt = chatbot.speech_2_text()
             else:
-                speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+                speech_txt = chatbot.speech_2_text_continous()  # speech_2_text() #speech_2_text_continous() #speech_2_text()
+
+        # upload file & create index base
+        st.subheader("Please upload your file below.")
+        # if "GeminiChatIMGDB" not in st.session_state:
+        #     st.session_state["GeminiChatIMGDB"] = None
+        file_path = st.file_uploader("1.Upload a document file",
+                                     type=["jpg", "png"],
+                                     accept_multiple_files=False)  # , on_change=is_upload_status_changed)
+        if st.button("Upload"):
+            if file_path is not None:
+                # save file
+                with st.spinner('Reading file'):
+                    uploaded_path = os.path.join(work_path + "/img", file_path.name)
+                    with open(uploaded_path, mode="wb") as f:
+                        f.write(file_path.getbuffer())
+                    if os.path.exists(uploaded_path) == True:
+                        st.write(f"✅ {Path(uploaded_path).name} uploaed")
+
+        # select the specified index base(s)
+        index_file_list = chatbot_gemini.get_all_files_list("./img", ["jpg", "png"])
+        options = st.multiselect('2.What img do you want to exam?',
+                                 index_file_list,
+                                 max_selections=1,
+                                 on_change=set_reload_img_flag)
+        if len(options) > 0:
+            if st.session_state["GeminiChatImgReloadFlag"] == True:
+                st.session_state["GeminiChatImgReloadFlag"] = False
+                with st.spinner('Load Image File'):
+                    IMAGE_PATH = os.path.join("./img", options[0])
+                    encoded_image = PIL.Image.open(IMAGE_PATH)
+
+                    # store in dict for history
+                    st.session_state["GeminiChatIMGDB"][IMAGE_PATH] = encoded_image
+
+                    # add in chat msg
+                    tmp_usr_img_msg = ({"role": "user", "parts": [encoded_image]})
+                    st.session_state["GeminiChatMessages"].append(tmp_usr_img_msg)
+                st.write("✅ " + ", ".join(options) + " IMG Loaded")
+            if st.session_state["GeminiChatIMGDB"] is None:
+                print("can you reach here?")
 
     # Display chat messages from history on app rerun
     for message in st.session_state["GeminiChatMessages"]:
         if message["role"] == "user":
             with st.chat_message(message["role"]):
-                st.markdown(message["parts"][0])
+                for part in message["parts"]:
+                    if isinstance(part, str):
+                        st.markdown(part)
+                    else:
+                        img_paths = chatbot_gemini.get_keys(st.session_state["GeminiChatIMGDB"], part)
+                        st.image(img_paths)
         elif message["role"] == "model":
             if message["parts"] is not None:
                 with st.chat_message(name=message["role"], avatar=st.session_state["GeminiChatAvatarImg"]):
@@ -153,12 +202,15 @@ def main():
     if (prompt := st.chat_input("Type you input here")) or (prompt := speech_txt):
         # Add user message to chat history
         max_cnt = st.session_state["GeminiChatSetting"]["context_msg"]
-        st.session_state["GeminiChatMessages"] = chatbot_gemini.control_msg_history_szie(st.session_state["GeminiChatMessages"], max_cnt, 2)
+        st.session_state["GeminiChatMessages"] = chatbot_gemini.control_msg_history_szie(
+            st.session_state["GeminiChatMessages"], max_cnt, 2)
         if st.session_state["GeminiChatMessages"][-1]["role"] == "user":
-            # For Gemini Error "400 Please ensure that multiturn requests ends with a user role or a function response."
+            # For Gemini Error "400 Please ensure that multi-turn requests ends with a user role or a function response."
             st.session_state["GeminiChatMessages"][-1]["parts"] += [prompt]
         else:
             st.session_state["GeminiChatMessages"].append({"role": "user", "parts": [prompt]})
+
+        composed_prompt = chatbot_gemini.compose_prompt(st.session_state["GeminiChatMessages"], prompt)
 
         print("HUMAN: " + prompt)
         # Display user message in chat message container
@@ -177,8 +229,9 @@ def main():
                         "top_k": 1,
                         "max_output_tokens": st.session_state["GeminiChatSetting"]["max_tokens"],
                     }
+
                     response = st.session_state["GeminiChatChain"].generate_content(
-                        contents=st.session_state["GeminiChatMessages"],
+                        contents=composed_prompt,  # st.session_state["GeminiChatMessages"],
                         generation_config=generation_config,
                         stream=True,
                     )

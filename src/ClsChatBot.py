@@ -1,4 +1,5 @@
-import os, shutil, json, time
+import os, shutil, json, time, glob
+from pathlib import Path
 import openai
 from openai import AzureOpenAI
 from dotenv import load_dotenv
@@ -29,6 +30,21 @@ class ChatRobotBase:
             for i in range(delcnt):
                 msglist.pop(1)
         return msglist
+
+    def get_all_files_list(self, source_dir, exts):
+        all_files = []
+        result = []
+        for ext in exts:
+            all_files.extend(
+                glob.glob(os.path.join(source_dir, f"*.{ext}"), recursive=False)
+            )
+        for filepath in all_files:
+            file_name = Path(filepath).name
+            result.append(file_name)
+        return result
+
+    def get_keys(self, d, value):
+        return [k for k, v in d.items() if v == value]
 
 class ChatRobot(ChatRobotBase):
     def __init__(self):
@@ -376,7 +392,7 @@ class ChatRobotGemini(ChatRobotBase):
             print("key.txt with OpenAI API is required")
             raise APIKeyNotFoundError("key.txt with Google API is required")
 
-    def initial_llm(self):
+    def initial_llm(self, model="gemini-pro"):
         # Set up the model
         generation_config = {
             "temperature": 0.9,
@@ -402,7 +418,7 @@ class ChatRobotGemini(ChatRobotBase):
                 "threshold": "BLOCK_MEDIUM_AND_ABOVE"
             },
         ]
-        client = genai.GenerativeModel(model_name="gemini-pro",
+        client = genai.GenerativeModel(model_name=model,
                                        generation_config=generation_config,
                                        safety_settings=safety_settings)
         return client
@@ -457,6 +473,31 @@ Current time: %s
         else:
             print("Wrong mode selected!")
         return prompt_template
+
+    def compose_prompt(self, msg_list, query:str):
+        """merge all turn conversation to string, to make pro vision support multi-turn"""
+        full_prompt_list = []
+        index = 0
+        image_file = None
+        for message in msg_list:
+            if message["role"] == "user":
+                if index == 0:
+                    full_prompt_list.append(message["parts"][0] + "\n")
+                else:
+                    for part in message["parts"]:
+                        if isinstance(part, str):
+                            full_prompt_list.append("HUMAN: " + part)
+                        else:
+                            image_file = part
+            elif message["role"] == "model":
+                if message["parts"] is not None:
+                    full_prompt_list.append("AI: " + message["parts"][0])
+            index += 1
+        full_prompt_list.append("\n" + "Assistant: \n")
+        if image_file is None:
+            return ["\n".join(full_prompt_list)]
+        else:
+            return [image_file, "\n".join(full_prompt_list)]
 
 
 
