@@ -67,10 +67,10 @@ def execute_function_call(available_functions, tool_call):
     return function_response
 
 
-def control_msg_hsitory_szie(msglist: List, max_cnt=10):
-    while len(msglist) > max_cnt:
-        msglist.pop(1)
-    return msglist
+# def control_msg_hsitory_szie(msglist: List, max_cnt=10):
+#     while len(msglist) > max_cnt:
+#         msglist.pop(1)
+#     return msglist
 
 
 def main():
@@ -198,7 +198,7 @@ def main():
     if (prompt := st.chat_input("Type you input here")) or (prompt := speech_txt):
         # Add user message to chat history
         max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
-        st.session_state["FreeChatMessages"] = control_msg_hsitory_szie(st.session_state["FreeChatMessages"], max_cnt)
+        st.session_state["FreeChatMessages"] = chatbot.control_msg_history_szie(st.session_state["FreeChatMessages"], max_cnt)
         st.session_state["FreeChatMessages"].append({"role": "user", "content": prompt})
         st.session_state["FreeChatMessagesDisplay"].append({"role": "user", "content": prompt})
 

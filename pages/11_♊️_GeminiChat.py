@@ -29,11 +29,11 @@ def set_reload_flag():
     st.session_state["GeminiChatReloadFlag"] = True
 
 
-def control_msg_hsitory_szie(msglist: List, max_cnt=10, delcnt=1):
-    while len(msglist) > max_cnt:
-        for i in range(delcnt):
-            msglist.pop(1)
-    return msglist
+# def control_msg_hsitory_szie(msglist: List, max_cnt=10, delcnt=1):
+#     while len(msglist) > max_cnt:
+#         for i in range(delcnt):
+#             msglist.pop(1)
+#     return msglist
 
 
 def main():
@@ -153,7 +153,7 @@ def main():
     if (prompt := st.chat_input("Type you input here")) or (prompt := speech_txt):
         # Add user message to chat history
         max_cnt = st.session_state["GeminiChatSetting"]["context_msg"]
-        st.session_state["GeminiChatMessages"] = control_msg_hsitory_szie(st.session_state["GeminiChatMessages"], max_cnt, 2)
+        st.session_state["GeminiChatMessages"] = chatbot_gemini.control_msg_history_szie(st.session_state["GeminiChatMessages"], max_cnt, 2)
         if st.session_state["GeminiChatMessages"][-1]["role"] == "user":
             # For Gemini Error "400 Please ensure that multiturn requests ends with a user role or a function response."
             st.session_state["GeminiChatMessages"][-1]["parts"] += [prompt]

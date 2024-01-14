@@ -5,9 +5,32 @@ from dotenv import load_dotenv
 from datetime import date, datetime
 import azure.cognitiveservices.speech as speechsdk
 import google.generativeai as genai
+from typing import List
 
 
-class ChatRobot():
+class ChatRobotBase:
+    def __init__(self):
+        super().__init__()
+
+    def setup_env(self):
+        """
+        Load API keys and other configs
+        Returns:
+
+        """
+    def initial_llm(self):
+        """Set up the model"""
+
+    def select_chat_mode(self, mode: str):
+        """Setup different system prompt"""
+
+    def control_msg_history_szie(self, msglist: List, max_cnt=10, delcnt=1):
+        while len(msglist) > max_cnt:
+            for i in range(delcnt):
+                msglist.pop(1)
+        return msglist
+
+class ChatRobot(ChatRobotBase):
     def __init__(self):
         super().__init__()
         self.speech_config = None
@@ -338,7 +361,8 @@ prompt: string
         ]
         return tools
 
-class ChatRobotGemini():
+
+class ChatRobotGemini(ChatRobotBase):
     def __init__(self):
         super().__init__()
 
