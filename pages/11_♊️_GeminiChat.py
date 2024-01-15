@@ -99,7 +99,7 @@ def main():
                 st.session_state["GeminiChatAvatarImg"] = "./img/Sunny.png"
                 initial_msg = "我是小南瓜，很高兴见到你！"
             else:
-                st.session_state["GeminiChatAvatarImg"] = None
+                st.session_state["GeminiChatAvatarImg"] = "assistant"
                 initial_msg = "I'm GeminiChatBot, How may I help you?"
             st.session_state["GeminiChatMessages"] = [
                 {"role": "user", "parts": [system_prompt]},

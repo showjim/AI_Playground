@@ -138,7 +138,7 @@ def main():
                 st.session_state["AvatarImg"] = "./img/Sunny.png"
                 initial_msg = "我是小南瓜，很高兴见到你！"
             else:
-                st.session_state["AvatarImg"] = None
+                st.session_state["AvatarImg"] = "assistant"
                 initial_msg = "I'm FreeChatBot, How may I help you?"
             st.session_state["FreeChatMessages"] = [
                 {"role": "system", "content": system_prompt},
