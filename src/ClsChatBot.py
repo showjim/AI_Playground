@@ -474,7 +474,7 @@ Current time: %s
             print("Wrong mode selected!")
         return prompt_template
 
-    def compose_prompt(self, msg_list, query:str):
+    def compose_prompt(self, msg_list, query:str, isTxtOnly: bool = False):
         """merge all turn conversation to string, to make pro vision support multi-turn"""
         full_prompt_list = []
         index = 0
@@ -494,7 +494,7 @@ Current time: %s
                     full_prompt_list.append("AI: " + message["parts"][0])
             index += 1
         full_prompt_list.append(query + "\n" + "Assistant: \n")
-        if image_file is None:
+        if image_file is None or isTxtOnly:
             return ["\n".join(full_prompt_list)]
         else:
             return [image_file, "\n".join(full_prompt_list)]

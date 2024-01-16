@@ -66,7 +66,7 @@ def save_temp_frame(frame, filename, directory='./temp'):
 
 def ask_to_gpt(base64Frames, prompt):
     messages = [
-        {"role": "system", "content": "These are frames from a video. Please reply in simplified Chinese, according to the frames."}
+        {"role": "system", "content": "These are frames from a video. Please reply one or two complete sentences in simplified Chinese, according to the frames."}
     ]
     print("HUMAN: " + prompt)
     PROMPT_MESSAGES = {
@@ -116,7 +116,7 @@ def ask_to_gpt(base64Frames, prompt):
 def ask_to_gpt_gemini(base64Frames, prompt):
 
     print("HUMAN: " + prompt)
-    PROMPT_MESSAGES = {"role": "user", "parts": [*base64Frames[0::30]]}
+    # PROMPT_MESSAGES = {"role": "user", "parts": [*base64Frames[0::30]]}
     # PROMPT_MESSAGES = {
     #     "role": "user",
     #     "content": [
@@ -124,8 +124,9 @@ def ask_to_gpt_gemini(base64Frames, prompt):
     #         *map(lambda x: {"image": x, "resize": 480}, base64Frames[0::30]),
     #     ],
     # }
-    messages.append(PROMPT_MESSAGES)
-    composed_prompt = chatbot_gemini.compose_prompt(messages, prompt)
+    # messages.append(PROMPT_MESSAGES)
+    composed_prompt = chatbot_gemini.compose_prompt(messages, prompt, True)
+    composed_prompt += base64Frames[0::30]
     generation_config = {
         "temperature": 0.4,
         "top_p": 1,
