@@ -1,31 +1,29 @@
-import os, sys, cv2, base64, openai
+import io, os, sys, cv2, base64, openai
 import azure.cognitiveservices.speech as speechsdk
 import threading
 import queue, time
+import PIL.Image
+
 # For VS Code use src module, need to nop in Pycharm
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 #########################
-from src.ClsChatBot import ChatRobot
+from src.ClsChatBot import ChatRobotGemini, ChatRobot
 
-# env_path = os.path.abspath(".")
+
+# This will correspond to the custom name you chose for your deployment when you deployed a model.
+deployment_id = "gemini-pro-vision"
+# Azure OpenAI/TTS/STT initial
 chatbot = ChatRobot()
-# For VS Code key.txt & config.json, in Pycharm use key.txt & config.json
-chatbot.setup_env("key.txt", "config.json")
-#########################
+chatbot.setup_env()
 client = chatbot.initial_llm()
+# Gemini initial
+chatbot_gemini = ChatRobotGemini()
+chatbot_gemini.setup_env()
+client_gemini = chatbot_gemini.initial_llm(deployment_id)
 
 is_tts_speaking = False
 shared_bool = threading.Event()
-
-# This will correspond to the custom name you chose for your deployment when you deployed a model.
-deployment_id = "gpt-4-vision-preview"
-
-# client = openai.AzureOpenAI(
-#     api_version="2023-12-01-preview",
-#     api_key=openai.api_key,
-#     azure_endpoint=openai.azure_endpoint
-# )
 
 audio_output_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
 audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
@@ -37,18 +35,38 @@ speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=chatbot.speech_co
 # tts sentence end mark
 tts_sentence_end = [".", "!", "?", ";", "。", "！", "？", "；", "\n"]
 
-# messages = [
-#     {"role": "system", "content": "请使用中文回答。These are frames from a video that I want you to talk about with. Knowledge cutoff: 2023-04."}
-# ]
+messages = [
+    {"role": "user", "parts": ["These are frames from a video. Please reply in Chinese, according to the frames."]},
+    {"role": "model", "parts": ["OK"]}
+]
 
 
 def encode_image_to_base64(frame):
     _, buffer = cv2.imencode(".jpg", frame)
     return base64.b64encode(buffer).decode('utf-8')
 
+def encode_image(frame):
+    _, buffer = cv2.imencode(".jpg", frame)
+    # buffer = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # image = PIL.Image.fromarray(buffer)
+    io_buf = io.BytesIO(buffer)
+    image = PIL.Image.open(io_buf)
+
+    return image
+
+def save_temp_frame(frame, filename, directory='./temp'):
+    # Create the directory if it does not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    # Creating the path for the filename
+    filepath = os.path.join(directory, filename)
+    # Saving the frame
+    cv2.imwrite(filepath, frame)
+    return filepath  # Returning the path of the saved file
+
 def ask_to_gpt(base64Frames, prompt):
     messages = [
-        {"role": "system", "content": "These are frames from a video. Please reply in Chinese, according to the frames."}
+        {"role": "system", "content": "These are frames from a video. Please reply in simplified Chinese, according to the frames."}
     ]
     print("HUMAN: " + prompt)
     PROMPT_MESSAGES = {
@@ -95,14 +113,72 @@ def ask_to_gpt(base64Frames, prompt):
     
     return full_response
 
-def gpt_thread(base64Frames, prompt):
+def ask_to_gpt_gemini(base64Frames, prompt):
+
+    print("HUMAN: " + prompt)
+    PROMPT_MESSAGES = {"role": "user", "parts": [*base64Frames[0::30]]}
+    # PROMPT_MESSAGES = {
+    #     "role": "user",
+    #     "content": [
+    #         prompt,  # "These are frames from a video that I want to upload. Please describe what you see.",
+    #         *map(lambda x: {"image": x, "resize": 480}, base64Frames[0::30]),
+    #     ],
+    # }
+    messages.append(PROMPT_MESSAGES)
+    composed_prompt = chatbot_gemini.compose_prompt(messages, prompt)
+    generation_config = {
+        "temperature": 0.4,
+        "top_p": 1,
+        "top_k": 1,
+        "max_output_tokens": 256,
+    }
+
+    params = {
+        "contents": composed_prompt,
+        "generation_config": generation_config,
+        "stream": True,
+    }
+
+    try:
+        response = client_gemini.generate_content(**params)
+
+        collected_messages = []
+        last_tts_request = None
+        full_response = ""
+        # iterate through the stream response stream
+        for chunk in response:
+            chunk_message = chunk.text  # extract the message
+            collected_messages.append(chunk_message)  # save the message
+            if chunk_message[-1] in tts_sentence_end:  # sentence end found
+                text = ''.join(collected_messages).strip()  # join the recieved message together to build a sentence
+                if text != '':  # if sentence only have \n or space, we could skip
+                    print(f"Speech synthesized to speaker for: {text}")
+                    last_tts_request = speech_synthesizer.speak_text(text)
+                    collected_messages.clear()
+            full_response += chunk_message
+        messages.append({"role": "model", "parts": [full_response]})
+        print("AI: " + full_response)
+        # if last_tts_request:
+        #     last_tts_request.get()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # 可以选择在这里返回，或者处理错误后继续
+        return e
+
+    return full_response
+
+def gpt_thread(base64Frames, prompt, model):
     global is_tts_speaking
     global shared_bool
     # 设置标志，以便音频识别线程知道TTS正在发声
     is_tts_speaking = True
     shared_bool.set()
     # 调用 GPT 函数并处理结果
-    response_str = ask_to_gpt(base64Frames, prompt)
+    if "gpt" in model:
+        response_str = ask_to_gpt(base64Frames, prompt)
+    else:
+        response_str = ask_to_gpt_gemini(base64Frames, prompt)
+    base64Frames = []
     # TTS发声结束后清除标志
     is_tts_speaking = False
     shared_bool.clear()
@@ -209,7 +285,8 @@ def main():
             # # 将帧放入队列
             # frame_queue.put(frame)
             # Encode the frame in Base64
-            base64_image = encode_image_to_base64(frame)
+            # base64_image = encode_image_to_base64(frame)
+            base64_image = encode_image(frame)
             base64Frames.append(base64_image)
             
             # Get audio from the microphone and then send it to the TTS service.
@@ -231,7 +308,7 @@ def main():
                         clear_audio_queue(audio_queue)
 
                         # 创建并启动 GPT 线程
-                        gpt_thread_handle = threading.Thread(target=gpt_thread, args=(base64Frames, speech_result_str))
+                        gpt_thread_handle = threading.Thread(target=gpt_thread, args=(base64Frames, speech_result_str, deployment_id))
                         gpt_thread_handle.start()
 
                         # to store next 3 second video

@@ -493,7 +493,7 @@ Current time: %s
                 if message["parts"] is not None:
                     full_prompt_list.append("AI: " + message["parts"][0])
             index += 1
-        full_prompt_list.append("\n" + "Assistant: \n")
+        full_prompt_list.append(query + "\n" + "Assistant: \n")
         if image_file is None:
             return ["\n".join(full_prompt_list)]
         else:
