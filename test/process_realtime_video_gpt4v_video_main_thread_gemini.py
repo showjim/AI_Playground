@@ -286,8 +286,11 @@ def main():
             # # 将帧放入队列
             # frame_queue.put(frame)
             # Encode the frame in Base64
-            # base64_image = encode_image_to_base64(frame)
-            base64_image = encode_image(frame)
+            if "gpt" in deployment_id:
+                base64_image = encode_image_to_base64(frame)
+            else:
+                # named "base64", actually it is image file for Gemini-pro-vision
+                base64_image = encode_image(frame)
             base64Frames.append(base64_image)
             
             # Get audio from the microphone and then send it to the TTS service.
