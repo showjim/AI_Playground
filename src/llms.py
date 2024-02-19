@@ -30,13 +30,10 @@ from langchain_community.document_loaders import (
     DirectoryLoader,
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.prompts import PromptTemplate
 # The vectorstore we'll be using
 from langchain_community.vectorstores import FAISS
-from langchain.chains.question_answering import load_qa_chain
 
 # The LangChain component we'll use to get the documents
-from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 from tqdm import tqdm
 
