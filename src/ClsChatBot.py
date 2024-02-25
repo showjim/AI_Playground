@@ -95,6 +95,10 @@ class ChatRobot(ChatRobotBase):
             # Text2Speech
             os.environ["SPEECH_KEY"] = os.getenv("SPEECH_KEY")
             os.environ["SPEECH_REGION"] = self.config_details['SPEECH_REGION']
+
+            # Whisper
+            os.environ["AZURE_OPENAI_API_KEY_USNC"] = os.getenv("AZURE_OPENAI_API_KEY_USNC")
+            os.environ["AZURE_OPENAI_ENDPOINT_USNC"] = self.config_details['AZURE_OPENAI_ENDPOINT_USNC']
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
@@ -103,6 +107,17 @@ class ChatRobot(ChatRobotBase):
             api_version="2023-12-01-preview",
             api_key=openai.api_key,
             azure_endpoint=openai.azure_endpoint
+        )
+        # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+        self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
+                                                    region=os.environ.get('SPEECH_REGION'))
+        return client
+
+    def initial_whisper(self):
+        client = AzureOpenAI(
+            api_version="2023-12-01-preview",
+            api_key=os.environ["AZURE_OPENAI_API_KEY_USNC"],
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_USNC"]
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
