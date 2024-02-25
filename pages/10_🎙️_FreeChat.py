@@ -1,9 +1,10 @@
 import streamlit as st
-import os, time, json
+import os, time, json, io
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot
 import openai
+from streamlit_mic_recorder import mic_recorder
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
@@ -11,6 +12,7 @@ env_path = os.path.abspath(".")
 chatbot = ChatRobot()
 chatbot.setup_env()
 client = chatbot.initial_llm()
+client_stt = chatbot.initial_whisper()
 tools = chatbot.initial_tools()
 
 
@@ -67,10 +69,24 @@ def execute_function_call(available_functions, tool_call):
     return function_response
 
 
-# def control_msg_hsitory_szie(msglist: List, max_cnt=10):
-#     while len(msglist) > max_cnt:
-#         msglist.pop(1)
-#     return msglist
+def whisper_STT(audio_test_file="./TalkForAFewSeconds16.wav", audio_language="en", prompt="以下是普通话的句子。", translate=False):
+    model_name = "whisper-1"
+    result = ""
+    if translate:
+        result = client_stt.audio.translations.create(
+            file=audio_test_file,  # open(audio_test_file, "rb"),
+            model=model_name,
+            response_format="text",
+        )
+    else:
+        result = client_stt.audio.transcriptions.create(
+                    file=audio_test_file, #open(audio_test_file, "rb"),
+                    model=model_name,
+                    language=audio_language,
+                    response_format="text",
+                    prompt=prompt,
+        )
+    return result
 
 
 def main():
@@ -168,16 +184,33 @@ def main():
             aa_voice_name = "en-US-AnaNeural"
             chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
-        # Speech2Text
-        aa_audio_mode = st.sidebar.selectbox(label="`6. Audio Input Mode`",
-                                             options=["Single", "Continuous"],
-                                             index=0)
         speech_txt = ""
-        if st.sidebar.button("`Speak`"):
-            if aa_audio_mode == "Single":
-                speech_txt = chatbot.speech_2_text()
-            else:
-                speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+        tab1, tab2 = st.sidebar.tabs(["Whisper", "Azure"])
+        with tab2:
+            # Speech2Text
+            aa_audio_mode = st.selectbox(label="`6. Audio Input Mode`",
+                                                 options=["Single", "Continuous"],
+                                                 index=0)
+            if st.button("`Speak`"):
+                if aa_audio_mode == "Single":
+                    speech_txt = chatbot.speech_2_text()
+                else:
+                    speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+        # another STT: Whisper option
+        with tab1:
+            aa_whisper_mode = st.selectbox(label="`6. Whipser Mode`",
+                                         options=["Transcribe", "Translate"],
+                                         index=0)
+            audio = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder', just_once=True)
+            if audio:
+                # st.audio(audio['bytes'])
+                audio_BIO = io.BytesIO(audio['bytes'])
+                audio_BIO.name = 'audio.mp3'
+                if aa_whisper_mode == "Transcribe":
+                    is_translate = False
+                else:
+                    is_translate = True
+                speech_txt = whisper_STT(audio_BIO, "zh",translate=is_translate)
 
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:

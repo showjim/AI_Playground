@@ -1,6 +1,7 @@
 import streamlit as st
 from src.analyse_audio import (
     extract_subtitle,
+    extract_subtitle_api,
     identify_speaker,
     output_subtitle
 )
@@ -56,6 +57,7 @@ def main():
             with open(uploaded_path, mode="wb") as f:
                 f.write(video_path.getvalue())
             segments, new_file, srt_string = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
+            # segments, new_file, srt_string = extract_subtitle_api(uploaded_path, aa_file_type, client_stt, aa_lang)
 
             # export srt file
             if srt_string != "":
