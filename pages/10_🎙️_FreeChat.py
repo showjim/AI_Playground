@@ -12,6 +12,7 @@ env_path = os.path.abspath(".")
 chatbot = ChatRobot()
 chatbot.setup_env()
 client = chatbot.initial_llm()
+client_dalle3 = chatbot.initial_dalle3()
 client_stt = chatbot.initial_whisper()
 tools = chatbot.initial_tools()
 
@@ -41,7 +42,7 @@ def get_current_weather(location, unit="fahrenheit"):
 
 def create_img_by_dalle3(prompt):
     """Create image by call to Dall-E3"""
-    result = client.images.generate(
+    result = client_dalle3.images.generate(
         model="Dalle3",  # the name of your DALL-E 3 deployment
         prompt=prompt,  # "a close-up of a bear walking through the forest",
         size="1024x1024",
