@@ -93,7 +93,7 @@ def extract_subtitle(file_names:str, file_type, language, model_size):
                 # write each item on a new line
                 fp.write("%s\n" % item)
             print('Done')
-    return results, file_name, srt_string #str(output_file) + ".wav"
+    return results, file_name, srt_string, total_duration #str(output_file) + ".wav"
 
 def extract_subtitle_api(file_names:str, file_type, model, language="en", prompt="Hello, welcome to my lecture."):
     file_name = file_names#[i]
@@ -103,10 +103,10 @@ def extract_subtitle_api(file_names:str, file_type, model, language="en", prompt
     output_file = str(Path(file_dir)/file_basename)
     if file_type == "video":
         print('提取音频中 Extracting audio from video file...')
-        # os.system(f'ffmpeg -i {file_name} -f mp3 -ab 192000 -vn {file_basename}.mp3')
-        os.system(f'ffmpeg -i {file_name} {output_file}.wav -y')
+        os.system(f'ffmpeg -i {file_name} -f mp3 -ab 192000 -vn {output_file}.mp3')
+        # os.system(f'ffmpeg -i {file_name} {output_file}.wav -y')
         print('提取完毕 Done.')
-        file_name = output_file + ".wav"
+        file_name = output_file + ".mp3" #".wav"
         # print(file_basename)
     tic = tt.time()
     print('识别中 Transcribe in progress...')
@@ -125,12 +125,12 @@ def extract_subtitle_api(file_names:str, file_type, model, language="en", prompt
     results_txt = []
     with tqdm(total=total_duration, unit=" seconds") as pbar:
         for s in contents.segments:
-            segment_dict = {'start': s.start, 'end': s.end, 'text': s.text}
+            segment_dict = {'start': s["start"], 'end': s["end"], 'text': s["text"]}
             results.append(segment_dict)
             # store as txt
-            results_txt.append(s.text)
+            results_txt.append(s["text"])
 
-            segment_duration = s.end - s.start
+            segment_duration = s["end"] - s["start"]
             pbar.update(segment_duration)
 
     # Time comsumed
@@ -150,11 +150,11 @@ def extract_subtitle_api(file_names:str, file_type, model, language="en", prompt
                 # write each item on a new line
                 fp.write("%s\n" % item)
             print('Done')
-    return results, file_name, srt_string #str(output_file) + ".wav"
+    return results, file_name, srt_string, total_duration #str(output_file) + ".wav"
 
-def identify_speaker(file_name, segments, num_speakers):
+def identify_speaker(file_name, segments, num_speakers, duration):
     print('Embedding audio to tensor...')
-    embeddings = embedding_audio(file_name, segments)
+    embeddings = embedding_audio(file_name, segments, duration)
     print('Identify the speakers...')
     clustering = AgglomerativeClustering(num_speakers).fit(embeddings)
     labels = clustering.labels_
@@ -162,11 +162,11 @@ def identify_speaker(file_name, segments, num_speakers):
         segments[i]["speaker"] = 'SPEAKER ' + str(labels[i] + 1)
     return segments
 
-def embedding_audio(path, segments):
-    with contextlib.closing(wave.open(path, 'r')) as f:
-        frames = f.getnframes()
-        rate = f.getframerate()
-        duration = frames / float(rate)
+def embedding_audio(path, segments, duration):
+    # with contextlib.closing(wave.open(path, 'r')) as f:
+    #     frames = f.getnframes()
+    #     rate = f.getframerate()
+    #     duration = frames / float(rate)
 
     audio = Audio()
     embeddings = np.zeros(shape=(len(segments), 192))

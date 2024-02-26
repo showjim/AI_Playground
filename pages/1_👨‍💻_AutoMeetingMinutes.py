@@ -7,10 +7,17 @@ from src.analyse_audio import (
 )
 import os
 from src.chat import ChatBot
+from src.ClsChatBot import ChatRobot
 from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
 
+# whisper
+chatbot = ChatRobot()
+chatbot.setup_env()
+client_stt = chatbot.initial_whisper()
+
+# LLM
 work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",
                 work_path + "/index",
@@ -56,15 +63,15 @@ def main():
             uploaded_path = os.path.join(work_path + "/tempDir", video_path.name)
             with open(uploaded_path, mode="wb") as f:
                 f.write(video_path.getvalue())
-            segments, new_file, srt_string = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
-            # segments, new_file, srt_string = extract_subtitle_api(uploaded_path, aa_file_type, client_stt, aa_lang)
+            # segments, new_file, srt_string, duration = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
+            segments, new_file, srt_string, duration = extract_subtitle_api(uploaded_path, aa_file_type, client_stt, aa_lang)
 
             # export srt file
             if srt_string != "":
                 st.download_button("Download .srt file", data=srt_string, file_name=f"{video_path.name}.srt")
 
             # identify the speakers
-            segments_speaker = identify_speaker(new_file, segments, aa_spk_num)
+            segments_speaker = identify_speaker(new_file, segments, aa_spk_num, duration)
             output_subtitle(new_file, segments_speaker)
 
             # Query the agent.
