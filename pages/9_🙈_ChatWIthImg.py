@@ -56,7 +56,7 @@ def main():
         ]
     if "IMGChatChain" not in st.session_state:
         # chain = initial_llm()
-        chain = chatbot.initial_llm()
+        chain = chatbot.initial_llm_vision()
         st.session_state["IMGChatChain"] = chain
     work_path = os.path.abspath('.')
 

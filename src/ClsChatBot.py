@@ -99,12 +99,16 @@ class ChatRobot(ChatRobotBase):
             # Whisper
             os.environ["AZURE_OPENAI_API_KEY_USNC"] = os.getenv("AZURE_OPENAI_API_KEY_USNC")
             os.environ["AZURE_OPENAI_ENDPOINT_USNC"] = self.config_details['AZURE_OPENAI_ENDPOINT_USNC']
+
+            # Vision
+            os.environ["AZURE_OPENAI_API_KEY_JPE"] = os.getenv("AZURE_OPENAI_API_KEY_JPE")
+            os.environ["AZURE_OPENAI_ENDPOINT_JPE"] = self.config_details['AZURE_OPENAI_ENDPOINT_JPE']
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
     def initial_llm(self):
         client = AzureOpenAI(
-            api_version="2023-12-01-preview",
+            api_version=openai.api_version, # "2023-12-01-preview",
             api_key=openai.api_key,
             azure_endpoint=openai.azure_endpoint
         )
@@ -115,7 +119,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_dalle3(self):
         client = AzureOpenAI(
-            api_version="2023-12-01-preview",
+            api_version=openai.api_version, #"2023-12-01-preview",
             api_key=os.environ["AZURE_OPENAI_API_KEY_SWC"],
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_SWC"]
         )
@@ -126,9 +130,20 @@ class ChatRobot(ChatRobotBase):
 
     def initial_whisper(self):
         client = AzureOpenAI(
-            api_version="2023-12-01-preview",
+            api_version=openai.api_version, #"2023-12-01-preview",
             api_key=os.environ["AZURE_OPENAI_API_KEY_USNC"],
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_USNC"]
+        )
+        # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+        self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
+                                                    region=os.environ.get('SPEECH_REGION'))
+        return client
+
+    def initial_llm_vision(self):
+        client = AzureOpenAI(
+            api_version=openai.api_version, # "2023-12-01-preview",
+            api_key=os.environ["AZURE_OPENAI_API_KEY_JPE"],
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_JPE"]
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),

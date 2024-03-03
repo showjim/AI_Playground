@@ -16,7 +16,7 @@ deployment_id = "gemini-pro-vision"
 # Azure OpenAI/TTS/STT initial
 chatbot = ChatRobot()
 chatbot.setup_env()
-client = chatbot.initial_llm()
+client = chatbot.initial_llm_vision()
 # Gemini initial
 chatbot_gemini = ChatRobotGemini()
 chatbot_gemini.setup_env()

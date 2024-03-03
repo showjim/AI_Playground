@@ -92,7 +92,7 @@ class OpenAIAzure():
             ".pdf": (PyMuPDFLoader, {}), #PyMuPDFLoader PDFMinerLoader PyPDFLoader
             ".ppt": (UnstructuredPowerPointLoader, {}),
             ".pptx": (UnstructuredPowerPointLoader, {}),
-            ".txt": (TextLoader,{}),# {"encoding": "utf8"}),
+            ".txt": (TextLoader, {"encoding": "utf8"}) #, {}),# {"encoding": "utf8"}),
             # Add more mappings for other file extensions and loaders as needed
         }
 
@@ -221,7 +221,7 @@ class OpenAIAzure():
 
     def build_index(self, embeddings, documents, path, indexfilename):
         print(f"Loaded {len(documents)} new documents")
-        chunk_size = 1000 #1000 #1024 #2048
+        chunk_size = 512 #1000 #1024 #2048
         chunk_overlap = 100
         # Get your splitter ready
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
