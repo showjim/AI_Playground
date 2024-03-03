@@ -20,5 +20,6 @@ ffmpeg~=1.4
 pysubs2~=1.6.1
 pyannote-audio
 pyannote-core
+streamlit_mic_recorder
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==2.2.0+cpu
