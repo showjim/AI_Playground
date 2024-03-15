@@ -365,9 +365,7 @@ class AgentChatBot():
         # self.index_path =index_path
 
     def initial_llm(self, mode:str, filename:str, model_name, num_output:int=1024, temperature:float=0):
-        if mode == "csv":
-            self.agent = self.model.create_csv_agent(filename)
-        elif mode == "bing_search":
+        if mode == "bing_search":
             self.model = self.model.create_complete_model(model_name, num_output, temperature)
             tools = load_tools(["bing-search"]) #"human",
             # search = BingSearchAPIWrapper()

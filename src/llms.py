@@ -221,7 +221,7 @@ class OpenAIAzure():
 
     def build_index(self, embeddings, documents, path, indexfilename):
         print(f"Loaded {len(documents)} new documents")
-        chunk_size = 512 #1000 #1024 #2048
+        chunk_size = 1000 #1024 #2048
         chunk_overlap = 100
         # Get your splitter ready
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -294,39 +294,6 @@ class OpenAIAzure():
         )
 
         return chatgpt_chain
-
-    def create_csv_agent(self, filename:str):
-        # setup prompt
-
-        # max LLM token input size
-        num_output = 1024  # 512
-        llm = AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
-                              openai_api_key=openai.api_key,
-                              azure_endpoint=openai.api_base,
-                              openai_api_type=openai.api_type,
-                              openai_api_version=self.config_details['OPENAI_API_VERSION'],
-                              max_tokens=num_output,
-                              temperature=0.2,
-                              )
-        # llm = AzureOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
-        #                   model_name=self.config_details['CHATGPT_MODEL'],
-        #                   openai_api_key=openai.api_key,
-        #                   azure_endpoint=openai.api_base,
-        #                   openai_api_type=openai.api_type,
-        #                   openai_api_version=self.config_details['OPENAI_API_VERSION'],
-        #                   max_tokens=num_output,
-        #                   temperature=0.2,
-        #                   )
-        # Read the CSV file into a Pandas DataFrame.
-        df = pd.read_csv(filename)
-        csv_agent = create_pandas_dataframe_agent(llm=llm,
-                                                  df=df,
-                                                  verbose=True,
-                                                  # prefix=prompt_template,
-                                                  # input_variables=["query","table"],
-                                                  )
-
-        return csv_agent
 
     def create_complete_model(self, model_name, num_output:int=1024, temperature:float=0.2):
         llm = AzureChatOpenAI(deployment_name=model_name,
