@@ -136,11 +136,11 @@ def main():
                                         max_value=aa_max_resp_max_val,
                                         value=512,
                                         on_change=set_reload_flag)
-        aa_context_msg = st.sidebar.slider(label="`4. Context message`",
-                                           min_value=5,
-                                           max_value=20,
-                                           value=10,
-                                           on_change=set_reload_flag)
+        aa_context_msg = st.sidebar.select_slider(label="`4. Context message`",
+                                                  options=[1, 5, 10, 20],
+                                                  value=5,
+                                                  on_change=set_reload_flag
+                                                  )
 
         if st.session_state["FreeChatReloadMode"] == True:
             system_prompt = chatbot.select_chat_mode(aa_chat_mode)
