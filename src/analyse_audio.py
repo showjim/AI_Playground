@@ -99,6 +99,7 @@ def extract_subtitle_api(file_names:str, file_type, model, language="en", prompt
     file_name = file_names#[i]
     # Transcribe
     file_basename = Path(file_name).stem
+    file_extname = Path(file_name).suffix
     file_dir = Path(file_name).parent
     output_file = str(Path(file_dir)/file_basename)
     if file_type == "video":
@@ -108,6 +109,12 @@ def extract_subtitle_api(file_names:str, file_type, model, language="en", prompt
         print('提取完毕 Done.')
         file_name = output_file + ".mp3" #".wav"
         # print(file_basename)
+    else:
+        if file_extname not in ["mp3", "wav"]:
+            print('处理音频中 Processing audio file...')
+            os.system(f'ffmpeg -i {file_name} -f mp3 -ab 192000 -vn {output_file}.mp3')
+            print('处理完毕 Done.')
+            file_name = output_file + ".mp3"
     tic = tt.time()
     print('识别中 Transcribe in progress...')
     contents = model.audio.transcriptions.create(

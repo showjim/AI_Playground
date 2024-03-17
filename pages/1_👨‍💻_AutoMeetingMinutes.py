@@ -22,7 +22,7 @@ work_path = os.path.abspath('.')
 chat = ChatBot(work_path + "/tempDir/output",
                 work_path + "/index",
                 work_path)
-chat.initial_llm("gpt-35-turbo", 2048, 0.2)
+chat.initial_llm("gpt-4-turbo", 2048, 0.2)
 query_str = """Please summary this meeting and output meeting minutes.
 Please try to focus on the below requests, and use the bullet format to output the answers for each request: 
 1. who attend the meeting?
@@ -50,7 +50,7 @@ def main():
     if aa_file_type == "video":
         video_path = st.file_uploader("Upload a Video or Audio", type=["mp4","mkv","avi"])
     else:
-        video_path = st.file_uploader("Upload a Video or Audio", type=["wav","mp3"])
+        video_path = st.file_uploader("Upload a Video or Audio", type=["wav","mp3","m4a"])
 
     query_input = st.text_area("Insert your instruction", query_str)
     uploaded_path = ""
@@ -64,7 +64,7 @@ def main():
             with open(uploaded_path, mode="wb") as f:
                 f.write(video_path.getvalue())
             # segments, new_file, srt_string, duration = extract_subtitle(uploaded_path, aa_file_type, aa_lang, aa_model_size)
-            segments, new_file, srt_string, duration = extract_subtitle_api(uploaded_path, aa_file_type, client_stt, aa_lang)
+            segments, new_file, srt_string, duration = extract_subtitle_api(uploaded_path, aa_file_type, client_stt, aa_lang, prompt="以下是普通话的句子。")
 
             # export srt file
             if srt_string != "":
@@ -90,7 +90,7 @@ def main():
         # st.info('This is a purely informational message', icon="ℹ️")
         with st.spinner('preparing answer'):
             # doc_summary_index = chat.setup_vectordb(uploaded_path)
-            response = chat.chat(query_str, st.session_state["mediavectordb"])
+            response = chat.chat(query_input, st.session_state["mediavectordb"])
         # response = llm_chat_langchain(query_input, work_path + "/tempDir/output",
         #                             work_path + "/index",
         #                             work_path)
