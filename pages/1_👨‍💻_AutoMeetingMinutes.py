@@ -1,6 +1,6 @@
 import streamlit as st
 from src.analyse_audio import (
-    extract_subtitle,
+    # extract_subtitle,
     extract_subtitle_api,
     identify_speaker,
     output_subtitle
