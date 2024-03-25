@@ -182,10 +182,11 @@ def main():
                     stream=True
                 )
                 for chunk in response:
-                    if chunk.choices[0].delta.content is not None:
-                        full_response += chunk.choices[0].delta.content #["answer"]  # .choices[0].delta.get("content", "")
-                    time.sleep(0.001)
-                    message_placeholder.markdown(full_response + "▌")
+                    if len(chunk.choices) > 0:
+                        if chunk.choices[0].delta.content is not None:
+                            full_response += chunk.choices[0].delta.content #["answer"]  # .choices[0].delta.get("content", "")
+                        time.sleep(0.001)
+                        message_placeholder.markdown(full_response + "▌")
             # full_response = response.choices[0].message.content
             print("AI: " + full_response)
             message_placeholder.markdown(full_response)
