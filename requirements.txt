@@ -19,7 +19,7 @@ faster-whisper==0.5.1
 ffmpeg~=1.4
 pysubs2~=1.6.1
 speechbrain~=0.5.16
-pyannote-audio~=2.1.1
+pyannote-audio~=3.1.1
 pyannote-core~=5.0.0
 streamlit_mic_recorder
 --find-links https://download.pytorch.org/whl/torch_stable.html
