@@ -434,6 +434,7 @@ class ChatRobotGemini(ChatRobotBase):
             raise APIKeyNotFoundError("key.txt with Google API is required")
 
     def initial_llm(self, model="gemini-pro"):
+        model = "models/" + model
         # Set up the model
         generation_config = {
             "temperature": 0.9,
