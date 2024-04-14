@@ -66,7 +66,7 @@ def main():
                                             index=0,
                                             on_change=set_reload_mode)
         aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
-                                            options=["gemini-1.0-pro", "gemini-1.5-pro-latest", "gemini-pro-vision"],
+                                            options=["gemini-1.5-pro-latest", "gemini-1.0-pro", "gemini-pro-vision"],
                                             index=0,
                                             on_change=set_reload_flag)
         aa_temperature = st.sidebar.selectbox(label="`2. Temperature (0~1)`",
@@ -85,9 +85,9 @@ def main():
                                            on_change=set_reload_flag)
 
         if st.session_state["GeminiChatReloadMode"] == True:
-            client_gemini = chatbot_gemini.initial_llm(aa_llm_model)
-            st.session_state["GeminiChatChain"] = client_gemini
             system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
+            client_gemini = chatbot_gemini.initial_llm(aa_llm_model, system_prompt)
+            st.session_state["GeminiChatChain"] = client_gemini
             st.session_state["GeminiChatReloadMode"] = False
             # set the tool choice in function call
             if aa_chat_mode == "Translate":
@@ -101,13 +101,17 @@ def main():
             else:
                 st.session_state["GeminiChatAvatarImg"] = "assistant"
                 initial_msg = "I'm GeminiChatBot, How may I help you?"
+            # st.session_state["GeminiChatMessages"] = [
+            #     {"role": "user", "parts": [system_prompt]},
+            #     {"role": "model", "parts": [initial_msg]}
+            # ]
             st.session_state["GeminiChatMessages"] = [
-                {"role": "user", "parts": [system_prompt]},
                 {"role": "model", "parts": [initial_msg]}
             ]
 
         if st.session_state["GeminiChatReloadFlag"] == True:
-            client_gemini = chatbot_gemini.initial_llm(aa_llm_model)
+            system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
+            client_gemini = chatbot_gemini.initial_llm(aa_llm_model, system_prompt)
             st.session_state["GeminiChatChain"] = client_gemini
             if "GeminiChatSetting" not in st.session_state:
                 st.session_state["GeminiChatSetting"] = {}
@@ -231,7 +235,7 @@ def main():
                     }
 
                     response = st.session_state["GeminiChatChain"].generate_content(
-                        contents=composed_prompt,  # st.session_state["GeminiChatMessages"],
+                        contents=st.session_state["GeminiChatMessages"], #composed_prompt,  # st.session_state["GeminiChatMessages"],
                         generation_config=generation_config,
                         stream=True,
                     )
