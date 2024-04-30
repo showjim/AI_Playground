@@ -28,7 +28,11 @@ class ChatRobotBase:
     def control_msg_history_szie(self, msglist: List, max_cnt=10, delcnt=1):
         while len(msglist) > max_cnt:
             for i in range(delcnt):
-                msglist.pop(1)
+                if 'tool_calls' in msglist[1].keys() and msglist[2]['role'] == 'tool':
+                    msglist.pop(1) # delete tool call
+                    msglist.pop(1) # delete corresponding response from tool
+                else:
+                    msglist.pop(1)
         return msglist
 
     def get_all_files_list(self, source_dir, exts):
