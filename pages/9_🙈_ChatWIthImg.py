@@ -65,7 +65,7 @@ def main():
 
         st.subheader("Parameter for document chains")
         aa_llm_model = st.selectbox(label="0.LLM Model",
-                                    options=["gpt-4-vision-preview"],
+                                    options=["gpt-4-vision-preview", "gpt-4-turbo"],
                                     index=0,
                                     on_change=set_reload_setting_flag)
         aa_temperature = st.selectbox(label="1.Temperature (0~1)",

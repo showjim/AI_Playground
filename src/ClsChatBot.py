@@ -92,21 +92,21 @@ class ChatRobot(ChatRobotBase):
             # os.environ["AZURE_COGNITIVE_SEARCH_INDEX_NAME"] = self.config_details['AZURE_COGNITIVE_SEARCH_INDEX_NAME']
             # os.environ["AZURE_COGNITIVE_SEARCH_API_KEY"] = os.getenv('AZURE_COGNITIVE_SEARCH_API_KEY')
 
-            # Dalle-E-3
-            os.environ["AZURE_OPENAI_API_KEY_SWC"] = os.getenv("AZURE_OPENAI_API_KEY_SWC")
-            os.environ["AZURE_OPENAI_ENDPOINT_SWC"] = self.config_details['AZURE_OPENAI_ENDPOINT_SWC']
+            # Dall-E-3
+            os.environ["DALLE3_MODEL"] = os.getenv("AZURE_OPENAI_API_KEY_SWC")
+            os.environ["DALLE3_MODEL_ENDPOINT"] = self.config_details['AZURE_OPENAI_ENDPOINT_SWC']
 
             # Text2Speech
             os.environ["SPEECH_KEY"] = os.getenv("SPEECH_KEY")
             os.environ["SPEECH_REGION"] = self.config_details['SPEECH_REGION']
 
             # Whisper
-            os.environ["AZURE_OPENAI_API_KEY_USNC"] = os.getenv("AZURE_OPENAI_API_KEY_USNC")
-            os.environ["AZURE_OPENAI_ENDPOINT_USNC"] = self.config_details['AZURE_OPENAI_ENDPOINT_USNC']
+            os.environ["WHISPER_MODEL"] = os.getenv("AZURE_OPENAI_API_KEY_USNC")
+            os.environ["WHISPER_MODEL_ENDPOINT"] = self.config_details['AZURE_OPENAI_ENDPOINT_USNC']
 
             # Vision
-            os.environ["AZURE_OPENAI_API_KEY_JPE"] = os.getenv("AZURE_OPENAI_API_KEY_JPE")
-            os.environ["AZURE_OPENAI_ENDPOINT_JPE"] = self.config_details['AZURE_OPENAI_ENDPOINT_JPE']
+            os.environ["VISION_MODEL"] = os.getenv("AZURE_OPENAI_API_KEY_JPE")
+            os.environ["VISION_MODEL_ENDPOINT"] = self.config_details['AZURE_OPENAI_ENDPOINT_JPE']
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
@@ -124,8 +124,8 @@ class ChatRobot(ChatRobotBase):
     def initial_dalle3(self):
         client = AzureOpenAI(
             api_version=openai.api_version, #"2023-12-01-preview",
-            api_key=os.environ["AZURE_OPENAI_API_KEY_SWC"],
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_SWC"]
+            api_key=os.environ["DALLE3_MODEL"],
+            azure_endpoint=os.environ["DALLE3_MODEL_ENDPOINT"]
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
@@ -135,8 +135,8 @@ class ChatRobot(ChatRobotBase):
     def initial_whisper(self):
         client = AzureOpenAI(
             api_version=openai.api_version, #"2023-12-01-preview",
-            api_key=os.environ["AZURE_OPENAI_API_KEY_USNC"],
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_USNC"]
+            api_key=os.environ["WHISPER_MODEL"],
+            azure_endpoint=os.environ["WHISPER_MODEL_ENDPOINT"]
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
@@ -146,8 +146,8 @@ class ChatRobot(ChatRobotBase):
     def initial_llm_vision(self):
         client = AzureOpenAI(
             api_version=openai.api_version, # "2023-12-01-preview",
-            api_key=os.environ["AZURE_OPENAI_API_KEY_JPE"],
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT_JPE"]
+            api_key=os.environ["VISION_MODEL"],
+            azure_endpoint=os.environ["VISION_MODEL_ENDPOINT"]
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
