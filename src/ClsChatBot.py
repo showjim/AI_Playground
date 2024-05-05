@@ -101,8 +101,8 @@ class ChatRobot(ChatRobotBase):
             os.environ["SPEECH_REGION"] = self.config_details['SPEECH_REGION']
 
             # Whisper
-            os.environ["WHISPER_MODEL"] = os.getenv("AZURE_OPENAI_API_KEY_USNC")
-            os.environ["WHISPER_MODEL_ENDPOINT"] = self.config_details['AZURE_OPENAI_ENDPOINT_USNC']
+            os.environ["WHISPER_MODEL"] = os.getenv("AZURE_OPENAI_API_KEY_SWC")
+            os.environ["WHISPER_MODEL_ENDPOINT"] = self.config_details['AZURE_OPENAI_ENDPOINT_SWC']
 
             # Vision
             os.environ["VISION_MODEL"] = os.getenv("AZURE_OPENAI_API_KEY_JPE")
