@@ -9,7 +9,7 @@ faiss-cpu~=1.7.4
 pymupdf
 unstructured~=0.7.8
 pandas==2.0.2
-tqdm~=4.65.0
+tqdm~=4.66.4
 numpy==1.24.0
 scikit-learn~=1.2.2
 nltk~=3.8.1
