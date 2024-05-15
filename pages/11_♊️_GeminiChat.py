@@ -66,7 +66,7 @@ def main():
                                             index=0,
                                             on_change=set_reload_mode)
         aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
-                                            options=["gemini-1.5-pro-latest", "gemini-1.0-pro", "gemini-pro-vision"],
+                                            options=["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro-vision"],
                                             index=0,
                                             on_change=set_reload_flag)
         aa_temperature = st.sidebar.selectbox(label="`2. Temperature (0~1)`",
