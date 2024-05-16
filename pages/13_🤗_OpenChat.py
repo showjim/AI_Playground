@@ -1,10 +1,7 @@
 import streamlit as st
 import os, time, json, io
-from typing import List
-import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobotOpenRouter
-import openai
-from streamlit_mic_recorder import mic_recorder
+
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
