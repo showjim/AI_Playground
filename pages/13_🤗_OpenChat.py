@@ -61,9 +61,15 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["openchat/openchat-7b:free", "meta-llama/llama-3-8b-instruct:free", "mistralai/mixtral-8x7b-instruct", "google/gemini-flash-1.5"],
-                                                index=0,
-                                                on_change=set_reload_flag)
+                                        options=["openchat/openchat-7b:free",
+                                                 "meta-llama/llama-3-8b-instruct:free",
+                                                 "mistralai/mistral-7b-instruct:free",
+                                                 "undi95/toppy-m-7b:free",
+                                                 "mistralai/mixtral-8x7b-instruct",
+                                                 "google/gemini-flash-1.5",
+                                                 ],
+                                        index=0,
+                                        on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
                                                   options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
                                                   index=1,
