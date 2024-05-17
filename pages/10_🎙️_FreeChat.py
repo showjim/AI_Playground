@@ -112,84 +112,86 @@ def main():
         st.session_state["FreeChatChain"] = client
 
     with st.sidebar:
-        st.sidebar.expander("Settings")
-        st.sidebar.subheader("Parameter for Chatbot")
-        aa_chat_mode = st.sidebar.selectbox(label="`0. Chat Mode`",
-                                            options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
-                                                     "西瓜一家-Ana"],
-                                            index=0,
-                                            on_change=set_reload_mode)
-        aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
-                                            options=["gpt-35-turbo", "gpt-4-turbo"],
-                                            index=0,
+        st.subheader("1. Settings")
+        with st.expander("Parameters for Chatbot"):
+
+            aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
+                                                options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
+                                                         "西瓜一家-Ana"],
+                                                index=0,
+                                                on_change=set_reload_mode)
+            aa_llm_model = st.selectbox(label="`1. LLM Model`",
+                                                options=["gpt-35-turbo", "gpt-4-turbo"],
+                                                index=0,
+                                                on_change=set_reload_flag)
+            aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
+                                                  options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
+                                                  index=1,
+                                                  on_change=set_reload_flag)
+            if "16k" in aa_llm_model:
+                aa_max_resp_max_val = 16 * 1024
+            else:
+                aa_max_resp_max_val = 4096
+            aa_max_resp = st.slider(label="`3. Max response`",
+                                            min_value=256,
+                                            max_value=aa_max_resp_max_val,
+                                            value=512,
                                             on_change=set_reload_flag)
-        aa_temperature = st.sidebar.selectbox(label="`2. Temperature (0~1)`",
-                                              options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
-                                              index=1,
-                                              on_change=set_reload_flag)
-        if "16k" in aa_llm_model:
-            aa_max_resp_max_val = 16 * 1024
-        else:
-            aa_max_resp_max_val = 4096
-        aa_max_resp = st.sidebar.slider(label="`3. Max response`",
-                                        min_value=256,
-                                        max_value=aa_max_resp_max_val,
-                                        value=512,
-                                        on_change=set_reload_flag)
-        aa_context_msg = st.sidebar.select_slider(label="`4. Context message`",
-                                                  options=[1, 5, 10, 20],
-                                                  value=5,
-                                                  on_change=set_reload_flag
-                                                  )
+            aa_context_msg = st.select_slider(label="`4. Context message`",
+                                                      options=[1, 5, 10, 20],
+                                                      value=5,
+                                                      on_change=set_reload_flag
+                                                      )
 
-        if st.session_state["FreeChatReloadMode"] == True:
-            system_prompt = chatbot.select_chat_mode(aa_chat_mode)
-            st.session_state["FreeChatReloadMode"] = False
-            # set the tool choice in fuction call
-            if aa_chat_mode == "Translate":
-                st.session_state["tool_choice"] = "none"
-            else:
-                st.session_state["tool_choice"] = "auto"
-            # initial the avatar and greeting
-            if aa_chat_mode == "西瓜一家-小南瓜":
-                st.session_state["AvatarImg"] = "./img/Sunny.png"
-                initial_msg = "我是小南瓜，很高兴见到你！"
-            else:
-                st.session_state["AvatarImg"] = "assistant"
-                initial_msg = "I'm FreeChatBot, How may I help you?"
-            st.session_state["FreeChatMessages"] = [
-                {"role": "system", "content": system_prompt},
-                {"role": "assistant", "content": initial_msg}
-            ]
-            st.session_state["FreeChatMessagesDisplay"] = [
-                {"role": "system", "content": system_prompt},
-                {"role": "assistant", "content": initial_msg}
-            ]
-        if st.session_state["FreeChatReloadFlag"] == True:
-            if "FreeChatSetting" not in st.session_state:
-                st.session_state["FreeChatSetting"] = {}
-            st.session_state["FreeChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
-                                                   "temperature": float(aa_temperature), "context_msg": aa_context_msg}
-            st.session_state["FreeChatReloadFlag"] = False
+            if st.session_state["FreeChatReloadMode"] == True:
+                system_prompt = chatbot.select_chat_mode(aa_chat_mode)
+                st.session_state["FreeChatReloadMode"] = False
+                # set the tool choice in fuction call
+                if aa_chat_mode == "Translate":
+                    st.session_state["tool_choice"] = "none"
+                else:
+                    st.session_state["tool_choice"] = "auto"
+                # initial the avatar and greeting
+                if aa_chat_mode == "西瓜一家-小南瓜":
+                    st.session_state["AvatarImg"] = "./img/Sunny.png"
+                    initial_msg = "我是小南瓜，很高兴见到你！"
+                else:
+                    st.session_state["AvatarImg"] = "assistant"
+                    initial_msg = "I'm FreeChatBot, How may I help you?"
+                st.session_state["FreeChatMessages"] = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "assistant", "content": initial_msg}
+                ]
+                st.session_state["FreeChatMessagesDisplay"] = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "assistant", "content": initial_msg}
+                ]
+            if st.session_state["FreeChatReloadFlag"] == True:
+                if "FreeChatSetting" not in st.session_state:
+                    st.session_state["FreeChatSetting"] = {}
+                st.session_state["FreeChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
+                                                       "temperature": float(aa_temperature), "context_msg": aa_context_msg}
+                st.session_state["FreeChatReloadFlag"] = False
 
-        # Text2Speech
-        aa_voice_name = st.sidebar.selectbox(label="`5. Voice Name`",
-                                             options=["None", "小南瓜", "小东瓜", "Ana"],
-                                             index=0)
-        chatbot.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
-        if aa_voice_name == "小南瓜":
-            aa_voice_name = "zh-CN-XiaoyiNeural"
-        elif aa_voice_name == "小东瓜":
-            aa_voice_name = "zh-CN-YunxiaNeural"
-        elif aa_voice_name == "Ana":
-            aa_voice_name = "en-US-AnaNeural"
-            chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
+            # Text2Speech
+            aa_voice_name = st.selectbox(label="`5. Voice Name`",
+                                                 options=["None", "小南瓜", "小东瓜", "Ana"],
+                                                 index=0)
+            chatbot.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
+            if aa_voice_name == "小南瓜":
+                aa_voice_name = "zh-CN-XiaoyiNeural"
+            elif aa_voice_name == "小东瓜":
+                aa_voice_name = "zh-CN-YunxiaNeural"
+            elif aa_voice_name == "Ana":
+                aa_voice_name = "en-US-AnaNeural"
+                chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
+        st.subheader("2. STT")
         speech_txt = ""
-        tab1, tab2 = st.sidebar.tabs(["Whisper", "Azure"])
+        tab1, tab2 = st.tabs(["Whisper", "Azure"])
         with tab2:
             # Speech2Text
-            aa_audio_mode = st.selectbox(label="`6. Audio Input Mode`",
+            aa_audio_mode = st.selectbox(label="`Audio Input Mode`",
                                                  options=["Single", "Continuous"],
                                                  index=0)
             if st.button("`Speak`"):
@@ -199,7 +201,7 @@ def main():
                     speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
         # another STT: Whisper option
         with tab1:
-            aa_whisper_mode = st.selectbox(label="`6. Whipser Mode`",
+            aa_whisper_mode = st.selectbox(label="`Whipser Mode`",
                                          options=["Transcribe", "Translate"],
                                          index=0)
             audio = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder', just_once=True)

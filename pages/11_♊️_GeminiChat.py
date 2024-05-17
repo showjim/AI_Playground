@@ -58,97 +58,100 @@ def main():
         st.session_state["GeminiChatIMGDB"] = {}
 
     with st.sidebar:
-        st.sidebar.expander("Settings")
-        st.sidebar.subheader("Parameter for Chatbot")
-        aa_chat_mode = st.sidebar.selectbox(label="`0. Chat Mode`",
-                                            options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
-                                                     "西瓜一家-Ana"],
-                                            index=0,
-                                            on_change=set_reload_mode)
-        aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
-                                            options=["gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-1.0-pro", "gemini-pro-vision"],
-                                            index=0,
+        st.subheader("1. Settings")
+        with st.expander("Parameter for Chatbot"):
+
+            aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
+                                                options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
+                                                         "西瓜一家-Ana"],
+                                                index=0,
+                                                on_change=set_reload_mode)
+            aa_llm_model = st.selectbox(label="`1. LLM Model`",
+                                                options=["gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-1.0-pro", "gemini-pro-vision"],
+                                                index=0,
+                                                on_change=set_reload_flag)
+            aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
+                                                  options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
+                                                  index=1,
+                                                  on_change=set_reload_flag)
+            aa_max_resp = st.slider(label="`3. Max response`",
+                                            min_value=256,
+                                            max_value=4096,
+                                            value=512,
                                             on_change=set_reload_flag)
-        aa_temperature = st.sidebar.selectbox(label="`2. Temperature (0~1)`",
-                                              options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
-                                              index=1,
-                                              on_change=set_reload_flag)
-        aa_max_resp = st.sidebar.slider(label="`3. Max response`",
-                                        min_value=256,
-                                        max_value=4096,
-                                        value=512,
-                                        on_change=set_reload_flag)
-        aa_context_msg = st.sidebar.slider(label="`4. Context message`",
-                                           min_value=5,
-                                           max_value=50,
-                                           value=20,
-                                           on_change=set_reload_flag)
+            aa_context_msg = st.slider(label="`4. Context message`",
+                                               min_value=5,
+                                               max_value=50,
+                                               value=20,
+                                               on_change=set_reload_flag)
 
-        if st.session_state["GeminiChatReloadMode"] == True:
-            system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
-            client_gemini = chatbot_gemini.initial_llm(aa_llm_model, system_prompt)
-            st.session_state["GeminiChatChain"] = client_gemini
-            st.session_state["GeminiChatReloadMode"] = False
-            # set the tool choice in function call
-            if aa_chat_mode == "Translate":
-                st.session_state["tool_choice"] = "none"
-            else:
-                st.session_state["tool_choice"] = "auto"
-            # initial the avatar and greeting
-            if aa_chat_mode == "西瓜一家-小南瓜":
-                st.session_state["GeminiChatAvatarImg"] = "./img/Sunny.png"
-                initial_msg = "我是小南瓜，很高兴见到你！"
-            else:
-                st.session_state["GeminiChatAvatarImg"] = "assistant"
-                initial_msg = "I'm GeminiChatBot, How may I help you?"
-            # st.session_state["GeminiChatMessages"] = [
-            #     {"role": "user", "parts": [system_prompt]},
-            #     {"role": "model", "parts": [initial_msg]}
-            # ]
-            st.session_state["GeminiChatMessages"] = [
-                {"role": "model", "parts": [initial_msg]}
-            ]
+            if st.session_state["GeminiChatReloadMode"] == True:
+                system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
+                client_gemini = chatbot_gemini.initial_llm(aa_llm_model, system_prompt)
+                st.session_state["GeminiChatChain"] = client_gemini
+                st.session_state["GeminiChatReloadMode"] = False
+                # set the tool choice in function call
+                if aa_chat_mode == "Translate":
+                    st.session_state["tool_choice"] = "none"
+                else:
+                    st.session_state["tool_choice"] = "auto"
+                # initial the avatar and greeting
+                if aa_chat_mode == "西瓜一家-小南瓜":
+                    st.session_state["GeminiChatAvatarImg"] = "./img/Sunny.png"
+                    initial_msg = "我是小南瓜，很高兴见到你！"
+                else:
+                    st.session_state["GeminiChatAvatarImg"] = "assistant"
+                    initial_msg = "I'm GeminiChatBot, How may I help you?"
+                # st.session_state["GeminiChatMessages"] = [
+                #     {"role": "user", "parts": [system_prompt]},
+                #     {"role": "model", "parts": [initial_msg]}
+                # ]
+                st.session_state["GeminiChatMessages"] = [
+                    {"role": "model", "parts": [initial_msg]}
+                ]
 
-        if st.session_state["GeminiChatReloadFlag"] == True:
-            system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
-            client_gemini = chatbot_gemini.initial_llm(aa_llm_model, system_prompt)
-            st.session_state["GeminiChatChain"] = client_gemini
-            if "GeminiChatSetting" not in st.session_state:
-                st.session_state["GeminiChatSetting"] = {}
-            st.session_state["GeminiChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
-                                                     "temperature": float(aa_temperature),
-                                                     "context_msg": aa_context_msg}
-            st.session_state["GeminiChatReloadFlag"] = False
+            if st.session_state["GeminiChatReloadFlag"] == True:
+                system_prompt = chatbot_gemini.select_chat_mode(aa_chat_mode)
+                client_gemini = chatbot_gemini.initial_llm(aa_llm_model, system_prompt)
+                st.session_state["GeminiChatChain"] = client_gemini
+                if "GeminiChatSetting" not in st.session_state:
+                    st.session_state["GeminiChatSetting"] = {}
+                st.session_state["GeminiChatSetting"] = {"model": aa_llm_model, "max_tokens": aa_max_resp,
+                                                         "temperature": float(aa_temperature),
+                                                         "context_msg": aa_context_msg}
+                st.session_state["GeminiChatReloadFlag"] = False
 
-        # Text2Speech
-        aa_voice_name = st.sidebar.selectbox(label="`5. Voice Name`",
-                                             options=["None", "小南瓜", "小东瓜", "Ana"],
-                                             index=0)
-        chatbot.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
-        if aa_voice_name == "小南瓜":
-            aa_voice_name = "zh-CN-XiaoyiNeural"
-        elif aa_voice_name == "小东瓜":
-            aa_voice_name = "zh-CN-YunxiaNeural"
-        elif aa_voice_name == "Ana":
-            aa_voice_name = "en-US-AnaNeural"
-            chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
+            # Text2Speech
+            aa_voice_name = st.selectbox(label="`5. Voice Name`",
+                                                 options=["None", "小南瓜", "小东瓜", "Ana"],
+                                                 index=0)
+            chatbot.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
+            if aa_voice_name == "小南瓜":
+                aa_voice_name = "zh-CN-XiaoyiNeural"
+            elif aa_voice_name == "小东瓜":
+                aa_voice_name = "zh-CN-YunxiaNeural"
+            elif aa_voice_name == "Ana":
+                aa_voice_name = "en-US-AnaNeural"
+                chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
         # Speech2Text
-        aa_audio_mode = st.sidebar.selectbox(label="`6. Audio Input Mode`",
+        st.subheader("2. STT")
+        aa_audio_mode = st.selectbox(label="`Audio Input Mode`",
                                              options=["Single", "Continuous"],
                                              index=0)
         speech_txt = ""
-        if st.sidebar.button("`Speak`"):
+        if st.button("`Speak`"):
             if aa_audio_mode == "Single":
                 speech_txt = chatbot.speech_2_text()
             else:
                 speech_txt = chatbot.speech_2_text_continous()  # speech_2_text() #speech_2_text_continous() #speech_2_text()
 
         # upload file & create index base
+        st.subheader("3. attachment")
         st.subheader("Please upload your file below.")
         # if "GeminiChatIMGDB" not in st.session_state:
         #     st.session_state["GeminiChatIMGDB"] = None
-        file_path = st.file_uploader("1.Upload a document file",
+        file_path = st.file_uploader("`1.Upload a document file`",
                                      type=["jpg", "png"],
                                      accept_multiple_files=False)  # , on_change=is_upload_status_changed)
         if st.button("Upload"):
@@ -163,7 +166,7 @@ def main():
 
         # select the specified index base(s)
         index_file_list = chatbot_gemini.get_all_files_list("./img", ["jpg", "png"])
-        options = st.multiselect('2.What img do you want to exam?',
+        options = st.multiselect('`2.What img do you want to exam?`',
                                  index_file_list,
                                  max_selections=1,
                                  on_change=set_reload_img_flag)
