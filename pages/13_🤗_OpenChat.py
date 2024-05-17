@@ -45,34 +45,43 @@ def main():
     #     st.session_state["OpenChatChain"] = client
 
     with st.sidebar:
-        st.sidebar.expander("Settings")
-        st.sidebar.subheader("Parameter for Chatbot")
-        aa_chat_mode = st.sidebar.selectbox(label="`0. Chat Mode`",
-                                            options=["CasualChat", "Translate"],
-                                            index=0,
-                                            on_change=set_reload_mode)
-        aa_llm_model = st.sidebar.selectbox(label="`1. LLM Model`",
-                                            options=["openchat/openchat-7b:free", "meta-llama/llama-3-8b-instruct:free", "mistralai/mixtral-8x7b-instruct", "google/gemini-flash-1.5"],
-                                            index=0,
+        st.header("Other Tools")
+        st.page_link("http://taishanstone:8501", label="Check INFO Tool", icon="1️⃣")
+        st.page_link("http://taishanstone:8502", label="Pattern Auto Edit Tool", icon="2️⃣")
+        st.page_link("http://taishanstone:8503", label="Shmoo Detect Tool", icon="3️⃣")
+        st.header("Help")
+        if st.button("About"):
+            st.info(
+                "Thank you for using!\nCreated by Chao Zhou.\nAny suggestions please mail zhouchao486@gmail.com]")
+
+        with st.expander("Settings"):
+            st.subheader("Parameter for Chatbot")
+            aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
+                                                options=["CasualChat", "Translate"],
+                                                index=0,
+                                                on_change=set_reload_mode)
+            aa_llm_model = st.selectbox(label="`1. LLM Model`",
+                                                options=["openchat/openchat-7b:free", "meta-llama/llama-3-8b-instruct:free", "mistralai/mixtral-8x7b-instruct", "google/gemini-flash-1.5"],
+                                                index=0,
+                                                on_change=set_reload_flag)
+            aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
+                                                  options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
+                                                  index=1,
+                                                  on_change=set_reload_flag)
+            if "16k" in aa_llm_model:
+                aa_max_resp_max_val = 16 * 1024
+            else:
+                aa_max_resp_max_val = 4096
+            aa_max_resp = st.slider(label="`3. Max response`",
+                                            min_value=256,
+                                            max_value=aa_max_resp_max_val,
+                                            value=512,
                                             on_change=set_reload_flag)
-        aa_temperature = st.sidebar.selectbox(label="`2. Temperature (0~1)`",
-                                              options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
-                                              index=1,
-                                              on_change=set_reload_flag)
-        if "16k" in aa_llm_model:
-            aa_max_resp_max_val = 16 * 1024
-        else:
-            aa_max_resp_max_val = 4096
-        aa_max_resp = st.sidebar.slider(label="`3. Max response`",
-                                        min_value=256,
-                                        max_value=aa_max_resp_max_val,
-                                        value=512,
-                                        on_change=set_reload_flag)
-        aa_context_msg = st.sidebar.select_slider(label="`4. Context message`",
-                                                  options=[1, 5, 10, 20],
-                                                  value=5,
-                                                  on_change=set_reload_flag
-                                                  )
+            aa_context_msg = st.select_slider(label="`4. Context message`",
+                                                      options=[1, 5, 10, 20],
+                                                      value=5,
+                                                      on_change=set_reload_flag
+                                                      )
 
         if st.session_state["OpenChatReloadMode"] == True:
             system_prompt = chatbot.select_chat_mode(aa_chat_mode)

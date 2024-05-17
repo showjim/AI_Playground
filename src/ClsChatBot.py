@@ -572,7 +572,6 @@ class ChatRobotOpenRouter(ChatRobotBase):
 
             # Setting up the embedding model
             openai.base_url = self.config_details['OPENROUTER_API_BASE']
-            openai.api_version = self.config_details['OPENAI_API_VERSION']
             openai.api_key = os.getenv("OPENROUTER_API_KEY")
 
     def initial_llm(self):
