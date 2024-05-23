@@ -102,8 +102,7 @@ def main():
             system_prompt = chatbot.select_chat_mode(aa_chat_mode)
             st.session_state["OpenChatReloadMode"] = False
 
-            # initial the avatar and greeting
-            st.session_state["OpenAvatarImg"] = "assistant"
+            # initial the greeting
             initial_msg = "I'm OpenChatBot, How may I help you?"
 
             st.session_state["OpenChatMessages"] = [
