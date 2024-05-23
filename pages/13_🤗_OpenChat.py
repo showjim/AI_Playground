@@ -39,10 +39,6 @@ def main():
     if "OpenChatMessagesDispay" not in st.session_state:
         # this is a shadow of "OpenChatMessages" to keep image URL from Dalle3
         st.session_state["OpenChatMessagesDispay"] = []
-    # chain = chatbot.initial_llm()
-    # if "OpenChatChain" not in st.session_state:
-    #     # client = chatbot.initial_llm()
-    #     st.session_state["OpenChatChain"] = client
 
     with st.sidebar:
         st.header("Other Tools")
@@ -72,6 +68,17 @@ def main():
                                                  ],
                                         index=0,
                                         on_change=set_reload_flag)
+            # initial the avatar and greeting
+            if "openchat" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/openchat-logo.png"
+            elif "meta-llama" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/meta-logo.png"
+            elif "google" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/google-logo.png"
+            elif "mistralai" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/mistral-logo.png"
+            else:
+                st.session_state["OpenAvatarImg"] = "assistant"
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
                                                   options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
                                                   index=1,
