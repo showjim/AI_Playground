@@ -3,7 +3,7 @@ import os, time, json, io
 from src.ClsChatBot import ChatRobotOpenRouter
 
 
-# __version__ = "Beta V0.0.2"
+__version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
 
 chatbot = ChatRobotOpenRouter()
@@ -25,7 +25,9 @@ def set_reload_flag():
 
 def main():
     index = 0
-    st.title("🤗Open Chat Web-UI App")
+    st.title("🤗Open Chat Web-UI App " + __version__)
+    st.caption('Powered by Streamlit, written by Chao Zhou')
+    st.subheader("", divider='rainbow')
     # Sidebar contents
     if "OpenChatReloadMode" not in st.session_state:
         st.session_state["OpenChatReloadMode"] = True
