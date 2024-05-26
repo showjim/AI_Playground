@@ -121,7 +121,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["gpt-35-turbo", "gpt-4-turbo"],
+                                                options=["gpt-4o"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
