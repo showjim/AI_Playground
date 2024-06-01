@@ -343,11 +343,12 @@ def main():
                         stream=True,
                     )  # get a new response from the model where it can see the function response
                     for chunk in second_response:
-                        deltas = chunk.choices[0].delta
-                        if deltas.content is not None:
-                            full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
-                            time.sleep(0.001)
-                            message_placeholder.markdown(full_response + "▌")
+                        if len(chunk.choices) > 0:
+                            deltas = chunk.choices[0].delta
+                            if deltas.content is not None:
+                                full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                                time.sleep(0.001)
+                                message_placeholder.markdown(full_response + "▌")
                 else:
                     full_response = full_response
             message_placeholder.markdown(full_response)
