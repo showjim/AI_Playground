@@ -295,6 +295,9 @@ def main():
                     st.error(e)
                     st.session_state["FreeChatMessages"].pop(-1)
                     st.session_state["FreeChatMessagesDisplay"].pop(-1)
+                    if 'tool_calls' in st.session_state["FreeChatMessages"][1].keys() and \
+                            st.session_state["FreeChatMessages"][2]['role'] == 'tool':
+                        st.session_state["FreeChatMessages"].pop(-1)
 
                 # Step 2: check if the model wanted to call a function
                 if tool_calls:
@@ -334,6 +337,9 @@ def main():
                         st.error(e)
                         st.session_state["FreeChatMessages"].pop(-1)
                         st.session_state["FreeChatMessagesDisplay"].pop(-1)
+                        if 'tool_calls' in st.session_state["FreeChatMessages"][1].keys() and \
+                                st.session_state["FreeChatMessages"][2]['role'] == 'tool':
+                            st.session_state["FreeChatMessages"].pop(-1)
                     second_response = st.session_state["FreeChatChain"].chat.completions.create(
                         model=st.session_state["FreeChatSetting"]["model"],
                         messages=st.session_state["FreeChatMessages"],
