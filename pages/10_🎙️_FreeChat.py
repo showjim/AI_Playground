@@ -266,28 +266,29 @@ def main():
                         # process normal response and tool_calls response
                         if len(chunk.choices) > 0:
                             deltas = chunk.choices[0].delta
-                            if deltas.content is not None:
-                                full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
-                                time.sleep(0.001)
-                                message_placeholder.markdown(full_response + "▌")
-                            elif deltas.tool_calls is not None:
-                                if deltas.tool_calls[0].id is not None:
-                                    if cur_func_call["id"] is not None:
-                                        if cur_func_call["id"] != deltas.tool_calls[0].id:
-                                            tool_calls.append(cur_func_call)
-                                            cur_func_call = {"id": None, "type": "function",
-                                                             "function": {"arguments": "", "name": None}}
-                                    cur_func_call["id"] = deltas.tool_calls[0].id
-                                if deltas.tool_calls[0].function.name is not None:
-                                    cur_func_call["function"]["name"] = deltas.tool_calls[0].function.name
-                                if deltas.tool_calls[0].function.arguments is not None:
-                                    cur_func_call["function"]["arguments"] += deltas.tool_calls[0].function.arguments
-                            elif chunk.choices[0].finish_reason == "tool_calls":
-                                tool_calls.append(cur_func_call)
-                                cur_func_call = {"name": None, "arguments": "", "id": None}
-                                # function call here using func_call
-                                # print("call tool here")
-                                response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
+                            if deltas is not None:
+                                if deltas.content is not None:
+                                    full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                                    time.sleep(0.001)
+                                    message_placeholder.markdown(full_response + "▌")
+                                elif deltas.tool_calls is not None:
+                                    if deltas.tool_calls[0].id is not None:
+                                        if cur_func_call["id"] is not None:
+                                            if cur_func_call["id"] != deltas.tool_calls[0].id:
+                                                tool_calls.append(cur_func_call)
+                                                cur_func_call = {"id": None, "type": "function",
+                                                                 "function": {"arguments": "", "name": None}}
+                                        cur_func_call["id"] = deltas.tool_calls[0].id
+                                    if deltas.tool_calls[0].function.name is not None:
+                                        cur_func_call["function"]["name"] = deltas.tool_calls[0].function.name
+                                    if deltas.tool_calls[0].function.arguments is not None:
+                                        cur_func_call["function"]["arguments"] += deltas.tool_calls[0].function.arguments
+                                elif chunk.choices[0].finish_reason == "tool_calls":
+                                    tool_calls.append(cur_func_call)
+                                    cur_func_call = {"name": None, "arguments": "", "id": None}
+                                    # function call here using func_call
+                                    # print("call tool here")
+                                    response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
                 except Exception as e:
                     print("Error found: ")
                     print(e)
@@ -353,10 +354,11 @@ def main():
                     for chunk in second_response:
                         if len(chunk.choices) > 0:
                             deltas = chunk.choices[0].delta
-                            if deltas.content is not None:
-                                full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
-                                time.sleep(0.001)
-                                message_placeholder.markdown(full_response + "▌")
+                            if deltas is not None:
+                                if deltas.content is not None:
+                                    full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                                    time.sleep(0.001)
+                                    message_placeholder.markdown(full_response + "▌")
                 else:
                     full_response = full_response
             message_placeholder.markdown(full_response)
