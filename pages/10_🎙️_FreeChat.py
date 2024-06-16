@@ -225,56 +225,58 @@ def main():
                     is_translate = True
                 speech_txt = whisper_STT(audio_BIO, "zh",translate=is_translate)
 
+
         # upload image file & create index base
-        st.subheader("Please upload your image below.")
-        file_path = st.file_uploader("1.Upload a image file",
-                                     type=["jpg", "png", "gif", "bmp"],
-                                     accept_multiple_files=False)  # , on_change=is_upload_status_changed)
+        st.subheader("3. Vision")
+        with st.expander("Upload your image"):
+            file_path = st.file_uploader("1.Upload a image file",
+                                         type=["jpg", "png", "gif", "bmp"],
+                                         accept_multiple_files=False)  # , on_change=is_upload_status_changed)
 
-        if st.button("Upload"):
-            if file_path is not None:
-                # save file
-                with st.spinner('Reading file'):
-                    uploaded_path = os.path.join(work_path + "/img", file_path.name)
-                    with open(uploaded_path, mode="wb") as f:
-                        f.write(file_path.getbuffer())
-                    if os.path.exists(uploaded_path) == True:
-                        st.write(f"✅ {Path(uploaded_path).name} uploaed")
+            if st.button("Upload"):
+                if file_path is not None:
+                    # save file
+                    with st.spinner('Reading file'):
+                        uploaded_path = os.path.join(work_path + "/img", file_path.name)
+                        with open(uploaded_path, mode="wb") as f:
+                            f.write(file_path.getbuffer())
+                        if os.path.exists(uploaded_path) == True:
+                            st.write(f"✅ {Path(uploaded_path).name} uploaed")
 
-        # select the specified index base(s)
-        index_file_list = chatbot.get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
-        options = st.multiselect('2.What img do you want to exam?',
-                                 index_file_list,
-                                 max_selections=1,
-                                 on_change=set_reload_img_flag)
-        if len(options) > 0:
-            if st.session_state["FreeChatImgReloadFlag"] == True:
-                st.session_state["FreeChatImgReloadFlag"] = False
-                with st.spinner('Load Image File'):
-                    IMAGE_PATH = os.path.join("./img", options[0])
-                    encoded_image = base64.b64encode(open(IMAGE_PATH, 'rb').read()).decode('utf-8')
+            # select the specified index base(s)
+            index_file_list = chatbot.get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
+            options = st.multiselect('2.What img do you want to exam?',
+                                     index_file_list,
+                                     max_selections=1,
+                                     on_change=set_reload_img_flag)
+            if len(options) > 0:
+                if st.session_state["FreeChatImgReloadFlag"] == True:
+                    st.session_state["FreeChatImgReloadFlag"] = False
+                    with st.spinner('Load Image File'):
+                        IMAGE_PATH = os.path.join("./img", options[0])
+                        encoded_image = base64.b64encode(open(IMAGE_PATH, 'rb').read()).decode('utf-8')
 
-                    # store in dict for history
-                    st.session_state["FreeIMGDB"][IMAGE_PATH] = encoded_image
+                        # store in dict for history
+                        st.session_state["FreeIMGDB"][IMAGE_PATH] = encoded_image
 
-                    # add in chat msg
-                    tmp_usr_img_msg = {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoded_image}",
-                                    # "detail": st.session_state["IMGChatSetting"]["detail"]
+                        # add in chat msg
+                        tmp_usr_img_msg = {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{encoded_image}",
+                                        # "detail": st.session_state["IMGChatSetting"]["detail"]
+                                    }
                                 }
-                            }
-                        ]
-                    }
-                    st.session_state["FreeChatMessages"].append(tmp_usr_img_msg)
-                    st.session_state["FreeChatMessagesDisplay"].append(tmp_usr_img_msg)
-                st.write("✅ " + ", ".join(options) + " IMG Loaded")
-            if st.session_state["FreeIMGDB"] is None:
-                print("can you reach here?")
+                            ]
+                        }
+                        st.session_state["FreeChatMessages"].append(tmp_usr_img_msg)
+                        st.session_state["FreeChatMessagesDisplay"].append(tmp_usr_img_msg)
+                    st.write("✅ " + ", ".join(options) + " IMG Loaded")
+                if st.session_state["FreeIMGDB"] is None:
+                    print("can you reach here?")
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:
         if message["role"] == "user":
