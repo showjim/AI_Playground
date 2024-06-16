@@ -9,8 +9,8 @@ FROM python:3.9-slim
 # 设置工作目录
 WORKDIR /app
 
-# Debian 12 换成国内源
-RUN sed -i 's@deb.debian.org@mirror.sjtu.edu.cn@g' /etc/apt/sources.list.d/debian.sources
+## Debian 12 换成国内源
+#RUN sed -i 's@deb.debian.org@mirror.sjtu.edu.cn@g' /etc/apt/sources.list.d/debian.sources
 
 # 安装curl tk等必要的软件
 RUN apt-get update && apt-get install -y \
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 COPY . /app
 
 # 安装依赖，使用清华大学的 PyPI 镜像
-RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/
+RUN pip install --no-cache-dir -r requirements.txt # -i https://pypi.tuna.tsinghua.edu.cn/simple/
 
 # 暴露 Streamlit 使用的默认端口
 EXPOSE 8504
