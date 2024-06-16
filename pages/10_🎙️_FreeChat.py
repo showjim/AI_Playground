@@ -1,10 +1,11 @@
 import streamlit as st
-import os, time, json, io
+import os, time, json, io, base64
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot
 import openai
 from streamlit_mic_recorder import mic_recorder
+from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
@@ -27,6 +28,10 @@ def set_reload_mode():
 def set_reload_flag():
     # st.write("New document need upload")
     st.session_state["FreeChatReloadFlag"] = True
+
+def set_reload_img_flag():
+    # st.write("New document need upload")
+    st.session_state["FreeChatImgReloadFlag"] = True
 
 def get_current_weather(location, unit="fahrenheit"):
     """Get the current weather in a given location"""
@@ -110,6 +115,11 @@ def main():
     if "FreeChatChain" not in st.session_state:
         # client = chatbot.initial_llm()
         st.session_state["FreeChatChain"] = client
+    if "FreeIMGDB" not in st.session_state:
+        st.session_state["FreeIMGDB"] = {}
+    if "FreeChatImgReloadFlag" not in st.session_state:
+        st.session_state["FreeChatImgReloadFlag"] = False
+    work_path = os.path.abspath('.')
 
     with st.sidebar:
         st.subheader("1. Settings")
@@ -159,12 +169,12 @@ def main():
                     st.session_state["AvatarImg"] = "assistant"
                     initial_msg = "I'm FreeChatBot, How may I help you?"
                 st.session_state["FreeChatMessages"] = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "assistant", "content": initial_msg}
+                    {"role": "system", "content": [{"type": "text", "text": system_prompt}]},
+                    {"role": "assistant", "content": [{"type": "text", "text": initial_msg}]}
                 ]
                 st.session_state["FreeChatMessagesDisplay"] = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "assistant", "content": initial_msg}
+                    {"role": "system", "content": [{"type": "text", "text": system_prompt}]},
+                    {"role": "assistant", "content": [{"type": "text", "text": initial_msg}]}
                 ]
             if st.session_state["FreeChatReloadFlag"] == True:
                 if "FreeChatSetting" not in st.session_state:
@@ -215,18 +225,77 @@ def main():
                     is_translate = True
                 speech_txt = whisper_STT(audio_BIO, "zh",translate=is_translate)
 
+        # upload image file & create index base
+        st.subheader("Please upload your image below.")
+        file_path = st.file_uploader("1.Upload a image file",
+                                     type=["jpg", "png", "gif", "bmp"],
+                                     accept_multiple_files=False)  # , on_change=is_upload_status_changed)
+
+        if st.button("Upload"):
+            if file_path is not None:
+                # save file
+                with st.spinner('Reading file'):
+                    uploaded_path = os.path.join(work_path + "/img", file_path.name)
+                    with open(uploaded_path, mode="wb") as f:
+                        f.write(file_path.getbuffer())
+                    if os.path.exists(uploaded_path) == True:
+                        st.write(f"✅ {Path(uploaded_path).name} uploaed")
+
+        # select the specified index base(s)
+        index_file_list = chatbot.get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
+        options = st.multiselect('2.What img do you want to exam?',
+                                 index_file_list,
+                                 max_selections=1,
+                                 on_change=set_reload_img_flag)
+        if len(options) > 0:
+            if st.session_state["FreeChatImgReloadFlag"] == True:
+                st.session_state["FreeChatImgReloadFlag"] = False
+                with st.spinner('Load Image File'):
+                    IMAGE_PATH = os.path.join("./img", options[0])
+                    encoded_image = base64.b64encode(open(IMAGE_PATH, 'rb').read()).decode('utf-8')
+
+                    # store in dict for history
+                    st.session_state["FreeIMGDB"][IMAGE_PATH] = encoded_image
+
+                    # add in chat msg
+                    tmp_usr_img_msg = {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoded_image}",
+                                    # "detail": st.session_state["IMGChatSetting"]["detail"]
+                                }
+                            }
+                        ]
+                    }
+                    st.session_state["FreeChatMessages"].append(tmp_usr_img_msg)
+                    st.session_state["FreeChatMessagesDisplay"].append(tmp_usr_img_msg)
+                st.write("✅ " + ", ".join(options) + " IMG Loaded")
+            if st.session_state["FreeIMGDB"] is None:
+                print("can you reach here?")
     # Display chat messages from history on app rerun
     for message in st.session_state["FreeChatMessagesDisplay"]:
         if message["role"] == "user":
             with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+                for content in message["content"]:
+                    if content["type"] == "image_url":
+                        image_url = content["image_url"]["url"].replace("data:image/jpeg;base64,", "")
+                        img_paths = chatbot.get_keys(st.session_state["FreeIMGDB"], image_url)
+                        st.image(img_paths[0])
+                    elif content["type"] == "text":
+                        st.markdown(content["text"])
+                    else:
+                        print("Error: Unexcept TYPE Found: " + content["type"])
         elif message["role"] == "assistant":
             if message["content"] is not None:
                 with st.chat_message(name=message["role"], avatar=st.session_state["AvatarImg"]):
-                    st.markdown(message["content"])
-                    st.button(label="Play", key="history" + str(index), on_click=chatbot.text_2_speech,
-                              args=(message["content"], aa_voice_name,))
-                    index += 1
+                    for content in message["content"]:
+                        st.markdown(content["text"])
+                        st.button(label="Play", key="history" + str(index), on_click=chatbot.text_2_speech,
+                                  args=(content["text"], aa_voice_name,))
+                        index += 1
                     if "image" in message.keys():
                         st.image(message["image"], width=256)
 
@@ -235,8 +304,8 @@ def main():
         # Add user message to chat history
         max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
         st.session_state["FreeChatMessages"] = chatbot.control_msg_history_szie(st.session_state["FreeChatMessages"], max_cnt)
-        st.session_state["FreeChatMessages"].append({"role": "user", "content": prompt})
-        st.session_state["FreeChatMessagesDisplay"].append({"role": "user", "content": prompt})
+        st.session_state["FreeChatMessages"].append({"role": "user", "content": [{"type": "text", "text": prompt}]})
+        st.session_state["FreeChatMessagesDisplay"].append({"role": "user", "content": [{"type": "text", "text": prompt}]})
 
         print("HUMAN: " + prompt)
         # Display user message in chat message container
@@ -352,14 +421,14 @@ def main():
                     full_response = full_response
             message_placeholder.markdown(full_response)
 
-            st.session_state["FreeChatMessages"].append({"role": "assistant", "content": full_response})
+            st.session_state["FreeChatMessages"].append({"role": "assistant", "content": [{"type": "text", "text": full_response}]})
             if function_response.startswith("https://"):
                 st.session_state["FreeChatMessagesDisplay"].append(
-                    {"role": "assistant", "content": full_response, "image": function_response})
+                    {"role": "assistant", "content": [{"type": "text", "text": full_response}], "image": function_response})
                 st.image(function_response)
             else:
                 st.session_state["FreeChatMessagesDisplay"].append(
-                    {"role": "assistant", "content": full_response})
+                    {"role": "assistant", "content": [{"type": "text", "text": full_response}]})
             print("AI: " + full_response)
             if aa_voice_name != "None":
                 chatbot.text_2_speech(full_response, aa_voice_name)
