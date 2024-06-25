@@ -90,11 +90,10 @@ def main():
                                         options=["openchat/openchat-7b:free",
                                                  "meta-llama/llama-3-8b-instruct:free",
                                                  "mistralai/mistral-7b-instruct:free",
-                                                 "google/gemma-7b-it:free",
-                                                 "undi95/toppy-m-7b:free",
                                                  "meta-llama/llama-3-70b-instruct",
                                                  "mistralai/mixtral-8x7b-instruct",
-                                                 "google/gemini-flash-1.5",
+                                                 "deepseek/deepseek-coder",
+                                                 "openai/gpt-4o"
                                                  ],
                                         index=0,
                                         on_change=set_reload_flag)
