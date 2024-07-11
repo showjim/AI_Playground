@@ -563,8 +563,8 @@ class ChatRobotOpenRouter(ChatRobotBase):
             shutil.copyfile(key_file, ".env")
             load_dotenv()
         else:
-            print("key.txt with OpenAI API is required")
-            raise APIKeyNotFoundError("key.txt with Google API is required")
+            print("key.txt with OpenRouter API is required")
+            raise APIKeyNotFoundError("key.txt with OpenRouter API is required")
         # Load config values
         if os.path.exists(config_file):
             with open(config_file) as config_file:
