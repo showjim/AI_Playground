@@ -5,7 +5,7 @@ import os, time, json, io
 from src.ClsChatBot import ChatRobotOpenRouter
 
 
-__version__ = "Beta V0.0.3"
+__version__ = "Beta V0.0.4"
 env_path = os.path.abspath(".")
 
 chatbot = ChatRobotOpenRouter()
@@ -93,6 +93,7 @@ def main():
                                                  "meta-llama/llama-3-70b-instruct",
                                                  "mistralai/mixtral-8x7b-instruct",
                                                  "deepseek/deepseek-coder",
+                                                 "openai/gpt-4o-mini",
                                                  "openai/gpt-4o"
                                                  ],
                                         index=0,
