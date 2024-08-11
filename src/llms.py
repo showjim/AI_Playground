@@ -246,7 +246,7 @@ class OpenAIAzure():
                 else:
                     doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
         else:
-            doc_summary_index = FAISS.load_local(path, embeddings, index_name)
+            doc_summary_index = FAISS.load_local(path, embeddings, index_name, allow_dangerous_deserialization=True)
         return doc_summary_index
 
     def rebuild_index_by_list(self, path, embeddings, all_files):
@@ -255,9 +255,9 @@ class OpenAIAzure():
             filename = all_files[i]
             tmpfile = filename #Path(filename).stem, has done in get_all_files_list
             if i == 0:
-                doc_summary_index = FAISS.load_local(path, embeddings, tmpfile)
+                doc_summary_index = FAISS.load_local(path, embeddings, tmpfile,allow_dangerous_deserialization=True)
             else:
-                doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile))
+                doc_summary_index.merge_from(FAISS.load_local(path, embeddings, tmpfile, allow_dangerous_deserialization=True))
         return doc_summary_index
 
     def create_chat_model_with_prompt(self, model_name, num_output, temperature, prompt):
