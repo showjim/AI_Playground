@@ -109,6 +109,10 @@ def main():
                 st.session_state["OpenAvatarImg"] = "./img/logo/mistral-logo.png"
             elif "openai" in aa_llm_model:
                 st.session_state["OpenAvatarImg"] = "./img/logo/openai-logo.png"
+            elif "deepseek" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/deepseek-logo.png"
+            elif "qwen" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/qwen-logo.png"
             else:
                 st.session_state["OpenAvatarImg"] = "assistant"
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
