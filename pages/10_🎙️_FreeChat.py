@@ -2,7 +2,7 @@ import streamlit as st
 import os, time, json, io, base64
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
-from src.ClsChatBot import ChatRobot
+from src.ClsChatBot import ChatRobot, ChatRobotOpenRouter
 import openai
 from streamlit_mic_recorder import mic_recorder
 from pathlib import Path
@@ -12,7 +12,9 @@ env_path = os.path.abspath(".")
 
 chatbot = ChatRobot()
 chatbot.setup_env()
-client = chatbot.initial_llm()
+chatbot_or = ChatRobotOpenRouter()
+chatbot_or.setup_env()
+client = chatbot_or.initial_llm() #chatbot.initial_llm()
 client_dalle3 = chatbot.initial_dalle3()
 client_stt = chatbot.initial_whisper()
 tools = chatbot.initial_tools()
@@ -131,7 +133,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["gpt-4o"],
+                                                options=["openai/gpt-4o-mini", "openai/gpt-4o", "meta-llama/llama-3.2-90b-vision-instruct"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
