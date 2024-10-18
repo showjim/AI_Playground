@@ -129,7 +129,7 @@ def main():
 
             aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
                                                 options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
-                                                         "西瓜一家-Ana"],
+                                                         "西瓜一家-Ana", "meta-prompt"],
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
