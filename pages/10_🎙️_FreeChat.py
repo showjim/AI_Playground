@@ -156,7 +156,7 @@ def main():
                                                       )
 
             if st.session_state["FreeChatReloadMode"] == True:
-                system_prompt = chatbot.select_chat_mode(aa_chat_mode)
+                system_prompt = chatbot_or.select_chat_mode(aa_chat_mode)
                 st.session_state["FreeChatReloadMode"] = False
                 # set the tool choice in fuction call
                 if aa_chat_mode == "Translate":
@@ -246,7 +246,7 @@ def main():
                             st.write(f"✅ {Path(uploaded_path).name} uploaed")
 
             # select the specified index base(s)
-            index_file_list = chatbot.get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
+            index_file_list = chatbot_or.get_all_files_list("./img", ["jpg", "png", "gif", "bmp"])
             options = st.multiselect('2.What img do you want to exam?',
                                      index_file_list,
                                      max_selections=1,
@@ -286,7 +286,7 @@ def main():
                 for content in message["content"]:
                     if content["type"] == "image_url":
                         image_url = content["image_url"]["url"].replace("data:image/jpeg;base64,", "")
-                        img_paths = chatbot.get_keys(st.session_state["FreeIMGDB"], image_url)
+                        img_paths = chatbot_or.get_keys(st.session_state["FreeIMGDB"], image_url)
                         st.image(img_paths[0])
                     elif content["type"] == "text":
                         st.markdown(content["text"])
@@ -307,7 +307,7 @@ def main():
     if (prompt := st.chat_input("Type you input here")) or (prompt := speech_txt):
         # Add user message to chat history
         max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
-        st.session_state["FreeChatMessages"] = chatbot.control_msg_history_szie(st.session_state["FreeChatMessages"], max_cnt)
+        st.session_state["FreeChatMessages"] = chatbot_or.control_msg_history_szie(st.session_state["FreeChatMessages"], max_cnt)
         st.session_state["FreeChatMessages"].append({"role": "user", "content": [{"type": "text", "text": prompt}]})
         st.session_state["FreeChatMessagesDisplay"].append({"role": "user", "content": [{"type": "text", "text": prompt}]})
 
