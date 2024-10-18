@@ -133,7 +133,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["openai/gpt-4o-mini", "openai/gpt-4o", "meta-llama/llama-3.2-90b-vision-instruct"],
+                                                options=["gpt-4o-mini", "gpt-4o", "meta-llama/llama-3.2-90b-vision-instruct"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
@@ -356,12 +356,12 @@ def main():
                                         cur_func_call["function"]["name"] = deltas.tool_calls[0].function.name
                                     if deltas.tool_calls[0].function.arguments is not None:
                                         cur_func_call["function"]["arguments"] += deltas.tool_calls[0].function.arguments
-                                elif chunk.choices[0].finish_reason == "tool_calls":
-                                    tool_calls.append(cur_func_call)
-                                    cur_func_call = {"name": None, "arguments": "", "id": None}
-                                    # function call here using func_call
-                                    # print("call tool here")
-                                    response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
+                            if chunk.choices[0].finish_reason == "tool_calls":
+                                tool_calls.append(cur_func_call)
+                                cur_func_call = {"name": None, "arguments": "", "id": None}
+                                # function call here using func_call
+                                # print("call tool here")
+                                response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
                 except Exception as e:
                     print("Error found: ")
                     print(e)

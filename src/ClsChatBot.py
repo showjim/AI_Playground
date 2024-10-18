@@ -154,10 +154,10 @@ class ChatRobot(ChatRobotBase):
                 self.config_details = json.load(config_file)
 
             # Setting up the embedding model
-            openai.api_type = "azure"
-            openai.azure_endpoint = self.config_details['OPENAI_API_BASE']
-            openai.api_version = self.config_details['OPENAI_API_VERSION']
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+            # openai.api_type = "azure"
+            # openai.azure_endpoint = self.config_details['OPENAI_API_BASE']
+            # openai.api_version = self.config_details['OPENAI_API_VERSION']
+            # openai.api_key = os.getenv("OPENAI_API_KEY")
 
             # bing search
             os.environ["BING_SUBSCRIPTION_KEY"] = os.getenv("BING_SUBSCRIPTION_KEY")
@@ -194,9 +194,9 @@ class ChatRobot(ChatRobotBase):
 
     def initial_llm(self):
         client = AzureOpenAI(
-            api_version=openai.api_version, # "2023-12-01-preview",
-            api_key=openai.api_key,
-            azure_endpoint=openai.azure_endpoint
+            api_version=self.config_details['OPENAI_API_VERSION'], # "2023-12-01-preview",
+            api_key=os.getenv("OPENAI_API_KEY"),
+            azure_endpoint=self.config_details['OPENAI_API_BASE']
         )
         # This requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         self.speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'),
@@ -205,7 +205,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_dalle3(self):
         client = AzureOpenAI(
-            api_version=openai.api_version, #"2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'], #"2023-12-01-preview",
             api_key=os.environ["DALLE3_MODEL"],
             azure_endpoint=os.environ["DALLE3_MODEL_ENDPOINT"]
         )
@@ -216,7 +216,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_whisper(self):
         client = AzureOpenAI(
-            api_version=openai.api_version, #"2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'], #"2023-12-01-preview",
             api_key=os.environ["WHISPER_MODEL"],
             azure_endpoint=os.environ["WHISPER_MODEL_ENDPOINT"]
         )
@@ -227,7 +227,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_llm_vision(self):
         client = AzureOpenAI(
-            api_version=openai.api_version, # "2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'], # "2023-12-01-preview",
             api_key=os.environ["VISION_MODEL"],
             azure_endpoint=os.environ["VISION_MODEL_ENDPOINT"]
         )
@@ -541,13 +541,13 @@ class ChatRobotOpenRouter(ChatRobotBase):
                 self.config_details = json.load(config_file)
 
             # Setting up the embedding model
-            openai.base_url = self.config_details['OPENROUTER_API_BASE']
-            openai.api_key = os.getenv("OPENROUTER_API_KEY")
+            # openai.base_url = self.config_details['OPENROUTER_API_BASE']
+            # openai.api_key = os.getenv("OPENROUTER_API_KEY")
 
     def initial_llm(self):
         client = OpenAI(
-            api_key=openai.api_key,
-            base_url=openai.base_url,
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url=self.config_details['OPENROUTER_API_BASE'],
         )
 
         return client
