@@ -5,9 +5,9 @@ import streamlit as st
 
 uploaded = st.file_uploader(label="Please browse for a pdf file", type="pdf")
 method = st.radio(label="Method", options=["Embed", "Iframe"], horizontal=True)
+
 if uploaded is None:
     st.stop()
-
 base64_pdf = base64.b64encode(uploaded.read()).decode("utf-8")
 if method == "Embed":
     pdf_display = (
