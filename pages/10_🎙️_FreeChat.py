@@ -128,7 +128,7 @@ def main():
         with st.expander("Parameters for Chatbot"):
 
             aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
-                                                options=["CasualChat", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
+                                                options=["CasualChat", "Meta-prompt", "Translate", "西瓜一家-小南瓜", "西瓜一家-小东瓜",
                                                          "西瓜一家-Ana"],
                                                 index=0,
                                                 on_change=set_reload_mode)

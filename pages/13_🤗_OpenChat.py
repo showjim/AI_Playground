@@ -83,7 +83,7 @@ def main():
         with st.expander("Settings"):
             st.subheader("Parameter for Chatbot")
             aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
-                                                options=["CasualChat", "Translate"],
+                                                options=["CasualChat", "Meta-prompt", "Translate"],
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
