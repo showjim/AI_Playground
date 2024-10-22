@@ -220,7 +220,7 @@ def main():
             if audio:
                 # st.audio(audio['bytes'])
                 audio_BIO = io.BytesIO(audio['bytes'])
-                audio_BIO.name = 'audio.mp3'
+                audio_BIO.name = 'audio.webm'
                 if aa_whisper_mode == "Transcribe":
                     is_translate = False
                 else:
