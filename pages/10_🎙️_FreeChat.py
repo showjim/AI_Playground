@@ -200,7 +200,17 @@ def main():
 
         st.subheader("2. STT")
         speech_txt = ""
-        tab1, tab2 = st.tabs(["Whisper", "Azure"])
+        tab1, tab2, tab3 = st.tabs(["Azure STT File", "Azure STT", "Whisper"])
+        with tab1:
+            audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True)
+            if audio_azure:
+                # Since Azure Whisper cannot be used any more so...
+                # I have to switch to Azure STT
+                filename = "./tmp.wav"
+                with open(filename, "wb") as f:
+                    f.write(audio_azure['bytes'])
+                speech_txt = chatbot.speech_2_text_file_based(filename)
+
         with tab2:
             # Speech2Text
             aa_audio_mode = st.selectbox(label="`Audio Input Mode`",
@@ -209,11 +219,14 @@ def main():
             if st.button("`Speak`"):
                 if aa_audio_mode == "Single":
                     speech_txt = chatbot.speech_2_text()
-                else:
+                elif aa_audio_mode == "Continuous":
                     speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+                else:
+                    print("")
+                    # speech_txt = chatbot.speech_2_text_file_based()
         # another STT: Whisper option
-        with tab1:
-            aa_whisper_mode = st.selectbox(label="`Whipser Mode`",
+        with tab3:
+            aa_whisper_mode = st.selectbox(label="`Whipser/Azure STT Mode`",
                                          options=["Transcribe", "Translate"],
                                          index=0)
             audio = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder', just_once=True)

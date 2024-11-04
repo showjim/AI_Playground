@@ -352,6 +352,30 @@ class ChatRobot(ChatRobotBase):
             result_txt = "Speech Recognition canceled"
         return result_txt
 
+    def speech_2_text_file_based(self, filename):
+        # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+        audio_config = speechsdk.audio.AudioConfig(filename=filename)
+        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=self.speech_config, audio_config=audio_config)
+
+        print("Speak into your microphone.")
+        speech_recognition_result = speech_recognizer.recognize_once_async().get()
+
+        result_txt = ""
+        if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            print("Recognized: {}".format(speech_recognition_result.text))
+            result_txt = speech_recognition_result.text
+        elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
+            print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
+            result_txt = "No speech could be recognized"
+        elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = speech_recognition_result.cancellation_details
+            print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                print("Error details: {}".format(cancellation_details.error_details))
+                print("Did you set the speech resource key and region values?")
+            result_txt = "Speech Recognition canceled"
+        return result_txt
+
     def speech_2_text_continous(self):
         # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
