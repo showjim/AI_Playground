@@ -83,15 +83,16 @@ def main():
         with st.expander("Settings"):
             st.subheader("Parameter for Chatbot")
             aa_chat_mode = st.selectbox(label="`0. Chat Mode`",
-                                                options=["CasualChat", "Meta-prompt", "Translate"],
+                                                options=["CasualChat", "Meta-prompt", "Translate", "Thinking Protocol"],
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
                                         options=["openchat/openchat-7b:free",
-                                                 "meta-llama/llama-3.2-11b-vision-instruct:free",
+                                                 "anthropic/claude-3-5-haiku",
+                                                 "anthropic/claude-3.5-sonnet",
                                                  "meta-llama/llama-3.2-90b-vision-instruct",
-                                                 "mistralai/mixtral-8x22b-instruct",
-                                                 "qwen/qwen-2.5-72b-instruct",
+                                                 "mistralai/mistral-nemo",
+                                                 "qwen/qwen-2.5-coder-32b-instruct",
                                                  "deepseek/deepseek-chat",
                                                  "openai/gpt-4o-mini",
                                                  "openai/gpt-4o"
@@ -113,6 +114,8 @@ def main():
                 st.session_state["OpenAvatarImg"] = "./img/logo/deepseek-logo.png"
             elif "qwen" in aa_llm_model:
                 st.session_state["OpenAvatarImg"] = "./img/logo/qwen-logo.png"
+            elif "claude" in aa_llm_model:
+                st.session_state["OpenAvatarImg"] = "./img/logo/claude-logo.png"
             else:
                 st.session_state["OpenAvatarImg"] = "assistant"
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
