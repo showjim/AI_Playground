@@ -762,6 +762,7 @@ class ChatRobotGemini(ChatRobotBase):
             shutil.copyfile(key_file, ".env")
             load_dotenv()
             genai.configure(api_key=os.getenv("GEMINI_KEY"))
+            os.environ["GEMINI_KEY"]=os.getenv("GEMINI_KEY")
         else:
             print("key.txt with OpenAI API is required")
             raise APIKeyNotFoundError("key.txt with Google API is required")

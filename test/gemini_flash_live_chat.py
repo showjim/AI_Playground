@@ -5,12 +5,14 @@ import os
 import pyaudio
 import numpy as np
 from websockets.asyncio.client import connect
+from src.ClsChatBot import ChatRobotGemini
 
+env_path = os.path.abspath(".")
 
 class SimpleGeminiVoice:
     def __init__(self):
         self.audio_queue = asyncio.Queue()
-        self.api_key =  os.environ.get("GEMINI_API_KEY")
+        self.api_key =  os.environ["GEMINI_KEY"]
         self.model = "gemini-2.0-flash-exp"
         self.uri = f"wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key={self.api_key}"
         # Audio settings
@@ -111,5 +113,9 @@ class SimpleGeminiVoice:
 
 
 if __name__ == "__main__":
+
+    chatbot = ChatRobotGemini()
+    chatbot.setup_env("../key.txt")
+    # client = chatbot.initial_llm()
     client = SimpleGeminiVoice()
     asyncio.run(client.start())
