@@ -5,9 +5,11 @@ import os
 import pyaudio
 import numpy as np
 from websockets.asyncio.client import connect
+from rich.console import Console
 from src.ClsChatBot import ChatRobotGemini
 
 env_path = os.path.abspath(".")
+console = Console()
 
 class SimpleGeminiVoice:
     def __init__(self):
@@ -24,11 +26,33 @@ class SimpleGeminiVoice:
         self.NOISE_THRESHOLD = 70  # Adjust this value to control sensitivity
 
     async def start(self):
+        # Initial system message
+        self.config = {
+            'generation_config': {
+                'temperature': 0.7,
+                'response_modalities': ["AUDIO"], #["TEXT"]
+                'speech_config': {
+                    'voice_config': {
+                        'prebuilt_voice_config' : {'voice_name': 'Puck'} # 'Puck' 'Charon' 'Kore' 'Fenrir' 'Aoede'
+                    }
+                }
+            }
+        }
         # Initialize websocket
         self.ws = await connect(
             self.uri, additional_headers={"Content-Type": "application/json"}
         )
-        await self.ws.send(json.dumps({"setup": {"model": f"models/{self.model}"}}))
+        await self.ws.send(json.dumps({
+            "setup": {
+                "model": f"models/{self.model}",
+                "generation_config": self.config["generation_config"],
+                "system_instruction": {
+                    "parts": [{"text": "You are a helpful assistant."}],
+                    "role": "user",
+                },
+                # "tool": [{"google_search": {}}],
+            }
+        }))
         await self.ws.recv(decode=False)
         print("Connected to Gemini, You can start talking now")
         # Start audio streaming using gather instead of TaskGroup
@@ -62,22 +86,22 @@ class SimpleGeminiVoice:
             rms = np.sqrt(np.mean(np.square(audio_data)))
             
             # Only send audio if it's above the noise threshold
-            if True: #rms > self.NOISE_THRESHOLD:
-                print(f"Info: current RMS of sound is: {rms}")
-                await self.ws.send(
-                    json.dumps(
-                        {
-                            "realtime_input": {
-                                "media_chunks": [
-                                    {
-                                        "data": base64.b64encode(data).decode(),
-                                        "mime_type": "audio/pcm",
-                                    }
-                                ]
-                            }
+            if rms > self.NOISE_THRESHOLD:
+                console.print(f"Info: current RMS of sound is: {rms}", style="green")
+            await self.ws.send(
+                json.dumps(
+                    {
+                        "realtime_input": {
+                            "media_chunks": [
+                                {
+                                    "data": base64.b64encode(data).decode(),
+                                    "mime_type": "audio/pcm",
+                                }
+                            ]
                         }
-                    )
+                    }
                 )
+            )
 
 
     async def stream_audio(self):
