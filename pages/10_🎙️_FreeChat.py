@@ -1,5 +1,5 @@
 import streamlit as st
-import os, time, json, io, base64
+import os, time, json, io, base64, requests
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot, ChatRobotOpenRouter
@@ -15,6 +15,7 @@ chatbot.setup_env()
 chatbot_or = ChatRobotOpenRouter()
 chatbot_or.setup_env()
 client = chatbot_or.initial_llm() #chatbot.initial_llm()
+client_siliconflow = chatbot_or.initial_siliconflow()
 client_dalle3 = chatbot.initial_dalle3()
 client_stt = chatbot.initial_whisper()
 tools = chatbot.initial_tools()
@@ -65,6 +66,36 @@ def create_img_by_dalle3(prompt):
     print("Dall-E3: " + image_url)
     return image_url
 
+def create_img_from_siliconflow(prompt:str):
+    """Create image by call to SiliconFlow"""
+    headers = {
+        "Authorization": f"Bearer {os.getenv('SILICONFLOW_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+
+    url = "https://api.siliconflow.cn/v1/images/generations"
+
+    payload = {
+        "model": "black-forest-labs/FLUX.1-dev", #"stabilityai/stable-diffusion-3-5-large",
+        "prompt": prompt,
+        "negative_prompt": "<string>",
+        "image_size": "1024x1024",
+        "batch_size": 1,
+        "seed": 4999999999,
+        "num_inference_steps": 20,
+        "guidance_scale": 7.5,
+        "prompt_enhancement": True
+    }
+
+    response = requests.request("POST", url, json=payload, headers=headers)
+
+    print(response.text)
+
+    json = response.json()
+    if "images" not in json:
+        return json["message"]
+    url = json["images"][0]["url"]
+    return url
 
 def execute_function_call(available_functions, tool_call):
     function_name = tool_call["function"]["name"]
@@ -393,7 +424,8 @@ def main():
                     # Note: the JSON response may not always be valid; be sure to handle errors
                     available_functions = {
                         "get_current_weather": get_current_weather,
-                        "create_img_by_dalle3": create_img_by_dalle3,
+                        # "create_img_by_dalle3": create_img_by_dalle3,
+                        "create_img_from_siliconflow": create_img_from_siliconflow,
                     }  # only one function in this example, but you can have multiple
                     # extend conversation with assistant's reply
                     st.session_state["FreeChatMessages"].append(response_message)

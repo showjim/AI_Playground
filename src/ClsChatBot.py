@@ -33,19 +33,19 @@ class ChatRobotBase:
         Current date: %s
         Current time: %s
         # Tools
-        ## dalle
+        ## IMAGE
 
-        // Whenever a description of an image is given, create a prompt that dalle can use to generate the image and abide to the following policy:
+        // Whenever a description of an image is given, create a prompt that IMAGE can use to generate the image and abide to the following policy:
         // 1. The prompt must be in English. Translate to English if needed.
         // 3. DO NOT ask for permission to generate the image, just do it!
         // 4. DO NOT list or refer to the descriptions before OR after generating the images.
         // 5. Do not create more than 1 image, even if the user requests more.
         // 6. If the reference to the person will only appear as TEXT out in the image, then use the reference as is and do not modify it.
-        // 7. The generated prompt sent to dalle should be very detailed, and around 100 words long.
+        // 7. The generated prompt sent to IMAGE should be very detailed, and around 100 words long.
 
         // Create images from a text-only prompt.
-        create_img_by_dalle3(
-        // The detailed image description, potentially modified to abide by the dalle policies. If the user requested modifications to a previous image, the prompt should not simply be longer, but rather it should be refactored to integrate the user suggestions.
+        create_img_from_siliconflow(
+        // The detailed image description, potentially modified to abide by the IMAGE policies. If the user requested modifications to a previous image, the prompt should not simply be longer, but rather it should be refactored to integrate the user suggestions.
         prompt: string
         ) => URL in string
                     """ % (cur_date, cur_time)
@@ -98,20 +98,20 @@ class ChatRobotBase:
         
         # Tools
 
-        ## dalle
+        ## IMAGE
 
-        // Whenever a description of an image is given, create a prompt that dalle can use to generate the image and abide to the following policy:
+        // Whenever a description of an image is given, create a prompt that IMAGE can use to generate the image and abide to the following policy:
         // 1. The prompt must be in English. Translate to English if needed.
         // 3. DO NOT ask for permission to generate the image, just do it!
         // 4. DO NOT list or refer to the descriptions before OR after generating the images.
         // 5. Do not create more than 1 image, even if the user requests more.
         // 6. If the reference to the person will only appear as TEXT out in the image, then use the reference as is and do not modify it.
-        // 7. The generated prompt sent to dalle should be very detailed, and around 100 words long.
+        // 7. The generated prompt sent to IMAGE should be very detailed, and around 100 words long.
         // 8. Do not create any imagery that would be offensive.
 
         // Create only cartoon images from a text-only prompt.
-        create_img_by_dalle3(
-        // The detailed image description, potentially modified to abide by the dalle policies. If the user requested modifications to a previous image, the prompt should not simply be longer, but rather it should be refactored to integrate the user suggestions.
+        create_img_from_siliconflow(
+        // The detailed image description, potentially modified to abide by the IMAGE policies. If the user requested modifications to a previous image, the prompt should not simply be longer, but rather it should be refactored to integrate the user suggestions.
         prompt: string
         ) => URL in string
         Current date: %s
@@ -731,11 +731,28 @@ class ChatRobot(ChatRobotBase):
                     },
                 },
             },
+            # {
+            #     "type": "function",
+            #     "function": {
+            #         "name": "create_img_by_dalle3",
+            #         "description": "Create image by call to Dall-E3 with prompt",
+            #         "parameters": {
+            #             "type": "object",
+            #             "properties": {
+            #                 "prompt": {
+            #                     "type": "string",
+            #                     "description": "The description of image to be created, e.g. a cute panda",
+            #                 }
+            #             },
+            #             "required": ["prompt"],
+            #         },
+            #     },
+            # },
             {
                 "type": "function",
                 "function": {
-                    "name": "create_img_by_dalle3",
-                    "description": "Create image by call to Dall-E3 with prompt",
+                    "name": "create_img_from_siliconflow",
+                    "description": "Create image by call to SiliconFlow IMAGE service with prompt",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -908,6 +925,14 @@ class ChatRobotOpenRouter(ChatRobotBase):
         client = OpenAI(
             api_key=os.getenv("OPENROUTER_API_KEY"),
             base_url=self.config_details['OPENROUTER_API_BASE'],
+        )
+
+        return client
+
+    def initial_siliconflow(self):
+        client = OpenAI(
+            api_key=os.getenv('SILICONFLOW_API_KEY'),
+            base_url="https://api.siliconflow.cn/v1"
         )
 
         return client
