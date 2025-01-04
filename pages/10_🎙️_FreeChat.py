@@ -233,7 +233,7 @@ def main():
         speech_txt = ""
         tab1, tab2, tab3 = st.tabs(["Azure STT File", "Azure STT", "Whisper"])
         with tab1:
-            audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True, format="wav")
+            audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True)#, format="wav")
             if audio_azure:
                 # Since Azure Whisper cannot be used any more so...
                 # I have to switch to Azure STT
