@@ -408,9 +408,9 @@ def main():
                                 response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
                 except Exception as e:
                     print("Error found: ")
-                    print(e)
+                    print(e.body)
                     print(st.session_state["FreeChatMessages"])
-                    st.error(e)
+                    st.error(e.body)
                     st.session_state["FreeChatMessages"].pop(-1)
                     st.session_state["FreeChatMessagesDisplay"].pop(-1)
                     if 'tool_calls' in st.session_state["FreeChatMessages"][1].keys() and \
@@ -453,8 +453,8 @@ def main():
                             )  # extend conversation with function response
                     except openai.BadRequestError as e:
                         print("Error found: ")
-                        print(e)
-                        st.error(e)
+                        print(e.body)
+                        st.error(e.body)
                         st.session_state["FreeChatMessages"].pop(-1)
                         st.session_state["FreeChatMessagesDisplay"].pop(-1)
                         if 'tool_calls' in st.session_state["FreeChatMessages"][1].keys() and \
