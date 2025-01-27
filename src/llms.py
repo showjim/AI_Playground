@@ -39,36 +39,6 @@ from tqdm import tqdm
 from langchain.chains import LLMChain
 from langchain.memory import ConversationBufferWindowMemory
 
-# from langchain.agents import create_pandas_dataframe_agent
-from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
-from langchain.callbacks.base import BaseCallbackHandler
-
-
-# class StreamHandler(BaseCallbackHandler):
-#     def __init__(self, container, initial_text=""):
-#         self.container = container
-#         self.text=initial_text
-#     def on_llm_new_token(self, token: str, **kwargs) -> None:
-#         # "/" is a marker to show difference
-#         # you don't need it
-#         self.text+=token+"/"
-#         self.container.markdown(self.text)
-
-
-# class OpenAI():
-#     def __init__(self, dir="./", env='key.txt'):
-#         super().__init__()
-#         self.WORK_ENV_DIR = dir
-#         self.ENV_FILE = env
-#
-#     def setup_env(self):
-#         # Load OpenAI key
-#         if os.path.exists(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE)):
-#             shutil.copyfile(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE), ".env")
-#             load_dotenv()
-#         else:
-#             raise APIKeyNotFoundError("key.txt with OpenAI API is required")
-
 
 class OpenAIAzure():
     def __init__(self, dir="./", env='key.txt'):
