@@ -80,6 +80,7 @@ def main():
             if st.session_state["vectorreloadflag"] == True:
                 st.session_state["FileChat"].initial_llm(aa_llm_model, aa_embed_model, aa_max_resp, float(aa_temperature))
                 st.session_state["vectorreloadflag"] = False
+                st.session_state["type_status_changed"] = True
 
     # main page
         with tab1:
