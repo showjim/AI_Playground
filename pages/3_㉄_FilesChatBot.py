@@ -54,13 +54,17 @@ def main():
         with tab2:
             st.subheader("Parameter for document chains")
             aa_llm_model = st.selectbox(label="1.LLM Model",
-                                                options=["gpt-35-turbo", "gpt-4o", "gpt-4o-mini"],
+                                                options=["gpt-4o-mini", "gpt-4o", "ollama"],
                                                 index=0,
                                                 on_change=set_reload_setting_flag)
-            aa_combine_type = st.radio(label="2.Types of combine document chains",
+            aa_embed_model = st.selectbox(label="2.Embedding Model",
+                                        options=["text-embedding-ada-002", "ollama"],
+                                        index=0,
+                                        on_change=set_reload_setting_flag)
+            aa_combine_type = st.radio(label="3.Types of combine document chains",
                                                options=["stuff", "map_reduce", "refine", "map_rerank"],
                                                on_change=type_status_changed)
-            aa_temperature = st.selectbox(label="1.Temperature (0~1)",
+            aa_temperature = st.selectbox(label="4.Temperature (0~1)",
                                                   options=["0", "0.2", "0.4", "0.6","0.8", "1.0"],
                                                   index=1,
                                                   on_change=set_reload_setting_flag)
@@ -68,13 +72,13 @@ def main():
                 aa_max_resp_max_val = 16 * 1024
             else:
                 aa_max_resp_max_val = 4096
-            aa_max_resp = st.slider(label="1.4. Max response",
+            aa_max_resp = st.slider(label="5. Max response",
                                             min_value=256,
                                             max_value=aa_max_resp_max_val,
                                             value=2048,
                                             on_change=set_reload_setting_flag)
             if st.session_state["vectorreloadflag"] == True:
-                st.session_state["FileChat"].initial_llm(aa_llm_model, aa_max_resp, float(aa_temperature))
+                st.session_state["FileChat"].initial_llm(aa_llm_model, aa_embed_model, aa_max_resp, float(aa_temperature))
                 st.session_state["vectorreloadflag"] = False
 
     # main page

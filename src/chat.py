@@ -2,7 +2,7 @@ import glob
 from datetime import date
 import os.path
 from pathlib import Path
-from src.llms import OpenAI, OpenAIAzure
+from src.llms import OpenAIAzure
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory, ConversationBufferMemory
@@ -11,7 +11,8 @@ from langchain.chains import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
-from langchain.agents import AgentType, initialize_agent, load_tools, Tool
+from langchain.agents import AgentType, initialize_agent, Tool
+from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain.callbacks.base import BaseCallbackHandler
 
 from langchain.chains.qa_with_sources.stuff_prompt import EXAMPLE_PROMPT as DOC_PROMPT
@@ -61,8 +62,8 @@ class ChatBot():
     #     response = query_engine.query(query_str)
     #     return response.response
 
-    def initial_llm(self,model_name, num_output, temperature):
-        self.llm, self.embedding = self.model.create_chat_model(model_name, num_output, temperature)
+    def initial_llm(self,model_name, embded_name, num_output, temperature):
+        self.llm, self.embedding = self.model.create_chat_model(model_name, embded_name, num_output, temperature)
 
     def setup_vectordb(self, filname:str):
         DEFAULT_INDEX_FILE = Path(filname).stem + ".faiss"
@@ -177,7 +178,7 @@ class ChatBot():
         #                                            verbose=True,
         #                                            return_source_documents=True)
 
-        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
+        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT) #CONDENSE_QUESTION_PROMPT | self.llm #
 
         # doc_chain = load_qa_chain(self.llm, chain_type=chain_type, verbose=True) #map_reduce,stuff
         if chain_type == "stuff":

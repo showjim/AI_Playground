@@ -1,17 +1,16 @@
 import glob
 import os, json
 import shutil
-from multiprocessing import Pool
+# from multiprocessing import Pool
 from typing import List
 from pathlib import Path
-import pandas as pd
+# import pandas as pd
 import openai
 from dotenv import load_dotenv
 
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-
 from langchain_openai import AzureOpenAIEmbeddings
-from langchain.schema import HumanMessage
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 from langchain_community.document_loaders import (
     CSVLoader,
@@ -56,19 +55,19 @@ from langchain.callbacks.base import BaseCallbackHandler
 #         self.container.markdown(self.text)
 
 
-class OpenAI():
-    def __init__(self, dir="./", env='key.txt'):
-        super().__init__()
-        self.WORK_ENV_DIR = dir
-        self.ENV_FILE = env
-
-    def setup_env(self):
-        # Load OpenAI key
-        if os.path.exists(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE)):
-            shutil.copyfile(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE), ".env")
-            load_dotenv()
-        else:
-            raise APIKeyNotFoundError("key.txt with OpenAI API is required")
+# class OpenAI():
+#     def __init__(self, dir="./", env='key.txt'):
+#         super().__init__()
+#         self.WORK_ENV_DIR = dir
+#         self.ENV_FILE = env
+#
+#     def setup_env(self):
+#         # Load OpenAI key
+#         if os.path.exists(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE)):
+#             shutil.copyfile(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE), ".env")
+#             load_dotenv()
+#         else:
+#             raise APIKeyNotFoundError("key.txt with OpenAI API is required")
 
 
 class OpenAIAzure():
@@ -141,30 +140,39 @@ class OpenAIAzure():
         else:
             raise AzureConfigNotFoundError("config.json with Azure OpenAI config is required")
 
-    def create_chat_model(self, model_name, num_output, temperature):
-        # max LLM token input size
-        # max_input_size = 3900  # 4096
-        # set number of output tokens
-        # num_output = 1024  # 512
-        # set maximum chunk overlap
-        # max_chunk_overlap = 20
-        llm = AzureChatOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
-                               openai_api_key=openai.api_key,
-                               azure_endpoint=openai.api_base,
-                               openai_api_type=openai.api_type,
-                               openai_api_version=self.config_details['OPENAI_API_VERSION'],
-                               max_tokens=num_output,
-                               temperature=temperature,#0.2,
-                               )
+    def create_chat_model(self, model_name, embded_name, num_output, temperature):
+        if "gpt" in model_name:
+            # max LLM token input size
+            # max_input_size = 3900  # 4096
+            # set number of output tokens
+            # num_output = 1024  # 512
+            # set maximum chunk overlap
+            # max_chunk_overlap = 20
+            llm = AzureChatOpenAI(deployment_name=model_name, #self.config_details['CHATGPT_MODEL'],
+                                   openai_api_key=openai.api_key,
+                                   azure_endpoint=openai.api_base,
+                                   openai_api_type=openai.api_type,
+                                   openai_api_version=self.config_details['OPENAI_API_VERSION'],
+                                   max_tokens=num_output,
+                                   temperature=temperature,#0.2,
+                                   )
+        elif "ollama" in model_name:
+            llm = ChatOllama(
+                model="deepseek-r1:1.5b"
+            )
 
 
-        # You need to deploy your own embedding model as well as your own chat completion model
-        embeddings = AzureOpenAIEmbeddings(deployment=self.config_details['EMBEDDING_MODEL'],
-                                      azure_endpoint=openai.api_base,
-                                      openai_api_type=openai.api_type,
-                                      # chunk_size=1,
-        )
-
+        if "text-embedding-ada" in embded_name:
+            # You need to deploy your own embedding model as well as your own chat completion model
+            embeddings = AzureOpenAIEmbeddings(deployment=self.config_details['EMBEDDING_MODEL'],
+                                          azure_endpoint=openai.api_base,
+                                          openai_api_type=openai.api_type,
+                                          # chunk_size=1,
+            )
+        elif "ollama" in embded_name:
+            embeddings = OllamaEmbeddings(
+                model="nomic-embed-text"
+            )
 
         return llm, embeddings
 

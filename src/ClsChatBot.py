@@ -937,6 +937,14 @@ class ChatRobotOpenRouter(ChatRobotBase):
 
         return client
 
+    def initial_ollama(self):
+        client = OpenAI(
+            api_key="ollama",
+            base_url="http://localhost:11434/v1/"
+        )
+
+        return client
+
 
 class APIKeyNotFoundError(Exception):
     """
