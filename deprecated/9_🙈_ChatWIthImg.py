@@ -9,7 +9,7 @@ from src.ClsChatBot import ChatRobot
 
 st.title("🙈 Chat with IMG")
 
-env_path = os.path.abspath(".")
+env_path = os.path.abspath("../pages")
 chatbot = ChatRobot()
 
 def set_reload_setting_flag():
@@ -58,7 +58,7 @@ def main():
         # chain = initial_llm()
         chain = chatbot.initial_llm_vision()
         st.session_state["IMGChatChain"] = chain
-    work_path = os.path.abspath('.')
+    work_path = os.path.abspath('../pages')
 
     with st.sidebar:
         st.sidebar.expander("Settings")

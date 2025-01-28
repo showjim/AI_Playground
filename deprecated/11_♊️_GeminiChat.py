@@ -7,7 +7,7 @@ from src.ClsChatBot import ChatRobot, ChatRobotGemini
 import PIL.Image
 
 # __version__ = "Beta V0.0.2"
-env_path = os.path.abspath(".")
+env_path = os.path.abspath("../pages")
 # Azure OpenAI/TTS/STT initial
 chatbot = ChatRobot()
 chatbot.setup_env()
@@ -36,7 +36,7 @@ def set_reload_img_flag():
 
 def main():
     index = 0
-    work_path = os.path.abspath('.')
+    work_path = os.path.abspath('../pages')
     st.title("♊️Gemini Chat Web-UI App")
     # Sidebar contents
     if "GeminiChatReloadMode" not in st.session_state:
