@@ -93,7 +93,7 @@ def load_single_vectordb(workDir:str, vsFileName:str):
     index = load_index_from_storage(storage_context=storage_context)
     return index
 
-
+@st.cache_resource
 def load_vectordbs(workDir:str, all_files: List[str]):
     nodes = []
     for i in range(len(all_files)):
