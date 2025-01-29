@@ -1,9 +1,5 @@
 # Adapted from https://docs.streamlit.io/knowledge-base/tutorials/build-conversational-apps#build-a-simple-chatbot-gui-with-streaming
-import os
-
-import base64
-import gc
-import uuid
+import os, base64, gc, uuid, re
 from typing import List
 
 import openai, glob
@@ -31,11 +27,13 @@ import faiss
 # dimensions of nomic-embed-text
 d = 768 #1536
 faiss_index = faiss.IndexFlatL2(d)
+BASE_URL = 'http://127.0.0.1:11434/'
 
 
 @st.cache_resource
 def load_llm(model: str = "deepseek-r1:1.5b", temperature: float = 0.2):
-    llm = Ollama(model=model, request_timeout=120.0, temperature=temperature)
+    global BASE_URL
+    llm = Ollama(model=model, request_timeout=120.0, temperature=temperature,base_url=BASE_URL)
     return llm
 
 
@@ -145,17 +143,30 @@ def main():
         st.session_state["LocalVectorDB"] = None
 
     session_id = st.session_state.id
-    client = openai.OpenAI(
-        base_url='http://localhost:11434/v1/',
-
-        # required but ignored
-        api_key='ollama',
-    )
     work_path = os.path.abspath('.')
     workDir = os.path.join(work_path, "workDir")
 
     with st.sidebar:
         st.header(f"RAG Setting")
+        # select Ollama base url
+        option = st.selectbox(
+            "Select Base URL",
+            ("http://localhost:11434/", "http://ollama:11434/", "http://127.0.0.1:11434/", "Another option..."),
+        )
+        global BASE_URL
+        # Create text input for user entry
+        if option == "Another option...":
+            BASE_URL = st.text_input("Enter your other option...")
+        else:
+            BASE_URL = option
+
+        client = openai.OpenAI(
+            base_url=BASE_URL + 'v1/',
+
+            # required but ignored
+            api_key='ollama',
+        )
+
         list_completion = client.models.list()
         models = [model.id for model in list_completion.data]
         model = st.selectbox(
@@ -167,7 +178,7 @@ def main():
         # setup llm & embedding model
         llm = load_llm(model)
         Settings.llm = llm
-        embed_model = OllamaEmbedding(model_name="nomic-embed-text:latest")
+        embed_model = OllamaEmbedding(model_name="nomic-embed-text:latest", base_url=BASE_URL)
         # Creating an index over loaded data
         Settings.embed_model = embed_model
 
@@ -256,8 +267,14 @@ def main():
 
     # Display chat messages from history on app rerun
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        if message["role"] == "assistant":
+            with st.chat_message(message["role"]):
+                with st.expander("See thinking"):
+                    st.markdown(message["content"]["thinking"])
+                st.markdown(message["content"]["answers"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
     # Accept user input
     if prompt := st.chat_input("What's up?"):
@@ -268,7 +285,8 @@ def main():
             st.markdown(prompt)
 
         # Display assistant response in chat message container
-        with st.chat_message("assistant"):
+        with (st.chat_message("assistant")):
+            thinking_placeholder = st.empty()
             message_placeholder = st.empty()
             full_response = ""
             with st.spinner("preparing answer"):
@@ -279,13 +297,19 @@ def main():
                     full_response += chunk
                     message_placeholder.markdown(full_response + "▌")
 
-                # full_response = query_engine.query(prompt)
-
-                message_placeholder.markdown(full_response)
+                resp_thinking = ""
+                resp_answer = ""
+                if '<think>' in full_response and '</think>' in full_response:
+                    split_resp = re.split('<think>|</think>', full_response)
+                    resp_thinking = split_resp[1]
+                    resp_answer = split_resp[2]
+                    with thinking_placeholder.expander("See thinking"):
+                        st.markdown(resp_thinking)
+                message_placeholder.markdown(resp_answer)
                 # st.session_state.context = ctx
 
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.session_state.messages.append({"role": "assistant", "content": {"answers": resp_answer, "thinking": resp_thinking}})
 
 if __name__ == "__main__":
     main()
