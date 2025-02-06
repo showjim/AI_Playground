@@ -31,7 +31,7 @@ BASE_URL = 'http://127.0.0.1:11434/'
 
 
 @st.cache_resource
-def load_llm(model: str = "deepseek-r1:1.5b", temperature: float = 0.2):
+def load_llm(model: str = "deepseek-r1:1.5b", temperature: float = 0.6):
     global BASE_URL
     llm = Ollama(model=model, request_timeout=120.0, temperature=temperature,base_url=BASE_URL)
     return llm
@@ -107,6 +107,42 @@ def load_vectordbs(workDir:str, all_files: List[str]):
     final_index = VectorStoreIndex(nodes=nodes)
     return final_index
 
+def process_thinking_part(stream):
+    full_response = ""
+    with st.status("Thinking...", expanded=True) as status:
+        thinking_placeholder = st.empty()
+
+        for chunk in stream:
+            full_response += chunk
+            if '<think>' in chunk:
+                continue
+            if '</think>' in chunk:
+                chunk.replace('</think>', '')
+                status.update(label='Thinking complete', state='complete', expanded=False)
+                break
+            thinking_placeholder.markdown(full_response + "▌")
+    thinking_placeholder.markdown(full_response)
+    return full_response
+
+def process_answer_part(stream):
+    message_placeholder = st.empty()
+    full_response = ""
+    for chuck in stream:
+        full_response += chuck
+        message_placeholder.markdown(full_response + "▌")
+    message_placeholder.markdown(full_response)
+    return full_response
+
+def display_message(messages):
+    for message in messages:
+        if message["role"] == "assistant":
+            with st.chat_message(message["role"]):
+                with st.expander("See thinking"):
+                    st.markdown(message["content"]["thinking"])
+                st.markdown(message["content"]["answers"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
 def create_query_engine(index):
     # Create the query engine, where we use a cohere reranker on the fetched nodes
@@ -118,7 +154,7 @@ def create_query_engine(index):
         "---------------------\n"
         "{context_str}\n"
         "---------------------\n"
-        "Given the context information above I want you to think step by step to answer the query in a crisp manner, incase case you don't know the answer say 'I don't know!'.\n"
+        "Given the context information above I want you to think step by step to answer the query in a crisp manner, in the case you don't know the answer say 'I don't know!'.\n"
         "Query: {query_str}\n"
         "Answer: "
     )
@@ -128,6 +164,18 @@ def create_query_engine(index):
         {"response_synthesizer:text_qa_template": qa_prompt_tmpl}
     )
     return query_engine
+
+def get_ollama_model_list():
+    client = openai.OpenAI(
+        base_url=BASE_URL + 'v1/',
+
+        # required but ignored
+        api_key='ollama',
+    )
+
+    list_completion = client.models.list()
+    models = [model.id for model in list_completion.data]
+    return models
 
 def main():
     if "id" not in st.session_state:
@@ -153,6 +201,8 @@ def main():
             "Select Base URL",
             ("http://localhost:11434/", "http://ollama:11434/", "http://127.0.0.1:11434/", "Another option..."),
         )
+
+
         global BASE_URL
         # Create text input for user entry
         if option == "Another option...":
@@ -160,15 +210,7 @@ def main():
         else:
             BASE_URL = option
 
-        client = openai.OpenAI(
-            base_url=BASE_URL + 'v1/',
-
-            # required but ignored
-            api_key='ollama',
-        )
-
-        list_completion = client.models.list()
-        models = [model.id for model in list_completion.data]
+        models = get_ollama_model_list()
         model = st.selectbox(
             label="Select Model",
             options=models,
@@ -261,20 +303,14 @@ def main():
     with col2:
         st.button("Clear ↺", on_click=reset_chat)
 
+    st.subheader("", divider='rainbow')
+
     # Initialize chat history
     if "messages" not in st.session_state:
         reset_chat()
 
     # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        if message["role"] == "assistant":
-            with st.chat_message(message["role"]):
-                with st.expander("See thinking"):
-                    st.markdown(message["content"]["thinking"])
-                st.markdown(message["content"]["answers"])
-        else:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    display_message(st.session_state.messages)
 
     # Accept user input
     if prompt := st.chat_input("What's up?"):
@@ -286,30 +322,12 @@ def main():
 
         # Display assistant response in chat message container
         with (st.chat_message("assistant")):
-            thinking_placeholder = st.empty()
-            message_placeholder = st.empty()
-            full_response = ""
-            with st.spinner("preparing answer"):
-                # Simulate stream of response with milliseconds delay
-                streaming_response = st.session_state["QueryEngine"].query(prompt)
-
-                for chunk in streaming_response.response_gen:
-                    full_response += chunk
-                    message_placeholder.markdown(full_response + "▌")
-
-                resp_thinking = ""
-                resp_answer = ""
-                if '<think>' in full_response and '</think>' in full_response:
-                    split_resp = re.split('<think>|</think>', full_response)
-                    resp_thinking = split_resp[1]
-                    resp_answer = split_resp[2]
-                    with thinking_placeholder.expander("See thinking"):
-                        st.markdown(resp_thinking)
-                message_placeholder.markdown(resp_answer)
-                # st.session_state.context = ctx
+            streaming_response = st.session_state["QueryEngine"].query(prompt)
+            message_thinking = process_thinking_part(streaming_response.response_gen)
+            message_answer = process_answer_part(streaming_response.response_gen)
 
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": {"answers": resp_answer, "thinking": resp_thinking}})
+        st.session_state.messages.append({"role": "assistant", "content": {"answers": message_answer, "thinking": message_thinking}})
 
 if __name__ == "__main__":
     main()

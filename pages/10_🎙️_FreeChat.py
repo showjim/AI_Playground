@@ -164,7 +164,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["gpt-4o-mini", "gpt-4o", "meta-llama/llama-3.2-90b-vision-instruct"],
+                                                options=["gpt-4o-mini", "gpt-4o", "google/gemini-2.0-flash-001"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
@@ -233,7 +233,7 @@ def main():
         speech_txt = ""
         tab1, tab2, tab3 = st.tabs(["Azure STT File", "Azure STT", "Whisper"])
         with tab1:
-            audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True)#, format="wav")
+            audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True, format="wav")
             if audio_azure:
                 # Since Azure Whisper cannot be used any more so...
                 # I have to switch to Azure STT
