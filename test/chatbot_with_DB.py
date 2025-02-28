@@ -89,6 +89,14 @@ def get_chat_response(messages):
         st.error(f"Error getting response from OpenAI: {str(e)}")
         return None
 
+# Save message to database
+def save_chat_to_db(current_topic_id:int, role:str, message:str):
+    with DatabaseConnection('chat_history.db') as c:
+        c.execute(
+            "INSERT INTO chats (topic_id, role, message) VALUES (?, ?, ?)",
+            (current_topic_id, role, message)
+        )
+
 def main():
     st.set_page_config(page_title="AI Chat Assistant", layout="wide")
     
@@ -155,11 +163,7 @@ def main():
                 st.write(prompt)
             
             # Save user message to database
-            with DatabaseConnection('chat_history.db') as c:
-                c.execute(
-                    "INSERT INTO chats (topic_id, role, message) VALUES (?, ?, ?)",
-                    (st.session_state.current_topic_id, "user", prompt)
-                )
+            save_chat_to_db(st.session_state.current_topic_id, "user", prompt)
             
             # Get and display AI response
             with st.chat_message("assistant"):
@@ -171,11 +175,7 @@ def main():
                     st.session_state.messages.append(("assistant", response))
                     
                     # Save AI response to database
-                    with DatabaseConnection('chat_history.db') as c:
-                        c.execute(
-                            "INSERT INTO chats (topic_id, role, message) VALUES (?, ?, ?)",
-                            (st.session_state.current_topic_id, "assistant", response)
-                        )
+                    save_chat_to_db(st.session_state.current_topic_id, "assistant", response)
     else:
         st.info("👈 Please select or create a topic from the sidebar to start chatting.")
 

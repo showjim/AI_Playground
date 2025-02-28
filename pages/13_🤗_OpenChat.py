@@ -1,4 +1,5 @@
 import hmac
+import sqlite3
 from typing import List
 
 import streamlit as st
@@ -8,13 +9,69 @@ from src.ClsChatBot import ChatRobotOpenRouter
 
 
 env_path = os.path.abspath("..")
-
+CHAT_HISTORY_PATH = "./setting/chat_history.db"
 chatbot = ChatRobotOpenRouter()
 chatbot.setup_env("./setting/key.txt", "./setting/config.json")
-client = chatbot.initial_llm()
 
+# Database connection context manager
+class DatabaseConnection:
+    def __init__(self, db_name):
+        self.db_name = db_name
 
+    def __enter__(self):
+        self.conn = sqlite3.connect(self.db_name, check_same_thread=False)
+        self.cursor = self.conn.cursor()
+        return self.cursor
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.conn:
+            self.conn.commit()
+            self.conn.close()
+
+# Initialize database
+def init_database():
+    with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+        # Add indexes for better performance
+        c.execute('''CREATE TABLE IF NOT EXISTS topics
+                    (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    name TEXT UNIQUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS chats
+                    (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    topic_id INTEGER, 
+                    role TEXT, 
+                    message TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(topic_id) REFERENCES topics(id) ON DELETE CASCADE)''')
+        # Add indexes
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_topic_id ON chats(topic_id)''')
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_created_at ON chats(created_at)''')
+
+# Initialize session state
+def init_session_state():
+    if "current_topic_id" not in st.session_state:
+        st.session_state.current_topic_id = None
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "new_topic" not in st.session_state:
+        st.session_state.new_topic = ""
+
+def create_topic():
+    if st.session_state.new_topic:
+        try:
+            with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+                c.execute("INSERT INTO topics (name) VALUES (?)", (st.session_state.new_topic,))
+                topic_id = c.lastrowid
+            st.session_state.current_topic_id = topic_id
+            st.session_state.messages = []
+            # Clear the input
+            st.session_state.new_topic = ""
+            st.session_state.OpenChatMessages = []
+            st.session_state.OpenChatMessagesDisplay = []
+        except sqlite3.IntegrityError:
+            st.sidebar.error("Topic name already exists!")
+        except Exception as e:
+            st.sidebar.error(f"Error creating topic: {str(e)}")
 
 def set_reload_mode():
     st.session_state["OpenChatReloadMode"] = True
@@ -100,15 +157,8 @@ async def call_openrouter(model:str, messages: List, temperature:float, max_toke
                 except json.decoder.JSONDecodeError as e:
                     continue
 
-async def main():
-    index = 0
-    st.title("🤗Open Chat Web-UI App ")
-    st.caption('Powered by Streamlit, written by Chao Zhou')
-    st.subheader("", divider='rainbow')
-
-    if not check_password():
-        st.stop()  # Do not continue if check_password is not True.
-
+# Initialize session state
+def init_session_state():
     # Sidebar contents
     if "OpenChatReloadMode" not in st.session_state:
         st.session_state["OpenChatReloadMode"] = True
@@ -122,6 +172,30 @@ async def main():
     if "OpenChatMessagesDispay" not in st.session_state:
         # this is a shadow of "OpenChatMessages" to keep image URL from Dalle3
         st.session_state["OpenChatMessagesDispay"] = []
+    if "current_topic_id" not in st.session_state:
+        st.session_state.current_topic_id = None
+    if "new_topic" not in st.session_state:
+        st.session_state.new_topic = ""
+
+# Save message to database
+def save_chat_to_db(current_topic_id:int, role:str, message:str):
+    with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+        c.execute(
+            "INSERT INTO chats (topic_id, role, message) VALUES (?, ?, ?)",
+            (current_topic_id, role, message)
+        )
+
+async def main():
+    index = 0
+    st.title("🤗Open Chat Web-UI App ")
+    st.caption('Powered by Streamlit, written by Chao Zhou')
+    st.subheader("", divider='rainbow')
+
+    if not check_password():
+        st.stop()  # Do not continue if check_password is not True.
+
+    init_database()
+    init_session_state()
 
     with st.sidebar:
         st.header("Other Tools")
@@ -132,6 +206,50 @@ async def main():
         if st.button("About"):
             st.info(
                 "Thank you for using!\nCreated by Chao Zhou.\nAny suggestions please mail zhouchao486@gmail.com]")
+
+        with st.expander("Topics"):
+            # New topic input with callback
+            st.text_input(
+                "New Topic",
+                placeholder="Enter topic name",
+                key="new_topic",
+                on_change=create_topic
+            )
+            
+            # Display topics
+            with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+                c.execute("SELECT id, name FROM topics ORDER BY created_at DESC")
+                topics = c.fetchall()
+            
+            if topics:
+                st.divider()
+                for topic_id, topic_name in topics:
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
+                        if st.button(f"📝 {topic_name}", key=f"topic_{topic_id}"):
+                            st.session_state.current_topic_id = topic_id
+                            # Load messages for this topic
+                            with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+                                c.execute("SELECT role, message FROM chats WHERE topic_id = ? ORDER BY created_at", (topic_id,))
+                                db_content = c.fetchall()
+                                st.session_state.OpenChatMessages = [{"role": m[0], "content": m[1]} for m in db_content]
+                                st.session_state.OpenChatMessagesDisplay = []
+                                for m in db_content:
+                                    if m[0] == "user":
+                                        st.session_state.OpenChatMessagesDisplay.append({"role": m[0], "content": m[1]})
+                                    else:
+                                        st.session_state.OpenChatMessagesDisplay.append(
+                                            {"role": m[0], "content": {"answers": m[1], "thinking": ""}})
+
+                    with col2:
+                        if st.button("🗑️", key=f"delete_{topic_id}"):
+                            with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+                                c.execute("DELETE FROM topics WHERE id = ?", (topic_id,))
+                            if st.session_state.current_topic_id == topic_id:
+                                st.session_state.current_topic_id = None
+                                st.session_state.OpenChatMessages = []
+                                st.session_state.OpenChatMessagesDisplay = []
+                            st.rerun()
 
         with st.expander("Settings"):
             st.subheader("Parameter for Chatbot")
@@ -214,66 +332,74 @@ async def main():
                                                    "enable_reasoning": aa_enable_reasoning}
             st.session_state["OpenChatReloadFlag"] = False
 
-    # Display chat messages from history on app rerun
-    display_message(st.session_state["OpenChatMessagesDisplay"])
+    # Main chat area
+    if st.session_state.current_topic_id:
+        # Get topic name
+        with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+            c.execute("SELECT name FROM topics WHERE id = ?", (st.session_state.current_topic_id,))
+            topic_name = c.fetchone()[0]
+        
+        st.header(f"Topic: {topic_name}")
 
-    # Accept user input
-    if prompt := st.chat_input("Type you input here"):
-        # Add user message to chat history
-        max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
-        st.session_state["OpenChatMessages"] = chatbot.control_msg_history_szie(st.session_state["OpenChatMessages"], max_cnt)
-        st.session_state["OpenChatMessages"].append({"role": "user", "content": prompt})
-        st.session_state["OpenChatMessagesDisplay"].append({"role": "user", "content": prompt})
+        # Display chat messages from history on app rerun
+        display_message(st.session_state["OpenChatMessagesDisplay"])
 
-        print("HUMAN: " + prompt)
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        # Display assistant response in chat message container
-        with st.chat_message("assistant", avatar=st.session_state["OpenAvatarImg"]):
-            if aa_enable_reasoning:
-                with st.status("Thinking...", expanded=True) as status:
-                    thinking_placeholder = st.empty()
-            message_placeholder = st.empty()
-            message_answer = ""
-            message_thinking = ""
-            with st.spinner("preparing answer"):
-                try:
-                    async for json_chunk in call_openrouter(
-                        model=st.session_state["FreeChatSetting"]["model"],
-                        messages=st.session_state["OpenChatMessages"],
-                        max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
-                        temperature=st.session_state["FreeChatSetting"]["temperature"],
-                        enable_reasoning=st.session_state["FreeChatSetting"]["enable_reasoning"]
-                    ):
-                        if 'choices' in json_chunk and json_chunk['choices']:
-                            delta = json_chunk['choices'][0].get('delta', {})
-                            if "reasoning" in delta.keys():
-                                if delta["reasoning"]:
-                                    message_thinking += delta["reasoning"]
-                                    # with thinking_status.status("Thinking...", expanded=True) as status:
-                                    thinking_placeholder.markdown(message_thinking)
-                            if delta["content"]:
-                                message_answer += delta["content"]
-                                message_placeholder.markdown(message_answer)
-                except Exception as e:
-                    print("Error found: ")
-                    print(e)
-                    print(st.session_state["OpenChatMessages"])
-                    st.error(e)
-                    if "error" in json_chunk:
-                        st.error(json_chunk)
-                    st.session_state["OpenChatMessages"].pop(-1)
-                    st.session_state["OpenChatMessagesDisplay"].pop(-1)
-            if aa_enable_reasoning:
-                status.update(label='Thinking complete', state='complete', expanded=False)
-            st.session_state["OpenChatMessagesDisplay"].append({"role": "assistant", "content": {"answers": message_answer, "thinking": message_thinking}})
-            st.session_state["OpenChatMessages"].append({"role": "assistant", "content": message_answer})
-            print("AI: " + message_answer)
-            # if aa_voice_name != "None":
-            #     chatbot.text_2_speech(full_response, aa_voice_name)
-            # btn_placeholder.button(label="Play", key="current", on_click=chatbot.text_2_speech,
-            #                        args=(full_response, aa_voice_name,))
+        # Accept user input
+        if prompt := st.chat_input("Type you input here"):
+            # Add user message to chat history
+            max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
+            st.session_state["OpenChatMessages"] = chatbot.control_msg_history_szie(st.session_state["OpenChatMessages"], max_cnt)
+            st.session_state["OpenChatMessages"].append({"role": "user", "content": prompt})
+            st.session_state["OpenChatMessagesDisplay"].append({"role": "user", "content": prompt})
+            # Save user message to database
+            save_chat_to_db(st.session_state.current_topic_id, "user", prompt)
+            print("HUMAN: " + prompt)
+            # Display user message in chat message container
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            # Display assistant response in chat message container
+            with st.chat_message("assistant", avatar=st.session_state["OpenAvatarImg"]):
+                if aa_enable_reasoning:
+                    with st.status("Thinking...", expanded=True) as status:
+                        thinking_placeholder = st.empty()
+                message_placeholder = st.empty()
+                message_answer = ""
+                message_thinking = ""
+                with st.spinner("preparing answer"):
+                    try:
+                        async for json_chunk in call_openrouter(
+                            model=st.session_state["FreeChatSetting"]["model"],
+                            messages=st.session_state["OpenChatMessages"],
+                            max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
+                            temperature=st.session_state["FreeChatSetting"]["temperature"],
+                            enable_reasoning=st.session_state["FreeChatSetting"]["enable_reasoning"]
+                        ):
+                            if 'choices' in json_chunk and json_chunk['choices']:
+                                delta = json_chunk['choices'][0].get('delta', {})
+                                if "reasoning" in delta.keys():
+                                    if delta["reasoning"]:
+                                        message_thinking += delta["reasoning"]
+                                        # with thinking_status.status("Thinking...", expanded=True) as status:
+                                        thinking_placeholder.markdown(message_thinking)
+                                if delta["content"]:
+                                    message_answer += delta["content"]
+                                    message_placeholder.markdown(message_answer)
+                    except Exception as e:
+                        print("Error found: ")
+                        print(e)
+                        print(st.session_state["OpenChatMessages"])
+                        st.error(e)
+                        if "error" in json_chunk:
+                            st.error(json_chunk)
+                        st.session_state["OpenChatMessages"].pop(-1)
+                        st.session_state["OpenChatMessagesDisplay"].pop(-1)
+                if aa_enable_reasoning:
+                    status.update(label='Thinking complete', state='complete', expanded=False)
+                st.session_state["OpenChatMessagesDisplay"].append({"role": "assistant", "content": {"answers": message_answer, "thinking": message_thinking}})
+                st.session_state["OpenChatMessages"].append({"role": "assistant", "content": message_answer})
+                # Save AI response to database
+                save_chat_to_db(st.session_state.current_topic_id, "assistant", message_answer)
+                print("AI: " + message_answer)
 
 
 if __name__ == "__main__":
