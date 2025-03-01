@@ -76,7 +76,7 @@ def create_img_from_siliconflow(prompt:str):
     url = "https://api.siliconflow.cn/v1/images/generations"
 
     payload = {
-        "model": "black-forest-labs/FLUX.1-dev", #"stabilityai/stable-diffusion-3-5-large",
+        "model": "Kwai-Kolors/Kolors", #"black-forest-labs/FLUX.1-dev", #"stabilityai/stable-diffusion-3-5-large", #“Kwai-Kolors/Kolors”
         "prompt": prompt,
         "negative_prompt": "<string>",
         "image_size": "1024x1024",
@@ -164,7 +164,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["gpt-4o-mini", "gpt-4o", "google/gemini-2.0-flash-001"],
+                                                options=["gpt-4o", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
