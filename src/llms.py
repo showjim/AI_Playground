@@ -8,7 +8,7 @@ from pathlib import Path
 import openai
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI
 from langchain_openai import AzureOpenAIEmbeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
