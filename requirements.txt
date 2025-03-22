@@ -1,17 +1,17 @@
-langchain==0.3.15
+langchain==0.3.20
 langchain-ollama==0.2.2
 langchain-openai==0.3.2
 langchain-community==0.3.19
 python-dotenv~=1.00
 streamlit==1.43.1
 openai~=1.59.6
-tiktoken~=0.5.2
+tiktoken~=0.7
 faiss-cpu==1.10.0
 pymupdf
 unstructured~=0.7.8
 pandas==2.0.2
 tqdm~=4.66.4
-numpy==1.24.0
+numpy==1.26.2
 scikit-learn~=1.5.2
 nltk~=3.9.1
 azure-cognitiveservices-speech~=1.33.0
@@ -24,4 +24,4 @@ pyannote-audio~=3.1.1
 pyannote-core~=5.0.0
 streamlit_mic_recorder==0.0.8
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==2.2.0
+torch==2.6.0
