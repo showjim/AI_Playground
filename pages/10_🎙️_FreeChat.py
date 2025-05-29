@@ -164,7 +164,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["gpt-4o", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat"],
+                                                options=["openai/gpt-4.1", "google/gemini-2.5-pro-preview", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat-v3-0324"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
