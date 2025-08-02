@@ -108,7 +108,7 @@ def execute_function_call(available_functions, tool_call):
     return function_response
 
 
-def whisper_STT(audio_test_file="./TalkForAFewSeconds16.wav", audio_language="en", prompt="以下是普通话的句子。", translate=False):
+def whisper_STT(audio_test_file, audio_language="en", prompt="以下是普通话的句子。", translate=False):
     model_name = "whisper-1"
     result = ""
     if translate:
@@ -164,7 +164,7 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["openai/gpt-4.1", "google/gemini-2.5-pro-preview", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat-v3-0324"],
+                                                options=["openai/gpt-4.1", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat-v3-0324"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
@@ -240,7 +240,7 @@ def main():
                 filename = "./tmp.wav"
                 with open(filename, "wb") as f:
                     f.write(audio_azure['bytes'])
-                speech_txt = chatbot.speech_2_text_file_based(filename)
+                speech_txt = chatbot.speech_2_text_continuous_file_based(filename) # speech_2_text_file_based(filename)
 
         with tab2:
             # Speech2Text

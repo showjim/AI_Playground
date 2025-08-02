@@ -639,6 +639,58 @@ class ChatRobot(ChatRobotBase):
             result_txt = "Speech Recognition canceled"
         return result_txt
 
+    def speech_2_text_continuous_file_based(self, filename:str):
+        """performs continuous speech recognition with input from an audio file"""
+        # <SpeechContinuousRecognitionWithFile>
+        audio_config = speechsdk.audio.AudioConfig(filename=filename)
+        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=self.speech_config, audio_config=audio_config)
+        full_text = ""
+        done = False
+        last_speech_time = time.time()
+
+        def recognizing_cb(evt):
+            # This callback can be used to show intermediate results.
+            nonlocal last_speech_time
+            last_speech_time = time.time()  # Reset the last speech time
+
+        def recognized_cb(evt):
+            nonlocal full_text
+            # Append the recognized text to the full_text variable
+            full_text += evt.result.text + " "
+            # Check the recognized text for the stop phrase
+            # print("OK")
+            print('RECOGNIZED: {}'.format(evt))
+
+        def stop_cb(evt: speechsdk.SessionEventArgs):
+            """callback that signals to stop continuous recognition upon receiving an event `evt`"""
+            print("CLOSING on {}".format(evt))
+            nonlocal done
+            done = True
+
+        # Connect callbacks to the events fired by the speech recognizer
+        speech_recognizer.recognizing.connect(recognizing_cb)
+        speech_recognizer.recognized.connect(recognized_cb)
+        speech_recognizer.session_started.connect(lambda evt: print("SESSION STARTED: {}".format(evt)))
+        speech_recognizer.session_stopped.connect(lambda evt: print("SESSION STOPPED {}".format(evt)))
+        speech_recognizer.canceled.connect(lambda evt: print("CANCELED {}".format(evt)))
+        # Stop continuous recognition on either session stopped or canceled events
+        speech_recognizer.session_stopped.connect(stop_cb)
+        speech_recognizer.canceled.connect(stop_cb)
+
+        # Start continuous speech recognition
+        speech_recognizer.start_continuous_recognition()
+
+        while not done:
+            time.sleep(.1)  # You can also use time.sleep() to wait for a short amount of time
+            if time.time() - last_speech_time > 2.5:  # If it's been more than 3 seconds since last speech
+                print("2.5 seconds of silence detected, stopping continuous recognition.")
+                speech_recognizer.stop_continuous_recognition_async()
+                done = True
+
+        speech_recognizer.stop_continuous_recognition()
+        # </SpeechContinuousRecognitionWithFile>
+        return full_text.strip()
+
     def speech_2_text_continous(self):
         # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
         audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
