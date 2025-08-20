@@ -231,7 +231,7 @@ def main():
 
         st.subheader("2. STT")
         speech_txt = ""
-        tab1, tab2, tab3 = st.tabs(["Azure STT File", "Azure STT", "Whisper"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Azure STT File", "Azure STT", "Whisper", "SiliconFlow"])
         with tab1:
             audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True, format="wav")
             if audio_azure:
@@ -271,6 +271,16 @@ def main():
                     is_translate = True
                 speech_txt = whisper_STT(audio_BIO, "zh",translate=is_translate)
 
+        with tab4:
+            audio_siliconflow = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_SiliconFlow', just_once=True,
+                                       format="wav")
+            if audio_siliconflow:
+                # Since Azure Whisper cannot be used any more so...
+                # I have to switch to Azure STT
+                filename = "./tmp.wav"
+                with open(filename, "wb") as f:
+                    f.write(audio_siliconflow['bytes'])
+                speech_txt = chatbot.speech_2_text_siliconflow(filename)
 
         # upload image file & create index base
         st.subheader("3. Vision")

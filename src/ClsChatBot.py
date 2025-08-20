@@ -1,4 +1,4 @@
-import os, shutil, json, time, glob
+import os, shutil, json, time, glob, requests
 from pathlib import Path
 import openai
 from openai import AzureOpenAI, OpenAI
@@ -762,6 +762,20 @@ class ChatRobot(ChatRobotBase):
         speech_recognizer.stop_continuous_recognition_async()
 
         return full_text.strip()  # Return the full text without leading/trailing spaces
+
+    def speech_2_text_siliconflow(self, audioFileName:str):
+        url = "https://api.siliconflow.cn/v1/audio/transcriptions"
+        key = os.getenv('SILICONFLOW_API_KEY')
+        audioFile = open(audioFileName, 'rb')
+        files = {"file": audioFile}
+        payload = {"model": "FunAudioLLM/SenseVoiceSmall"}
+        headers = {"Authorization": F"Bearer {key}"}
+
+        response = requests.post(url, data=payload, files=files, headers=headers)
+
+        resp_dict = response.json()
+
+        return resp_dict['text']
 
     def initial_tools(self):
         tools = [
