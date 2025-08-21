@@ -272,15 +272,13 @@ def main():
                 speech_txt = whisper_STT(audio_BIO, "zh",translate=is_translate)
 
         with tab4:
-            audio_siliconflow = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_SiliconFlow', just_once=True,
-                                       format="wav")
+            # audio_siliconflow = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_SiliconFlow', just_once=True,
+            #                            format="wav")
+            audio_siliconflow = st.audio_input("Record a voice message", label_visibility="hidden")
             if audio_siliconflow:
                 # Since Azure Whisper cannot be used any more so...
-                # I have to switch to Azure STT
-                filename = "./tmp.wav"
-                with open(filename, "wb") as f:
-                    f.write(audio_siliconflow['bytes'])
-                speech_txt = chatbot.speech_2_text_siliconflow(filename)
+                # I have to switch to SiliconFlow STT
+                speech_txt = chatbot.speech_2_text_siliconflow(audio_siliconflow)
 
         # upload image file & create index base
         st.subheader("3. Vision")

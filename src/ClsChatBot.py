@@ -763,10 +763,10 @@ class ChatRobot(ChatRobotBase):
 
         return full_text.strip()  # Return the full text without leading/trailing spaces
 
-    def speech_2_text_siliconflow(self, audioFileName:str):
+    def speech_2_text_siliconflow(self, audioFile):
         url = "https://api.siliconflow.cn/v1/audio/transcriptions"
         key = os.getenv('SILICONFLOW_API_KEY')
-        audioFile = open(audioFileName, 'rb')
+        # audioFile = open(audioFileName, 'rb')
         files = {"file": audioFile}
         payload = {"model": "FunAudioLLM/SenseVoiceSmall"}
         headers = {"Authorization": F"Bearer {key}"}
