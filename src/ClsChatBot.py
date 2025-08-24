@@ -19,6 +19,7 @@ class ChatRobotBase:
         Returns:
 
         """
+
     def initial_llm(self):
         """Set up the model"""
 
@@ -446,8 +447,8 @@ Before and during responding, Claude should quickly check and ensure the respons
         while len(msglist) > max_cnt:
             for i in range(delcnt):
                 if 'tool_calls' in msglist[1].keys() and msglist[2]['role'] == 'tool':
-                    msglist.pop(1) # delete tool call
-                    msglist.pop(1) # delete corresponding response from tool
+                    msglist.pop(1)  # delete tool call
+                    msglist.pop(1)  # delete corresponding response from tool
                 else:
                     msglist.pop(1)
         return msglist
@@ -466,6 +467,7 @@ Before and during responding, Claude should quickly check and ensure the respons
 
     def get_keys(self, d, value):
         return [k for k, v in d.items() if v == value]
+
 
 class ChatRobot(ChatRobotBase):
     def __init__(self):
@@ -529,7 +531,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_llm(self):
         client = AzureOpenAI(
-            api_version=self.config_details['OPENAI_API_VERSION'], # "2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'],  # "2023-12-01-preview",
             api_key=os.getenv("OPENAI_API_KEY"),
             azure_endpoint=self.config_details['OPENAI_API_BASE']
         )
@@ -540,7 +542,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_dalle3(self):
         client = AzureOpenAI(
-            api_version=self.config_details['OPENAI_API_VERSION'], #"2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'],  # "2023-12-01-preview",
             api_key=os.environ["DALLE3_MODEL"],
             azure_endpoint=os.environ["DALLE3_MODEL_ENDPOINT"]
         )
@@ -551,7 +553,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_whisper(self):
         client = AzureOpenAI(
-            api_version=self.config_details['OPENAI_API_VERSION'], #"2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'],  # "2023-12-01-preview",
             api_key=os.environ["WHISPER_MODEL"],
             azure_endpoint=os.environ["WHISPER_MODEL_ENDPOINT"]
         )
@@ -562,7 +564,7 @@ class ChatRobot(ChatRobotBase):
 
     def initial_llm_vision(self):
         client = AzureOpenAI(
-            api_version=self.config_details['OPENAI_API_VERSION'], # "2023-12-01-preview",
+            api_version=self.config_details['OPENAI_API_VERSION'],  # "2023-12-01-preview",
             api_key=os.environ["VISION_MODEL"],
             azure_endpoint=os.environ["VISION_MODEL_ENDPOINT"]
         )
@@ -639,7 +641,7 @@ class ChatRobot(ChatRobotBase):
             result_txt = "Speech Recognition canceled"
         return result_txt
 
-    def speech_2_text_continuous_file_based(self, filename:str):
+    def speech_2_text_continuous_file_based(self, filename: str):
         """performs continuous speech recognition with input from an audio file"""
         # <SpeechContinuousRecognitionWithFile>
         audio_config = speechsdk.audio.AudioConfig(filename=filename)
@@ -845,7 +847,7 @@ class ChatRobotGemini(ChatRobotBase):
             shutil.copyfile(key_file, ".env")
             load_dotenv()
             genai.configure(api_key=os.getenv("GEMINI_KEY"))
-            os.environ["GEMINI_KEY"]=os.getenv("GEMINI_KEY")
+            os.environ["GEMINI_KEY"] = os.getenv("GEMINI_KEY")
         else:
             print("key.txt with OpenAI API is required")
             raise APIKeyNotFoundError("key.txt with Google API is required")
@@ -939,7 +941,7 @@ Current time: %s
             print("Wrong mode selected!")
         return prompt_template
 
-    def compose_prompt(self, msg_list, query:str, isTxtOnly: bool = False):
+    def compose_prompt(self, msg_list, query: str, isTxtOnly: bool = False):
         """merge all turn conversation to string, to make pro vision support multi-turn"""
         full_prompt_list = []
         index = 0
