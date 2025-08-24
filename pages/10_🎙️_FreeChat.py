@@ -4,7 +4,6 @@ from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobot, ChatRobotOpenRouter, ChatRobotSiliconFlow
 import openai
-from streamlit_mic_recorder import mic_recorder
 from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
@@ -373,9 +372,15 @@ def main():
 
         st.subheader("2. STT")
         speech_txt = ""
-        tab1, tab2, tab3, tab4 = st.tabs(["Azure STT File", "Azure STT", "Whisper", "SiliconFlow"])
+        tab1, tab2, tab3, tab4 = st.tabs([ "SiliconFlow", "Azure STT File", "Azure STT", "Whisper"])
         with tab1:
-            audio_azure = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_Azure', just_once=True, format="wav")
+            audio_siliconflow = st.audio_input("Record a voice message", key ="SiliconFlow", label_visibility="hidden")
+            if audio_siliconflow:
+                # Since Azure Whisper cannot be used any more so...
+                # I have to switch to SiliconFlow STT
+                speech_txt = chatbot_siliconflow.stt(audio_siliconflow)
+        with tab2:
+            audio_azure = st.audio_input("Record a voice message", key ="Azure STT File", label_visibility="hidden")
             if audio_azure:
                 # Since Azure Whisper cannot be used any more so...
                 # I have to switch to Azure STT
@@ -383,8 +388,7 @@ def main():
                 with open(filename, "wb") as f:
                     f.write(audio_azure['bytes'])
                 speech_txt = chatbot.speech_2_text_continuous_file_based(filename) # speech_2_text_file_based(filename)
-
-        with tab2:
+        with tab3:
             # Speech2Text
             aa_audio_mode = st.selectbox(label="`Audio Input Mode`",
                                                  options=["Single", "Continuous"],
@@ -398,29 +402,17 @@ def main():
                     print("")
                     # speech_txt = chatbot.speech_2_text_file_based()
         # another STT: Whisper option
-        with tab3:
+        with tab4:
             aa_whisper_mode = st.selectbox(label="`Whipser/Azure STT Mode`",
                                          options=["Transcribe", "Translate"],
                                          index=0)
-            audio = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder', just_once=True)
+            audio = st.audio_input("Record a voice message", key ="Whisper", label_visibility="hidden")
             if audio:
-                # st.audio(audio['bytes'])
-                audio_BIO = io.BytesIO(audio['bytes'])
-                audio_BIO.name = 'audio.webm'
                 if aa_whisper_mode == "Transcribe":
                     is_translate = False
                 else:
                     is_translate = True
-                speech_txt = whisper_STT(audio_BIO, "zh",translate=is_translate)
-
-        with tab4:
-            # audio_siliconflow = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder_SiliconFlow', just_once=True,
-            #                            format="wav")
-            audio_siliconflow = st.audio_input("Record a voice message", label_visibility="hidden")
-            if audio_siliconflow:
-                # Since Azure Whisper cannot be used any more so...
-                # I have to switch to SiliconFlow STT
-                speech_txt = chatbot_siliconflow.stt(audio_siliconflow)
+                speech_txt = whisper_STT(audio, "zh",translate=is_translate)
 
         # upload image file & create index base
         st.subheader("3. Vision")
