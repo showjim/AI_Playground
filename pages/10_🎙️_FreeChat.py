@@ -497,7 +497,7 @@ def main():
                         for content in message["content"]:
                             st.markdown(content["text"])
                             st.button(label="Play", key="history" + str(index), on_click=chatbot.text_2_speech,
-                                      args=(content["text"], aa_voice_name,))
+                                      args=(str(content["text"]).replace("*","").replace("#", ""), aa_voice_name,))
                             index += 1
                         if "image" in message.keys():
                             st.image(message["image"], width=256)
@@ -653,7 +653,7 @@ def main():
                 if aa_voice_name != "None":
                     chatbot.text_2_speech(full_response, aa_voice_name)
                 btn_placeholder.button(label="Play", key="current", on_click=chatbot.text_2_speech,
-                                       args=(full_response, aa_voice_name,))
+                                       args=(full_response.replace("*","").replace("#", ""), aa_voice_name,))
 
 
 if __name__ == "__main__":
