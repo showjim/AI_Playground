@@ -2,7 +2,7 @@ import streamlit as st
 import os, time, json, io, base64, requests, sqlite3
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
-from src.ClsChatBot import ChatRobot, ChatRobotOpenRouter
+from src.ClsChatBot import ChatRobot, ChatRobotOpenRouter, ChatRobotSiliconFlow
 import openai
 from streamlit_mic_recorder import mic_recorder
 from pathlib import Path
@@ -15,7 +15,7 @@ chatbot.setup_env()
 chatbot_or = ChatRobotOpenRouter()
 chatbot_or.setup_env()
 client = chatbot_or.initial_llm() #chatbot.initial_llm()
-client_siliconflow = chatbot_or.initial_siliconflow()
+chatbot_siliconflow = ChatRobotSiliconFlow()
 client_dalle3 = chatbot.initial_dalle3()
 client_stt = chatbot.initial_whisper()
 tools = chatbot.initial_tools()
@@ -420,7 +420,7 @@ def main():
             if audio_siliconflow:
                 # Since Azure Whisper cannot be used any more so...
                 # I have to switch to SiliconFlow STT
-                speech_txt = chatbot.speech_2_text_siliconflow(audio_siliconflow)
+                speech_txt = chatbot_siliconflow.stt(audio_siliconflow)
 
         # upload image file & create index base
         st.subheader("3. Vision")
