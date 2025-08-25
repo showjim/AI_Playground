@@ -263,7 +263,7 @@ def main():
                                             value=512,
                                             on_change=set_reload_flag)
             aa_context_msg = st.select_slider(label="`4. Context message`",
-                                                      options=[1, 5, 10, 20],
+                                                      options=[1, 5, 10, 20, 50],
                                                       value=5,
                                                       on_change=set_reload_flag
                                                       )
@@ -651,7 +651,7 @@ def main():
                     save_chat_to_db(st.session_state.current_topic_id, "assistant", "text", full_response)
                 print("AI: " + full_response)
                 if aa_voice_name != "None":
-                    chatbot.text_2_speech(full_response, aa_voice_name)
+                    chatbot.text_2_speech(full_response.replace("*","").replace("#", ""), aa_voice_name)
                 btn_placeholder.button(label="Play", key="current", on_click=chatbot.text_2_speech,
                                        args=(full_response.replace("*","").replace("#", ""), aa_voice_name,))
 
