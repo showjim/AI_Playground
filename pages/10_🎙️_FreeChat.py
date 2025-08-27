@@ -2,22 +2,23 @@ import streamlit as st
 import os, time, json, io, base64, requests, sqlite3
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
-from src.ClsChatBot import ChatRobot, ChatRobotOpenRouter, ChatRobotSiliconFlow
+from src.ClsChatBot import ChatRobotAzure, ChatRobotOpenRouter, ChatRobotSiliconFlow
 import openai
 from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
 CHAT_HISTORY_PATH = "./setting/chat_history_nangua.db"
-chatbot = ChatRobot()
-chatbot.setup_env()
+chatbot_azure = ChatRobotAzure()
+chatbot_azure.setup_env()
 chatbot_or = ChatRobotOpenRouter()
 chatbot_or.setup_env()
 client = chatbot_or.initial_llm() #chatbot.initial_llm()
 chatbot_siliconflow = ChatRobotSiliconFlow()
-client_dalle3 = chatbot.initial_dalle3()
-client_stt = chatbot.initial_whisper()
-tools = chatbot.initial_tools()
+# client_dalle3 = chatbot_azure.initial_dalle3()
+# client_stt = chatbot_azure.initial_whisper()
+chatbot_azure.initial_stt()
+tools = chatbot_or.initial_tools()
 
 
 st.set_page_config(page_title="FreeChat - Chatbot With Native APIs")
@@ -124,21 +125,21 @@ def get_current_weather(location, unit="fahrenheit"):
 
 def create_img_by_dalle3(prompt):
     """Create image by call to Dall-E3"""
-    result = client_dalle3.images.generate(
-        model="Dalle3",  # the name of your DALL-E 3 deployment
-        prompt=prompt,  # "a close-up of a bear walking through the forest",
-        size="1024x1024",
-        style="vivid",  # "vivid", "natural"
-        # quality="auto",  # "standard" "hd"
-        n=1
-    )
-    json_response = json.loads(result.model_dump_json())
-    # Retrieve the generated image
-    image_url = json_response["data"][0]["url"]  # extract image URL from response
-    revised_prompt = json_response["data"][0]["revised_prompt"]
-    print("Dall-E3: " + revised_prompt)
-    print("Dall-E3: " + image_url)
-    return image_url
+    # result = client_dalle3.images.generate(
+    #     model="Dalle3",  # the name of your DALL-E 3 deployment
+    #     prompt=prompt,  # "a close-up of a bear walking through the forest",
+    #     size="1024x1024",
+    #     style="vivid",  # "vivid", "natural"
+    #     # quality="auto",  # "standard" "hd"
+    #     n=1
+    # )
+    # json_response = json.loads(result.model_dump_json())
+    # # Retrieve the generated image
+    # image_url = json_response["data"][0]["url"]  # extract image URL from response
+    # revised_prompt = json_response["data"][0]["revised_prompt"]
+    # print("Dall-E3: " + revised_prompt)
+    # print("Dall-E3: " + image_url)
+    # return image_url
 
 def create_img_from_siliconflow(prompt:str):
     """Create image by call to SiliconFlow"""
@@ -185,21 +186,21 @@ def execute_function_call(available_functions, tool_call):
 def whisper_STT(audio_test_file, audio_language="en", prompt="以下是普通话的句子。", translate=False):
     model_name = "whisper-1"
     result = ""
-    if translate:
-        result = client_stt.audio.translations.create(
-            file=audio_test_file,  # open(audio_test_file, "rb"),
-            model=model_name,
-            response_format="text",
-        )
-    else:
-        result = client_stt.audio.transcriptions.create(
-                    file=audio_test_file, #open(audio_test_file, "rb"),
-                    model=model_name,
-                    language=audio_language,
-                    response_format="text",
-                    prompt=prompt,
-        )
-    return result
+    # if translate:
+    #     result = client_stt.audio.translations.create(
+    #         file=audio_test_file,  # open(audio_test_file, "rb"),
+    #         model=model_name,
+    #         response_format="text",
+    #     )
+    # else:
+    #     result = client_stt.audio.transcriptions.create(
+    #                 file=audio_test_file, #open(audio_test_file, "rb"),
+    #                 model=model_name,
+    #                 language=audio_language,
+    #                 response_format="text",
+    #                 prompt=prompt,
+    #     )
+    # return result
 
 @st.cache_resource
 def create_img_store_dict(index_file_list: List[str]):
@@ -302,14 +303,14 @@ def main():
             aa_voice_name = st.selectbox(label="`5. Voice Name`",
                                                  options=["None", "小南瓜", "小东瓜", "Ana"],
                                                  index=0)
-            chatbot.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
+            chatbot_azure.speech_config.speech_recognition_language = "zh-CN"  # "zh-CN" #"en-US"
             if aa_voice_name == "小南瓜":
                 aa_voice_name = "zh-CN-XiaoyiNeural"
             elif aa_voice_name == "小东瓜":
                 aa_voice_name = "zh-CN-YunxiaNeural"
             elif aa_voice_name == "Ana":
                 aa_voice_name = "en-US-AnaNeural"
-                chatbot.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
+                chatbot_azure.speech_config.speech_recognition_language = "en-US"  # "zh-CN" #"en-US"
 
         with st.expander("Topics"):
             # New topic input with callback
@@ -387,7 +388,7 @@ def main():
                 filename = "./tmp.wav"
                 with open(filename, "wb") as f:
                     f.write(audio_azure['bytes'])
-                speech_txt = chatbot.speech_2_text_continuous_file_based(filename) # speech_2_text_file_based(filename)
+                speech_txt = chatbot_azure.speech_2_text_continuous_file_based(filename) # speech_2_text_file_based(filename)
         with tab3:
             # Speech2Text
             aa_audio_mode = st.selectbox(label="`Audio Input Mode`",
@@ -395,9 +396,9 @@ def main():
                                                  index=0)
             if st.button("`Speak`"):
                 if aa_audio_mode == "Single":
-                    speech_txt = chatbot.speech_2_text()
+                    speech_txt = chatbot_azure.speech_2_text()
                 elif aa_audio_mode == "Continuous":
-                    speech_txt = chatbot.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
+                    speech_txt = chatbot_azure.speech_2_text_continous() #speech_2_text() #speech_2_text_continous() #speech_2_text()
                 else:
                     print("")
                     # speech_txt = chatbot.speech_2_text_file_based()
@@ -496,7 +497,7 @@ def main():
                     with st.chat_message(name=message["role"], avatar=st.session_state["AvatarImg"]):
                         for content in message["content"]:
                             st.markdown(content["text"])
-                            st.button(label="Play", key="history" + str(index), on_click=chatbot.text_2_speech,
+                            st.button(label="Play", key="history" + str(index), on_click=chatbot_azure.text_2_speech,
                                       args=(str(content["text"]).replace("*","").replace("#", ""), aa_voice_name,))
                             index += 1
                         if "image" in message.keys():
@@ -651,8 +652,8 @@ def main():
                     save_chat_to_db(st.session_state.current_topic_id, "assistant", "text", full_response)
                 print("AI: " + full_response)
                 if aa_voice_name != "None":
-                    chatbot.text_2_speech(full_response.replace("*","").replace("#", ""), aa_voice_name)
-                btn_placeholder.button(label="Play", key="current", on_click=chatbot.text_2_speech,
+                    chatbot_azure.text_2_speech(full_response.replace("*","").replace("#", ""), aa_voice_name)
+                btn_placeholder.button(label="Play", key="current", on_click=chatbot_azure.text_2_speech,
                                        args=(full_response.replace("*","").replace("#", ""), aa_voice_name,))
 
 
