@@ -8,7 +8,7 @@ from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
 env_path = os.path.abspath(".")
-CHAT_HISTORY_PATH = "./setting/chat_history.db"
+CHAT_HISTORY_PATH = "./setting/chat_history_nangua.db"
 chatbot = ChatRobot()
 chatbot.setup_env()
 chatbot_or = ChatRobotOpenRouter()
