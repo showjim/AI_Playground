@@ -247,21 +247,17 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["openai/gpt-4.1", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat-v3-0324"],
+                                                options=["google/gemini-2.5-flash", "openai/gpt-4.1", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat-v3-0324", "moonshotai/kimi-k2"],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
                                                   options=["0", "0.2", "0.4", "0.6", "0.8", "1.0"],
                                                   index=1,
                                                   on_change=set_reload_flag)
-            if "16k" in aa_llm_model:
-                aa_max_resp_max_val = 16 * 1024
-            else:
-                aa_max_resp_max_val = 4096
             aa_max_resp = st.slider(label="`3. Max response`",
                                             min_value=256,
-                                            max_value=aa_max_resp_max_val,
-                                            value=512,
+                                            max_value=16 * 1024,
+                                            value=4096,
                                             on_change=set_reload_flag)
             aa_context_msg = st.select_slider(label="`4. Context message`",
                                                       options=[1, 5, 10, 20, 50],
@@ -355,10 +351,11 @@ def main():
                                             st.session_state.FreeChatMessagesDisplay.append(
                                                 {"role": m[0], "content": [{"type": m[1], "text": m[2]}]})
                                     else:
-                                        st.session_state.FreeChatMessages.append(
-                                            {"role": m[0], "content": [{"type": m[1], "image_url": {"url":m[2]}}]})
-                                        st.session_state.FreeChatMessagesDisplay.append(
-                                            {"role": m[0], "content": [{"type": m[1], "image_url": {"url":m[2]}}]})
+                                        if aa_llm_model not in ["deepseek/deepseek-chat-v3-0324", "moonshotai/kimi-k2"]:
+                                            st.session_state.FreeChatMessages.append(
+                                                {"role": m[0], "content": [{"type": m[1], "image_url": {"url":m[2]}}]})
+                                            st.session_state.FreeChatMessagesDisplay.append(
+                                                {"role": m[0], "content": [{"type": m[1], "image_url": {"url":m[2]}}]})
 
 
                     with col2:
