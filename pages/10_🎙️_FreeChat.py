@@ -228,7 +228,7 @@ def main():
     # chain = chatbot.initial_llm()
     if "FreeChatChain" not in st.session_state:
         # client = chatbot.initial_llm()
-        st.session_state["FreeChatChain"] = client
+        st.session_state.FreeChatChain = client
     if "FreeIMGDB" not in st.session_state:
         st.session_state["FreeIMGDB"] = {}
     if "FreeChatImgReloadFlag" not in st.session_state:
@@ -247,7 +247,13 @@ def main():
                                                 index=0,
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
-                                                options=["google/gemini-2.5-flash", "openai/gpt-4.1", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat-v3-0324", "moonshotai/kimi-k2"],
+                                                options=[
+                                                    "deepseek/deepseek-v3.1-terminus",
+                                                    "google/gemini-2.5-flash",
+                                                    "openai/gpt-4.1",
+                                                    "google/gemini-2.5-pro",
+                                                    "anthropic/claude-sonnet-4"
+                                                ],
                                                 index=0,
                                                 on_change=set_reload_flag)
             aa_temperature = st.selectbox(label="`2. Temperature (0~1)`",
@@ -523,15 +529,15 @@ def main():
                 cur_func_call = {"id": None, "type": "function", "function": {"arguments": "", "name": None}}
                 with st.spinner("preparing answer"):  # st.session_state["FreeChatChain"]
                     try:
-                        response = st.session_state["FreeChatChain"].chat.completions.create(
-                            model=st.session_state["FreeChatSetting"]["model"],
-                            messages=st.session_state["FreeChatMessages"],
-                            max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
+                        response = st.session_state.FreeChatChain.chat.completions.create(
+                            model=st.session_state.FreeChatSetting["model"],
+                            messages=st.session_state.FreeChatMessages,
+                            max_tokens=st.session_state.FreeChatSetting["max_tokens"],
                             # default max tokens is low so set higher
-                            temperature=st.session_state["FreeChatSetting"]["temperature"],
+                            temperature=st.session_state.FreeChatSetting["temperature"],
                             stream=True,
                             tools=tools,
-                            tool_choice=st.session_state["tool_choice"],  # auto is default, but we'll be explicit
+                            tool_choice=st.session_state.tool_choice,  # auto is default, but we'll be explicit
                         )
                         for chunk in response:
                             # process normal response and tool_calls response
