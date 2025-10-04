@@ -162,7 +162,7 @@ class ChatRobotBase:
         // 7. The generated prompt sent to IMAGE should be very detailed, and around 100 words long.
         // 8. Do not create any imagery that would be offensive.
 
-        // Create only cartoon images from a text-only prompt.
+        // Create only cartoon images from a text-only prompt!!!
         create_img_from_siliconflow(
         // The detailed image description, potentially modified to abide by the IMAGE policies. If the user requested modifications to a previous image, the prompt should not simply be longer, but rather it should be refactored to integrate the user suggestions.
         prompt: string

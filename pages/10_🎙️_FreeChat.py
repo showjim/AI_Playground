@@ -151,18 +151,17 @@ def create_img_from_siliconflow(prompt:str):
     url = "https://api.siliconflow.cn/v1/images/generations"
 
     payload = {
-        "model": "Kwai-Kolors/Kolors", #"black-forest-labs/FLUX.1-dev", #"stabilityai/stable-diffusion-3-5-large", #“Kwai-Kolors/Kolors”
+        "model": "Qwen/Qwen-Image", # "Kwai-Kolors/Kolors"
         "prompt": prompt,
         "negative_prompt": "<string>",
-        "image_size": "1024x1024",
+        "image_size": "1472x1140",
         "batch_size": 1,
         "seed": 4999999999,
         "num_inference_steps": 20,
-        "guidance_scale": 7.5,
-        "prompt_enhancement": True
+        "guidance_scale": 7.5
     }
 
-    response = requests.request("POST", url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=headers)
 
     print(response.text)
 
