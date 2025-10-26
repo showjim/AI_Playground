@@ -356,7 +356,11 @@ def main():
                                             st.session_state.FreeChatMessagesDisplay.append(
                                                 {"role": m[0], "content": [{"type": m[1], "text": m[2]}]})
                                     else:
-                                        if aa_llm_model not in ["deepseek/deepseek-chat-v3-0324", "moonshotai/kimi-k2"]:
+                                        if aa_llm_model not in [
+                                            "deepseek/deepseek-v3.1-terminus",
+                                            "deepseek/deepseek-chat-v3-0324",
+                                            "moonshotai/kimi-k2"
+                                        ]:
                                             st.session_state.FreeChatMessages.append(
                                                 {"role": m[0], "content": [{"type": m[1], "image_url": {"url":m[2]}}]})
                                             st.session_state.FreeChatMessagesDisplay.append(
