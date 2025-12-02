@@ -247,7 +247,7 @@ def main():
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
                                                 options=[
-                                                    "deepseek/deepseek-v3.1-terminus",
+                                                    "deepseek/deepseek-v3.2",
                                                     "google/gemini-2.5-flash",
                                                     "openai/gpt-4.1",
                                                     "google/gemini-2.5-pro",
