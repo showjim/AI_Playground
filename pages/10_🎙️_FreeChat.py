@@ -248,8 +248,7 @@ def main():
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
                                                 options=[
                                                     "deepseek/deepseek-chat-v3-0324",
-                                                    "deepseek/deepseek-v3.2",
-                                                    "google/gemini-2.5-flash",
+                                                    "moonshotai/kimi-k2-0905",
                                                     "openai/gpt-4.1",
                                                     "google/gemini-2.5-pro",
                                                     "anthropic/claude-sonnet-4"

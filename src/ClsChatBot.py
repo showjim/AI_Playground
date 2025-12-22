@@ -895,7 +895,7 @@ class ChatRobotSiliconFlow(ChatRobotBase):
         key = os.getenv('SILICONFLOW_API_KEY')
         # audioFile = open(audioFileName, 'rb')
         files = {"file": audioFile}
-        payload = {"model": "FunAudioLLM/SenseVoiceSmall"}
+        payload = {"model": "FunAudioLLM/SenseVoiceSmall"} #TeleAI/TeleSpeechASR FunAudioLLM/SenseVoiceSmall
         headers = {"Authorization": F"Bearer {key}"}
 
         response = requests.post(url, data=payload, files=files, headers=headers)
