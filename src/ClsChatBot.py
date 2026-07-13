@@ -64,8 +64,8 @@ class ChatRobotBase:
         Please print the two translation results according to the above rules.
                     """
         elif mode == "西瓜一家-小南瓜":
-            prompt_template = """你现在是一名叫小南瓜的小姑娘，大名张若鹿，今年10岁了，生日是12月16号，在上海上小学四年级，英文名叫Sunny。你有两个弟弟，
-        小西瓜和小东瓜。你很爱护小西瓜(8岁，大名张若龙)和小东瓜（3岁，大名张若虎）这两位弟弟。你的爸爸叫张晓明，是一名工程师，你的妈妈姓余，是一名小学语文老师。爷爷退休在家，每天做做饭。
+            prompt_template = """你现在是一名叫小南瓜的小姑娘，大名张若鹿，今年11岁了，生日是12月16号，在上海上小学五年级，英文名叫Sunny。你有两个弟弟，
+        小西瓜和小东瓜。你很爱护小西瓜(9岁，大名张若龙)和小东瓜（4岁，大名张若虎）这两位弟弟。你的爸爸叫张晓明，是一名工程师，你的妈妈姓余，是一名小学语文老师。爷爷退休在家，每天做做饭。
         性格上，你聪明伶俐，有礼貌，活泼可爱。你支持家人，同时鼓励他们独立和学会解决问题。你充满同情心，喜欢用温暖的话语和生动的例子传递爱。
         你也非常有耐心，擅长倾听，愿意在他人需要时提供心理和情感上的支持。在坚持对错的大原则的前提下，永远无条件支持自己的家人。
         你的沟通风格温柔而耐心，避免使用复杂术语，倾听他人问题后提出建议，以鼓励和正面态度回应，喜欢用生动的例子和故事让观点更加引人入胜。
@@ -893,14 +893,52 @@ class ChatRobotSiliconFlow(ChatRobotBase):
     def stt(self, audioFile):
         url = "https://api.siliconflow.cn/v1/audio/transcriptions"
         key = os.getenv('SILICONFLOW_API_KEY')
-        # audioFile = open(audioFileName, 'rb')
-        files = {"file": audioFile}
         payload = {"model": "FunAudioLLM/SenseVoiceSmall"} #TeleAI/TeleSpeechASR FunAudioLLM/SenseVoiceSmall
         headers = {"Authorization": F"Bearer {key}"}
 
+        # audioFile may be a Streamlit UploadedFile or a file-like object whose
+        # internal pointer has already advanced past the data (e.g. after a previous
+        # read, or on a script rerun). Rewind to the start and read the raw bytes so
+        # we never send an empty/short upload — SiliconFlow returns HTTP 500 with an
+        # empty body for those, which then fails JSON parsing at char 0.
+        if hasattr(audioFile, "seek"):
+            try:
+                audioFile.seek(0)
+            except (OSError, ValueError):
+                pass
+
+        if hasattr(audioFile, "getvalue"):
+            audio_bytes = audioFile.getvalue()
+        elif isinstance(audioFile, (bytes, bytearray)):
+            audio_bytes = bytes(audioFile)
+        else:
+            audio_bytes = audioFile.read()
+
+        if not audio_bytes:
+            raise ValueError("Empty audio data passed to STT; got no bytes to transcribe.")
+
+        # Pass an explicit (filename, bytes, content_type) tuple so requests always
+        # sends fresh, complete bytes regardless of the source object's cursor state.
+        name = getattr(audioFile, "name", None) or "audio.wav"
+        files = {"file": (name, audio_bytes, "audio/wav")}
+
         response = requests.post(url, data=payload, files=files, headers=headers)
 
-        resp_dict = response.json()
+        # Surface the real failure instead of letting a non-JSON body (e.g. an empty
+        # 500 response) blow up later as a confusing JSONDecodeError at char 0.
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"SiliconFlow STT failed: HTTP {response.status_code} "
+                f"(body[:200]={response.text[:200]!r})"
+            )
+
+        try:
+            resp_dict = response.json()
+        except requests.exceptions.JSONDecodeError as e:
+            raise RuntimeError(
+                f"SiliconFlow STT returned non-JSON body (HTTP {response.status_code}, "
+                f"body[:200]={response.text[:200]!r})"
+            ) from e
 
         return resp_dict['text']
 
