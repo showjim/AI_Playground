@@ -3,7 +3,6 @@ import os, time, json, io, base64, requests, sqlite3
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobotAzure, ChatRobotOpenRouter, ChatRobotSiliconFlow
-import openai
 from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
@@ -101,6 +100,7 @@ def save_chat_to_db(current_topic_id:int, role:str, type:str, message:str, img:s
 
 def set_reload_mode():
     st.session_state.FreeChatReloadMode = True
+    st.session_state.FreeChatModeChanged = True
 
 
 def set_reload_flag():
@@ -274,6 +274,19 @@ def main():
             if st.session_state.FreeChatReloadMode:
                 st.session_state.system_prompt = chatbot_or.select_chat_mode(aa_chat_mode)
                 st.session_state.FreeChatReloadMode = False
+                # Apply a mode change to the current topic; loading a topic leaves its stored prompt alone
+                if st.session_state.get("FreeChatModeChanged", False):
+                    st.session_state.FreeChatModeChanged = False
+                    system_msg = {"role": "system",
+                                  "content": [{"type": "text", "text": st.session_state.system_prompt}]}
+                    for msg_list in (st.session_state.FreeChatMessages,
+                                     st.session_state.get("FreeChatMessagesDisplay", [])):
+                        if msg_list and msg_list[0].get("role") == "system":
+                            msg_list[0] = system_msg
+                    if st.session_state.current_topic_id:
+                        with DatabaseConnection(CHAT_HISTORY_PATH) as c:
+                            c.execute("UPDATE chats SET message = ? WHERE topic_id = ? AND role = 'system'",
+                                      (st.session_state.system_prompt, st.session_state.current_topic_id))
                 # set the tool choice in fuction call
                 if aa_chat_mode == "Translate":
                     st.session_state["tool_choice"] = "none"
@@ -383,19 +396,21 @@ def main():
         tab1, tab2, tab3, tab4 = st.tabs([ "SiliconFlow", "Azure STT File", "Azure STT", "Whisper"])
         with tab1:
             audio_siliconflow = st.audio_input("Record a voice message", key ="SiliconFlow", label_visibility="hidden")
-            if audio_siliconflow:
+            if audio_siliconflow and st.session_state.get("FreeChatLastAudioSiliconFlow") != audio_siliconflow.file_id:
                 # Since Azure Whisper cannot be used any more so...
                 # I have to switch to SiliconFlow STT
                 speech_txt = chatbot_siliconflow.stt(audio_siliconflow)
+                st.session_state["FreeChatLastAudioSiliconFlow"] = audio_siliconflow.file_id
         with tab2:
             audio_azure = st.audio_input("Record a voice message", key ="Azure STT File", label_visibility="hidden")
-            if audio_azure:
+            if audio_azure and st.session_state.get("FreeChatLastAudioAzure") != audio_azure.file_id:
                 # Since Azure Whisper cannot be used any more so...
                 # I have to switch to Azure STT
                 filename = "./tmp.wav"
                 with open(filename, "wb") as f:
-                    f.write(audio_azure['bytes'])
+                    f.write(audio_azure.getvalue())
                 speech_txt = chatbot_azure.speech_2_text_continuous_file_based(filename) # speech_2_text_file_based(filename)
+                st.session_state["FreeChatLastAudioAzure"] = audio_azure.file_id
         with tab3:
             # Speech2Text
             aa_audio_mode = st.selectbox(label="`Audio Input Mode`",
@@ -515,6 +530,7 @@ def main():
             # Add user message to chat history
             max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
             st.session_state.FreeChatMessages = chatbot_or.control_msg_history_szie(st.session_state.FreeChatMessages, max_cnt)
+            model_len_before_input = len(st.session_state.FreeChatMessages)
             st.session_state.FreeChatMessages.append({"role": "user", "content": [{"type": "text", "text": prompt}]})
             st.session_state.FreeChatMessagesDisplay.append({"role": "user", "content": [{"type": "text", "text": prompt}]})
             # Save user message to database
@@ -571,16 +587,11 @@ def main():
                                     # print("call tool here")
                                     response_message = {"role": "assistant", "content": None, "tool_calls": tool_calls}
                     except Exception as e:
-                        print("Error found: ")
-                        print(e.body)
+                        print(f"Error found: {e}")
                         print(st.session_state["FreeChatMessages"])
-                        st.error(e.body)
-                        st.session_state["FreeChatMessages"].pop(-1)
-                        st.session_state["FreeChatMessagesDisplay"].pop(-1)
-                        if 'tool_calls' in st.session_state["FreeChatMessages"][1].keys() and \
-                                st.session_state["FreeChatMessages"][2]['role'] == 'tool':
-                            st.session_state["FreeChatMessages"].pop(1)
-                            st.session_state["FreeChatMessages"].pop(1)
+                        st.error(f"请求失败了，请稍后再试。\n\n{str(e)}")
+                        del st.session_state["FreeChatMessages"][model_len_before_input:]
+                        st.stop()
 
                     # Step 2: check if the model wanted to call a function
                     if tool_calls:
@@ -592,6 +603,7 @@ def main():
                             "create_img_from_siliconflow": create_img_from_siliconflow,
                         }  # only one function in this example, but you can have multiple
                         # extend conversation with assistant's reply
+                        display_len_before_tool = len(st.session_state["FreeChatMessagesDisplay"])
                         st.session_state["FreeChatMessages"].append(response_message)
                         st.session_state["FreeChatMessagesDisplay"].append(response_message)
                         # Step 4: send the info for each function call and function response to the model
@@ -615,35 +627,35 @@ def main():
                                         "content": function_response,
                                     }
                                 )  # extend conversation with function response
-                        except openai.BadRequestError as e:
-                            print("Error found: ")
-                            print(e.body)
-                            st.error(e.body)
-                            st.session_state["FreeChatMessages"].pop(-1)
-                            st.session_state["FreeChatMessagesDisplay"].pop(-1)
-                            if 'tool_calls' in st.session_state["FreeChatMessages"][1].keys() and \
-                                    st.session_state["FreeChatMessages"][2]['role'] == 'tool':
-                                st.session_state["FreeChatMessages"].pop(1)
-                                st.session_state["FreeChatMessages"].pop(1)
-                        second_response = st.session_state["FreeChatChain"].chat.completions.create(
-                            model=st.session_state["FreeChatSetting"]["model"],
-                            messages=st.session_state["FreeChatMessages"],
-                            max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
-                            # default max tokens is low so set higher
-                            temperature=st.session_state["FreeChatSetting"]["temperature"],
-                            stream=True,
-                        )  # get a new response from the model where it can see the function response
-                        for chunk in second_response:
-                            if len(chunk.choices) > 0:
-                                deltas = chunk.choices[0].delta
-                                if deltas is not None:
-                                    if deltas.content is not None:
-                                        full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
-                                        time.sleep(0.001)
-                                        message_placeholder.markdown(full_response + "▌")
+                            second_response = st.session_state["FreeChatChain"].chat.completions.create(
+                                model=st.session_state["FreeChatSetting"]["model"],
+                                messages=st.session_state["FreeChatMessages"],
+                                max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
+                                # default max tokens is low so set higher
+                                temperature=st.session_state["FreeChatSetting"]["temperature"],
+                                stream=True,
+                            )  # get a new response from the model where it can see the function response
+                            for chunk in second_response:
+                                if len(chunk.choices) > 0:
+                                    deltas = chunk.choices[0].delta
+                                    if deltas is not None:
+                                        if deltas.content is not None:
+                                            full_response += deltas.content  # ["answer"]  # .choices[0].delta.get("content", "")
+                                            time.sleep(0.001)
+                                            message_placeholder.markdown(full_response + "▌")
+                        except Exception as e:
+                            print(f"Error found: {e}")
+                            st.error(f"请求失败了，请稍后再试。\n\n{str(e)}")
+                            del st.session_state["FreeChatMessages"][model_len_before_input:]
+                            del st.session_state["FreeChatMessagesDisplay"][display_len_before_tool:]
+                            st.stop()
                     else:
                         full_response = full_response
                 message_placeholder.markdown(full_response)
+                if not full_response:
+                    st.warning("模型没有返回内容，请重试。")
+                    del st.session_state["FreeChatMessages"][model_len_before_input:]
+                    st.stop()
 
                 st.session_state["FreeChatMessages"].append({"role": "assistant", "content": [{"type": "text", "text": full_response}]})
                 if function_response.startswith("https://"):
