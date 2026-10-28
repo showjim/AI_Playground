@@ -3,7 +3,7 @@ langchain-ollama==0.2.2
 langchain-openai==0.3.2
 langchain-community==0.3.27
 python-dotenv~=1.00
-streamlit==1.48.1
+streamlit==1.66.1
 openai~=1.59.6
 tiktoken~=0.7
 faiss-cpu==1.10.0
@@ -15,7 +15,6 @@ numpy==1.26.2
 scikit-learn~=1.5.2
 nltk~=3.9.1
 azure-cognitiveservices-speech~=1.33.0
-google-generativeai~=0.4.0
 faster-whisper==0.5.1
 ffmpeg~=1.4
 pysubs2~=1.6.1

@@ -5,7 +5,6 @@ from openai import AzureOpenAI, OpenAI
 from dotenv import load_dotenv
 from datetime import date, datetime
 import azure.cognitiveservices.speech as speechsdk
-import google.generativeai as genai
 from typing import List
 
 
