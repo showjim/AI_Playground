@@ -247,7 +247,7 @@ def main():
                                                 on_change=set_reload_mode)
             aa_llm_model = st.selectbox(label="`1. LLM Model`",
                                                 options=[
-                                                    "deepseek/deepseek-v4-flash-vision-exp",
+                                                    "deepseek/deepseek-v4.1-flash-1017",
                                                     "deepseek/deepseek-v4-pro",
                                                     "moonshotai/kimi-k2.6",
                                                     "qwen/qwen3.6-plus",

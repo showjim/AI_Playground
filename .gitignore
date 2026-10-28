@@ -16,3 +16,7 @@ test/*.mp4
 test/*.txt
 src/__pycache__
 
+img/*.jpg
+*.wav
+*.pptx
+*.db
