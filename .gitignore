@@ -20,3 +20,5 @@ img/*.jpg
 *.wav
 *.pptx
 *.db
+*.pyc
+setting/memory_backfill_draft.*

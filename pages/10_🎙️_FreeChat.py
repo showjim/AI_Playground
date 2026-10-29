@@ -3,6 +3,7 @@ import os, time, json, io, base64, requests, sqlite3
 from typing import List
 import azure.cognitiveservices.speech as speechsdk
 from src.ClsChatBot import ChatRobotAzure, ChatRobotOpenRouter, ChatRobotSiliconFlow
+from src import memory
 from pathlib import Path
 
 # __version__ = "Beta V0.0.2"
@@ -57,6 +58,7 @@ def init_database():
         # Add indexes
         c.execute('''CREATE INDEX IF NOT EXISTS idx_topic_id ON chats(topic_id)''')
         c.execute('''CREATE INDEX IF NOT EXISTS idx_created_at ON chats(created_at)''')
+    memory.init_db(CHAT_HISTORY_PATH)
 
 # Initialize session state
 def init_session_state():
@@ -75,6 +77,7 @@ def create_topic(system_prompt:str):
             with DatabaseConnection(CHAT_HISTORY_PATH) as c:
                 c.execute("INSERT INTO topics (name) VALUES (?)", (st.session_state.new_topic,))
                 topic_id = c.lastrowid
+            memory.init_topic(CHAT_HISTORY_PATH, topic_id)
             st.session_state.current_topic_id = topic_id
             st.session_state.messages = []
             # Clear the input
@@ -97,6 +100,33 @@ def save_chat_to_db(current_topic_id:int, role:str, type:str, message:str, img:s
             "INSERT INTO chats (topic_id, role, type, message, img) VALUES (?, ?, ?, ?, ?)",
             (current_topic_id, role, type, message, img)
         )
+
+
+def build_api_messages(prompt: str) -> List[dict]:
+    """Copy the history and add long-term memory to the system message.
+
+    The memory block is never written back to FreeChatMessages or the database.
+    """
+    messages = list(st.session_state.FreeChatMessages)
+    try:
+        context = memory.build_memory_context(CHAT_HISTORY_PATH, prompt)
+    except Exception as e:
+        print(f"Memory context failed: {e}")
+        context = ""
+    if context and messages and messages[0].get("role") == "system":
+        system_message = dict(messages[0])
+        content = system_message.get("content")
+        if isinstance(content, list) and content:
+            system_text = content[0].get("text", "")
+        elif isinstance(content, str):
+            system_text = content
+        else:
+            system_text = ""
+        system_message["content"] = [
+            {"type": "text", "text": system_text + "\n\n" + context}
+        ]
+        messages[0] = system_message
+    return messages
 
 def set_reload_mode():
     st.session_state.FreeChatReloadMode = True
@@ -347,6 +377,25 @@ def main():
                     col1, col2 = st.columns([5, 1])
                     with col1:
                         if st.button(f"📝 {topic_name}", key=f"topic_{topic_id}"):
+                            previous_topic_id = st.session_state.current_topic_id
+                            if (
+                                previous_topic_id
+                                and previous_topic_id != topic_id
+                                and memory.has_new_messages(
+                                    CHAT_HISTORY_PATH, previous_topic_id
+                                )
+                            ):
+                                with st.spinner("小南瓜在回想刚才的聊天..."):
+                                    try:
+                                        memory.maybe_extract_memories(
+                                            CHAT_HISTORY_PATH,
+                                            previous_topic_id,
+                                            st.session_state.FreeChatChain,
+                                            st.session_state.FreeChatSetting["model"],
+                                            force=True,
+                                        )
+                                    except Exception as e:
+                                        print(f"Memory extraction failed: {e}")
                             st.session_state.FreeChatReloadMode = True
                             st.session_state.current_topic_id = topic_id
                             # Load messages for this topic
@@ -390,6 +439,46 @@ def main():
                                 st.session_state.FreeChatMessages = []
                                 st.session_state.FreeChatMessagesDisplay = []
                             st.rerun()
+
+        with st.expander("📖 小南瓜记得的事"):
+            memories = memory.list_memories(CHAT_HISTORY_PATH)
+            counts = memory.memory_counts(CHAT_HISTORY_PATH)
+            if not memories:
+                st.caption("还没有记忆。聊满 10 轮，或点“让小南瓜记住这段”。")
+            else:
+                st.caption(
+                    f"共 {counts['total']} 条 · 本周学习 {counts['learning_week']} 条 · "
+                    f"需要关注 {counts['attention']} 条 · 心情 30 天后淡出"
+                )
+                for kind in ("story", "learning", "life", "mood"):
+                    kind_items = [m for m in memories if m["kind"] == kind]
+                    if not kind_items:
+                        continue
+                    st.markdown(f"**{memory.KIND_LABELS[kind]}**")
+                    for item in kind_items:
+                        flag = f" ⚠️ {item['flag']}" if item.get("flag") else ""
+                        st.markdown(f"**{item['key']}**：{item['content']}{flag}")
+                        with st.popover(
+                            "编辑 / 忘掉", key=f"mem_popover_{item['id']}"
+                        ):
+                            new_content = st.text_area(
+                                "内容",
+                                item["content"],
+                                key=f"mem_text_{item['id']}",
+                            )
+                            if st.button("保存", key=f"mem_save_{item['id']}"):
+                                memory.update_memory_content(
+                                    CHAT_HISTORY_PATH, item["id"], new_content
+                                )
+                                st.rerun()
+                            if st.button("忘掉", key=f"mem_forget_{item['id']}"):
+                                memory.delete_memory(CHAT_HISTORY_PATH, item["id"])
+                                st.rerun()
+                with st.form("clear_memory_form"):
+                    confirmed = st.checkbox("我确认要清空全部记忆")
+                    if st.form_submit_button("清空全部记忆") and confirmed:
+                        memory.clear_memories(CHAT_HISTORY_PATH)
+                        st.rerun()
 
         st.subheader("2. STT")
         speech_txt = ""
@@ -525,8 +614,45 @@ def main():
                         if "image" in message.keys():
                             st.image(message["image"], width=256)
 
+        if st.button(
+            "📝 让小南瓜记住这段",
+            help="把小南瓜刚才和你说的话记进故事书、生活、心情或学习里。",
+        ):
+            try:
+                with st.spinner("小南瓜在记..."):
+                    result = memory.maybe_extract_memories(
+                        CHAT_HISTORY_PATH,
+                        st.session_state.current_topic_id,
+                        st.session_state.FreeChatChain,
+                        st.session_state.FreeChatSetting["model"],
+                        force=True,
+                        window=20,
+                    )
+            except Exception as e:
+                print(f"Memory extraction failed: {e}")
+                result = {"error": str(e)}
+            if result.get("extracted"):
+                st.toast(f"记住啦，{result['extracted']} 条。")
+            elif result.get("error"):
+                st.toast("这次没记住，等一下再试。")
+            else:
+                st.toast("这段已经记过了。")
+
         # Accept user input
         if (prompt := st.chat_input("Type you input here")) or (prompt := speech_txt):
+            if st.session_state.current_topic_id and memory.has_due_memories(
+                CHAT_HISTORY_PATH, st.session_state.current_topic_id
+            ):
+                with st.spinner("小南瓜在回想之前聊过的事..."):
+                    try:
+                        memory.maybe_extract_memories(
+                            CHAT_HISTORY_PATH,
+                            st.session_state.current_topic_id,
+                            st.session_state.FreeChatChain,
+                            st.session_state.FreeChatSetting["model"],
+                        )
+                    except Exception as e:
+                        print(f"Memory extraction failed: {e}")
             # Add user message to chat history
             max_cnt = st.session_state["FreeChatSetting"]["context_msg"]
             st.session_state.FreeChatMessages = chatbot_or.control_msg_history_szie(st.session_state.FreeChatMessages, max_cnt)
@@ -551,7 +677,7 @@ def main():
                     try:
                         response = st.session_state.FreeChatChain.chat.completions.create(
                             model=st.session_state.FreeChatSetting["model"],
-                            messages=st.session_state.FreeChatMessages,
+                            messages=build_api_messages(prompt),
                             max_tokens=st.session_state.FreeChatSetting["max_tokens"],
                             # default max tokens is low so set higher
                             temperature=st.session_state.FreeChatSetting["temperature"],
@@ -629,7 +755,7 @@ def main():
                                 )  # extend conversation with function response
                             second_response = st.session_state["FreeChatChain"].chat.completions.create(
                                 model=st.session_state["FreeChatSetting"]["model"],
-                                messages=st.session_state["FreeChatMessages"],
+                                messages=build_api_messages(prompt),
                                 max_tokens=st.session_state["FreeChatSetting"]["max_tokens"],
                                 # default max tokens is low so set higher
                                 temperature=st.session_state["FreeChatSetting"]["temperature"],
